@@ -670,47 +670,41 @@
       <button class="ghost-btn" onclick="logout()">Salir</button>
     </div>
     <div class="dash-pad">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
-        <button onclick="openHistory()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
-          📊<br>Progreso
-        </button>
-        <button onclick="openBodyScreen()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
-          📏<br>Cuerpo
-        </button>
-        <button onclick="openMenuScreen()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
-          🥗<br>Menú
-        </button>
+
+      <!-- Nav rápida -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
+        <button onclick="openHistory()"    style="padding:9px 6px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">Progreso</button>
+        <button onclick="openBodyScreen()" style="padding:9px 6px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">Cuerpo</button>
+        <button onclick="openMenuScreen()" style="padding:9px 6px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">Menú</button>
       </div>
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-val" id="streak-current">0</div>
-          <div class="stat-lbl">🔥 Racha actual</div>
+
+      <!-- Stats + rec en una sola fila -->
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-bottom:10px">
+        <div class="stat-card" style="padding:10px 12px">
+          <div class="stat-val" id="streak-current" style="font-size:28px">0</div>
+          <div class="stat-lbl">Racha</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-val" id="streak-record">0</div>
-          <div class="stat-lbl">🏆 Récord</div>
+        <div class="stat-card" style="padding:10px 12px">
+          <div class="stat-val" id="streak-record" style="font-size:28px">0</div>
+          <div class="stat-lbl">Récord</div>
+        </div>
+        <div class="stat-card" style="padding:10px 14px;text-align:left;min-width:0">
+          <div class="rec-title" id="rec-title" style="font-size:13px;font-weight:600">¡Hora de entrenar!</div>
+          <div class="rec-sub"   id="rec-sub"   style="font-size:11px;color:var(--muted);margin-top:2px">Empieza tu sesión</div>
         </div>
       </div>
 
-      <div class="rec-card" id="rec-card">
-        <div class="rec-icon" id="rec-icon">💪</div>
-        <div>
-          <div class="rec-title" id="rec-title">¡Hora de entrenar!</div>
-          <div class="rec-sub"  id="rec-sub">Comienza tu sesión de hoy</div>
-        </div>
-      </div>
-
-      <!-- Phase card -->
-      <div class="phase-card" id="phase-card">
-        <div class="phase-badge" id="phase-badge">F1</div>
+      <!-- Phase card compacta -->
+      <div class="phase-card" id="phase-card" style="padding:10px 14px;margin-bottom:10px">
+        <div class="phase-badge" id="phase-badge" style="width:32px;height:32px;font-size:12px">F1</div>
         <div class="phase-info">
-          <div class="phase-name" id="phase-name">Fase 1 · Mantenimiento</div>
-          <div class="phase-desc" id="phase-desc">Pesos ligeros, trabaja la técnica. RPE 5-6.</div>
+          <div class="phase-name" id="phase-name" style="font-size:13px">Fase 1 · Mantenimiento</div>
+          <div class="phase-desc" id="phase-desc" style="font-size:11px">Pesos ligeros, trabaja la técnica. RPE 5-6.</div>
         </div>
         <div class="phase-changer">
-          <div class="phase-dot active" id="pdot-1" onclick="setFase(1)" title="Fase 1"></div>
-          <div class="phase-dot"        id="pdot-2" onclick="setFase(2)" title="Fase 2"></div>
-          <div class="phase-dot"        id="pdot-3" onclick="setFase(3)" title="Fase 3"></div>
+          <div class="phase-dot active" id="pdot-1" onclick="setFase(1)"></div>
+          <div class="phase-dot"        id="pdot-2" onclick="setFase(2)"></div>
+          <div class="phase-dot"        id="pdot-3" onclick="setFase(3)"></div>
         </div>
       </div>
 
@@ -1587,7 +1581,6 @@ function renderDash() {
   document.getElementById('streak-record').textContent  = rec;
 
   const r = getRec();
-  document.getElementById('rec-icon').textContent  = r.icon;
   document.getElementById('rec-title').textContent = r.title;
   document.getElementById('rec-sub').textContent   = r.sub;
 
