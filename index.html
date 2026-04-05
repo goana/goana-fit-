@@ -729,9 +729,17 @@
         <div class="cal-grid" id="cal-grid"></div>
       </div>
 
-      <button class="btn-secondary" onclick="openHistory()">Ver historial de progreso →</button>
-      <button class="btn-secondary" onclick="openBodyScreen()" style="margin-top:6px">Ver peso y medidas →</button>
-      <button class="btn-secondary" onclick="openMenuScreen()" style="margin-top:6px">Ver menú semanal →</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
+        <button onclick="openHistory()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
+          📊<br>Progreso
+        </button>
+        <button onclick="openBodyScreen()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
+          📏<br>Cuerpo
+        </button>
+        <button onclick="openMenuScreen()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
+          🥗<br>Menú
+        </button>
+      </div>
     </div>
   </div>
 
