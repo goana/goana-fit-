@@ -1,0 +1,1938 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>goanaFit</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset & Variables ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-tap-highlight-color: transparent; }
+
+    :root {
+      --bg:          #0f0f0f;
+      --card:        #1a1a1a;
+      --card2:       #212121;
+      --accent:      #a3e635;
+      --accent-d:    #84cc16;
+      --accent-bg:   rgba(163,230,53,.08);
+      --text:        #f0f0f0;
+      --muted:       #777;
+      --dim:         #3a3a3a;
+      --border:      #252525;
+      --border2:     #303030;
+      --success:     #22c55e;
+      --warning:     #f59e0b;
+      --danger:      #ef4444;
+      --r:  14px;
+      --rs:  8px;
+      --rx:  6px;
+      --t: .18s ease;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    /* ── Layout ────────────────────────────────────────────── */
+    #app { max-width: 480px; margin: 0 auto; position: relative; }
+
+    .screen { display: none; min-height: 100vh; padding-bottom: 100px; }
+    .screen.active { display: block; }
+
+    .app-header {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--bg); border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .app-header h1 { font-size: 19px; font-weight: 800; letter-spacing: -.4px; }
+    .app-header h1 em { font-style: normal; color: var(--accent); }
+
+    .back-btn {
+      background: none; border: none; color: var(--muted);
+      font-size: 22px; cursor: pointer; padding: 4px 8px 4px 0;
+      line-height: 1;
+    }
+    .ghost-btn {
+      background: none; border: none; color: var(--muted);
+      font-size: 13px; cursor: pointer; padding: 4px;
+    }
+    .ghost-btn:hover { color: var(--text); }
+
+    /* ── Loading ───────────────────────────────────────────── */
+    #screen-loading.active {
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+    }
+    .spinner {
+      width: 38px; height: 38px;
+      border: 3px solid var(--border2); border-top-color: var(--accent);
+      border-radius: 50%; animation: spin .75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Auth ──────────────────────────────────────────────── */
+    #screen-auth.active { display: flex; }
+    #screen-auth { flex-direction: column; align-items: center; justify-content: center; padding: 40px 28px; text-align: center; }
+    .auth-logo { font-size: 60px; margin-bottom: 20px; }
+    .auth-title { font-size: 28px; font-weight: 800; letter-spacing: -.5px; margin-bottom: 10px; }
+    .auth-title em { font-style: normal; color: var(--accent); }
+    .auth-sub { color: var(--muted); font-size: 15px; line-height: 1.6; margin-bottom: 36px; max-width: 300px; }
+    .auth-error {
+      background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.25);
+      color: #fca5a5; padding: 14px 16px; border-radius: var(--rs);
+      font-size: 13px; line-height: 1.6; text-align: left;
+      margin-bottom: 20px; width: 100%;
+    }
+    .auth-error code { background: rgba(255,255,255,.1); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+
+    .btn-google {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: 100%; padding: 15px; background: #fff; color: #111;
+      border: none; border-radius: var(--r); font-size: 15px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: background var(--t);
+    }
+    .btn-google:hover { background: #f0f0f0; }
+
+    /* ── Buttons ───────────────────────────────────────────── */
+    .btn-primary {
+      display: block; width: 100%; padding: 17px;
+      background: var(--accent); color: #0f0f0f;
+      border: none; border-radius: var(--r);
+      font-size: 15px; font-weight: 700; letter-spacing: .5px;
+      cursor: pointer; font-family: inherit; text-transform: uppercase;
+      transition: background var(--t), transform var(--t);
+    }
+    .btn-primary:hover { background: var(--accent-d); }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { background: var(--dim); color: var(--muted); cursor: not-allowed; transform: none; }
+
+    .btn-secondary {
+      display: block; width: 100%; padding: 14px;
+      background: transparent; color: var(--muted);
+      border: 1px solid var(--border2); border-radius: var(--r);
+      font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit;
+      transition: border-color var(--t), color var(--t); margin-top: 10px;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Dashboard ─────────────────────────────────────────── */
+    .dash-pad { padding: 18px 18px 0; }
+
+    .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px 12px; text-align: center;
+    }
+    .stat-val { font-size: 38px; font-weight: 800; color: var(--accent); line-height: 1; }
+    .stat-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin-top: 3px; }
+
+    .rec-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r);
+      padding: 14px 16px; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .rec-icon { font-size: 26px; flex-shrink: 0; }
+    .rec-title { font-size: 15px; font-weight: 600; }
+    .rec-sub { font-size: 13px; color: var(--muted); margin-top: 1px; }
+
+    /* ── Calendar ──────────────────────────────────────────── */
+    .section-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 10px; margin-top: 22px; }
+
+    .cal-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--r); padding: 14px;
+    }
+    .cal-head {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+    }
+    .cal-month { font-size: 14px; font-weight: 600; }
+    .cal-nav {
+      background: none; border: none; color: var(--muted);
+      cursor: pointer; font-size: 18px; padding: 2px 8px; border-radius: var(--rx);
+      line-height: 1;
+    }
+    .cal-nav:hover { background: var(--border2); color: var(--text); }
+    .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+    .cal-dname { font-size: 10px; text-align: center; color: var(--muted); padding: 4px 0; text-transform: uppercase; }
+    .cal-day {
+      aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; border-radius: 50%;
+    }
+    .cal-day.empty { visibility: hidden; }
+    .cal-day.today { border: 1.5px solid var(--accent); color: var(--accent); font-weight: 600; }
+    .cal-day.trained { background: var(--accent); color: #0f0f0f; font-weight: 700; }
+    .cal-day.trained.today { background: var(--accent); border-color: transparent; }
+
+    /* ── Workout Screen ────────────────────────────────────── */
+    .workout-meta { padding: 12px 18px 6px; }
+    .workout-date-lbl { font-size: 15px; font-weight: 600; text-transform: capitalize; }
+    .workout-hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .ex-list { padding: 0 14px; }
+
+    .ex-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); margin-bottom: 10px; overflow: hidden;
+      transition: border-color var(--t);
+    }
+    .ex-card.done { border-color: rgba(163,230,53,.35); background: linear-gradient(to bottom, rgba(163,230,53,.04), var(--card)); }
+
+    .ex-hd {
+      display: flex; align-items: center; gap: 8px; padding: 13px 14px;
+    }
+    .ex-num {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: var(--border2); display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; flex-shrink: 0;
+      transition: background var(--t), color var(--t);
+    }
+    .ex-card.done .ex-num { background: var(--accent); color: #0f0f0f; }
+    .ex-name { font-size: 14px; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .video-link {
+      font-size: 26px; opacity: .75; text-decoration: none;
+      transition: opacity var(--t); flex-shrink: 0;
+      padding: 6px; line-height: 1;
+    }
+    .video-link:hover { opacity: 1; }
+    .video-link.disabled { opacity: .2; cursor: default; pointer-events: none; }
+
+    .note-toggle {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 22px; padding: 6px; border-radius: var(--rx);
+      white-space: nowrap; transition: background var(--t), color var(--t); flex-shrink: 0;
+      line-height: 1;
+    }
+    .note-toggle:hover { background: var(--border2); color: var(--text); }
+
+    .ex-note {
+      margin: 0 14px 10px; padding: 10px 12px;
+      background: rgba(255,255,255,.03); border-left: 2px solid var(--accent);
+      border-radius: 0 var(--rx) var(--rx) 0;
+      font-size: 13px; color: var(--muted); line-height: 1.55;
+    }
+
+    .ex-prog { padding: 2px 14px 8px; font-size: 12px; color: var(--muted); }
+    .ex-prog.all-done { color: var(--accent); }
+
+    .series-col-headers {
+      display: flex; align-items: center; gap: 8px;
+      padding: 4px 14px 2px; border-top: 1px solid var(--border);
+    }
+    .series-col-headers .col-spacer { width: 22px; flex-shrink: 0; }
+    .series-col-headers .col-lbl {
+      flex: 1; text-align: center;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted);
+    }
+    .series-col-headers .col-chk { width: 30px; flex-shrink: 0; }
+
+    /* series rows */
+    .series-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 9px 14px; border-top: 1px solid var(--border);
+      transition: background var(--t);
+    }
+    .series-row.s-done { background: rgba(163,230,53,.04); }
+
+    .s-lbl { font-size: 12px; font-weight: 600; color: var(--muted); width: 22px; flex-shrink: 0; }
+    .series-row.s-done .s-lbl { color: var(--accent); }
+
+    .s-inputs { display: flex; gap: 6px; flex: 1; }
+    .inp-wrap { flex: 1; position: relative; }
+    .inp-wrap input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border2);
+      border-radius: var(--rx); color: var(--text);
+      font-size: 17px; font-weight: 600; font-family: inherit;
+      padding: 8px 24px 8px 8px; text-align: center;
+      -moz-appearance: textfield;
+      transition: border-color var(--t);
+    }
+    .inp-wrap input::-webkit-outer-spin-button,
+    .inp-wrap input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .inp-wrap input:focus { outline: none; border-color: var(--accent); }
+    .inp-unit {
+      position: absolute; right: 6px; top: 50%;
+      transform: translateY(-50%); font-size: 10px; color: var(--dim); pointer-events: none;
+    }
+
+    .s-check-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 2px solid var(--border2); background: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+      transition: background var(--t), border-color var(--t);
+    }
+    .s-check-btn.checked { background: var(--accent); border-color: var(--accent); color: #0f0f0f; }
+
+    .workout-footer { padding: 16px 14px; }
+
+    /* ── Floating Timer ────────────────────────────────────── */
+    #floating-timer {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 480px; z-index: 90;
+      background: #111; border-top: 1px solid var(--border);
+      padding: 10px 18px;
+      display: flex; align-items: center; gap: 14px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,.7);
+    }
+
+    .tmr-svg-wrap { position: relative; flex-shrink: 0; }
+    .tmr-svg-wrap svg { transform: rotate(-90deg); display: block; }
+    .tmr-inner-text {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700;
+    }
+    .tmr-bg { fill: none; stroke: var(--border2); stroke-width: 3.5; }
+    .tmr-prog {
+      fill: none; stroke: var(--accent); stroke-width: 3.5; stroke-linecap: round;
+      stroke-dasharray: 138.23; stroke-dashoffset: 0;
+      transition: stroke-dashoffset 1s linear, stroke .3s;
+    }
+    .tmr-prog.urgent { stroke: var(--warning); }
+
+    .tmr-info { flex: 1; min-width: 0; }
+    .tmr-lbl { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tmr-status { font-size: 13px; font-weight: 600; }
+    .tmr-status.running { color: var(--accent); }
+    .tmr-status.paused  { color: var(--warning); }
+    .tmr-status.done    { color: var(--success); }
+
+    .tmr-btns { display: flex; gap: 5px; }
+    .tmr-btn {
+      width: 34px; height: 34px; border: 1px solid var(--border2);
+      border-radius: var(--rx); background: var(--card);
+      color: var(--text); cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; transition: background var(--t);
+    }
+    .tmr-btn:hover { background: var(--border2); }
+
+    /* ── History ───────────────────────────────────────────── */
+    .hist-pad { padding: 16px; }
+
+    .sel-wrap { position: relative; margin-bottom: 18px; }
+    .sel-wrap select {
+      width: 100%; padding: 12px 36px 12px 14px;
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--r); color: var(--text);
+      font-size: 14px; font-family: inherit;
+      appearance: none; cursor: pointer;
+    }
+    .sel-wrap select:focus { outline: none; border-color: var(--accent); }
+    .sel-wrap::after {
+      content: '▾'; position: absolute; right: 12px; top: 50%;
+      transform: translateY(-50%); color: var(--muted); pointer-events: none;
+    }
+
+    .chart-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px; margin-bottom: 16px;
+    }
+    .chart-lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 10px; }
+    #progress-chart { max-height: 190px; }
+
+    .tbl-wrap { background: var(--card); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; }
+    .hist-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .hist-table th {
+      padding: 9px 12px; text-align: left;
+      font-size: 11px; text-transform: uppercase; letter-spacing: .5px;
+      color: var(--muted); border-bottom: 1px solid var(--border);
+    }
+    .hist-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); }
+    .hist-table tr:last-child td { border-bottom: none; }
+    .hist-table tr:nth-child(even) td { background: rgba(255,255,255,.02); }
+    .hist-table .w-cell { font-weight: 700; color: var(--accent); }
+
+    .empty-st { text-align: center; padding: 36px 20px; color: var(--muted); }
+    .empty-st .e-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-st p { font-size: 14px; }
+
+    /* ── Toasts ────────────────────────────────────────────── */
+    #toast-root {
+      position: fixed; top: 14px; right: 14px; z-index: 300;
+      display: flex; flex-direction: column; gap: 7px; pointer-events: none;
+    }
+    .toast {
+      background: var(--card2); border: 1px solid var(--border2);
+      border-radius: var(--rs); padding: 11px 14px;
+      font-size: 13px; max-width: 270px; pointer-events: auto;
+      animation: tSlide .25s ease, tFade .25s ease 2.75s forwards;
+      box-shadow: 0 4px 16px rgba(0,0,0,.5);
+    }
+    .toast.success { border-left: 3px solid var(--success); }
+    .toast.error   { border-left: 3px solid var(--danger); }
+    .toast.warning { border-left: 3px solid var(--warning); }
+    .toast.info    { border-left: 3px solid var(--accent); }
+    @keyframes tSlide { from { transform: translateX(110%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @keyframes tFade  { to { opacity: 0; } }
+
+    /* ── Offline Banner ────────────────────────────────────── */
+    #offline-banner {
+      position: fixed; top: 0; left: 0; right: 0;
+      background: var(--warning); color: #000;
+      text-align: center; padding: 7px; font-size: 12px; font-weight: 600; z-index: 400;
+    }
+
+    /* ── Success Overlay ───────────────────────────────────── */
+    #success-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      background: rgba(163,230,53,.12); backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center;
+      animation: sOverlay 1.8s ease forwards;
+    }
+    .success-inner { text-align: center; }
+    .success-emoji { font-size: 72px; animation: sPop .4s cubic-bezier(.34,1.56,.64,1); }
+    .success-msg { font-size: 22px; font-weight: 800; color: var(--accent); margin-top: 14px; }
+    @keyframes sOverlay { 0%,10%{opacity:0} 25%,70%{opacity:1} 100%{opacity:0} }
+    @keyframes sPop { from{transform:scale(0)} to{transform:scale(1)} }
+
+    /* ── Phase card (dashboard) ────────────────────────────── */
+    .phase-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 16px; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .phase-badge {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--accent); color: #0f0f0f;
+      font-size: 13px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .phase-badge.phase-2 { background: var(--warning); }
+    .phase-badge.phase-3 { background: var(--success); }
+    .phase-info { flex: 1; }
+    .phase-name  { font-size: 14px; font-weight: 700; }
+    .phase-desc  { font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.4; }
+    .phase-changer {
+      display: flex; gap: 4px;
+    }
+    .phase-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--border2); cursor: pointer; transition: background var(--t);
+    }
+    .phase-dot.active { background: var(--accent); }
+
+    /* ── Check-in screen ───────────────────────────────────── */
+    .ci-pad { padding: 16px; }
+    .ci-block {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px; margin-bottom: 12px;
+    }
+    .ci-q { font-size: 15px; font-weight: 600; margin-bottom: 4px; line-height: 1.4; }
+    .ci-hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+
+    .pair-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .pair-btn {
+      padding: 12px 8px; border: 1.5px solid var(--border2); border-radius: var(--rs);
+      background: none; color: var(--text); font-size: 13px; font-weight: 500;
+      cursor: pointer; font-family: inherit; text-align: center;
+      transition: border-color var(--t), background var(--t), color var(--t);
+    }
+    .pair-btn.selected { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); font-weight: 700; }
+    .pair-btn.selected-warn { border-color: var(--warning); background: rgba(245,158,11,.1); color: var(--warning); font-weight: 700; }
+
+    .scale-row { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 12px; }
+    .scale-btn {
+      width: 38px; height: 38px; border: 1.5px solid var(--border2); border-radius: var(--rs);
+      background: none; color: var(--text); font-size: 14px; font-weight: 600;
+      cursor: pointer; font-family: inherit;
+      transition: border-color var(--t), background var(--t), color var(--t);
+    }
+    .scale-btn.sel-green  { border-color: var(--accent);  background: var(--accent-bg); color: var(--accent); }
+    .scale-btn.sel-yellow { border-color: var(--warning); background: rgba(245,158,11,.1); color: var(--warning); }
+    .scale-btn.sel-red    { border-color: var(--danger);  background: rgba(239,68,68,.1); color: var(--danger); }
+
+    .skin-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+
+    .adaptation-card {
+      background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.3);
+      border-radius: var(--r); padding: 14px 16px; margin-bottom: 12px;
+      font-size: 13px; line-height: 1.6; color: var(--text);
+    }
+    .adaptation-card.ok {
+      background: var(--accent-bg); border-color: rgba(163,230,53,.3);
+    }
+    .adaptation-card strong { display: block; font-size: 14px; margin-bottom: 6px; }
+
+    /* Warning banner in workout */
+    .workout-warn {
+      margin: 8px 14px; padding: 10px 14px;
+      background: rgba(245,158,11,.1); border: 1px solid rgba(245,158,11,.3);
+      border-radius: var(--rs); font-size: 13px; color: var(--warning); line-height: 1.5;
+    }
+    .workout-warn.danger {
+      background: rgba(239,68,68,.1); border-color: rgba(239,68,68,.3); color: #fca5a5;
+    }
+
+    /* ── Misc ──────────────────────────────────────────────── */
+    .hidden { display: none !important; }
+
+    /* ── Body tracking screen ──────────────────────────────── */
+    .body-pad { padding: 16px; }
+
+    .bio-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;
+    }
+    .bio-stat {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 14px 10px; text-align: center;
+    }
+    .bio-stat .bval { font-size: 22px; font-weight: 800; color: var(--accent); line-height: 1.1; }
+    .bio-stat .bval.neutral { color: var(--text); }
+    .bio-stat .bval.warn { color: var(--warning); }
+    .bio-stat .blbl { font-size: 10px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-top: 3px; }
+
+    .body-form-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 16px; margin-bottom: 14px;
+    }
+    .body-form-title {
+      font-size: 14px; font-weight: 700; margin-bottom: 12px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .body-form-date { font-size: 12px; color: var(--muted); font-weight: 400; }
+    .meas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .meas-field { display: flex; flex-direction: column; gap: 5px; }
+    .meas-field label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+    .meas-field input {
+      background: var(--bg); border: 1px solid var(--border2); border-radius: var(--rx);
+      color: var(--text); font-size: 18px; font-weight: 600; font-family: inherit;
+      padding: 10px 32px 10px 12px; -moz-appearance: textfield;
+      transition: border-color var(--t);
+    }
+    .meas-field input::-webkit-outer-spin-button,
+    .meas-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .meas-field input:focus { outline: none; border-color: var(--accent); }
+    .meas-field .meas-unit {
+      position: relative; display: flex; align-items: center;
+    }
+    .meas-field .meas-unit input { width: 100%; padding-right: 36px; }
+    .meas-field .meas-unit span {
+      position: absolute; right: 10px; font-size: 11px; color: var(--dim); pointer-events: none;
+    }
+    .meas-hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .collapse-toggle {
+      background: none; border: none; color: var(--muted); cursor: pointer;
+      font-size: 12px; padding: 4px 0; font-family: inherit; text-align: left;
+      display: flex; align-items: center; gap: 4px; margin-top: 10px;
+    }
+    .collapse-toggle:hover { color: var(--text); }
+
+    .body-hist-row {
+      display: grid; grid-template-columns: 80px repeat(5, 1fr);
+      gap: 4px; padding: 8px 12px; border-bottom: 1px solid var(--border);
+      font-size: 12px; align-items: center;
+    }
+    .body-hist-row.header {
+      font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted);
+      padding-top: 10px;
+    }
+    .body-hist-row:last-child { border-bottom: none; }
+
+    .chart-tabs { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+    .chart-tab {
+      padding: 6px 12px; border: 1px solid var(--border2); border-radius: 20px;
+      background: none; color: var(--muted); font-size: 12px; cursor: pointer;
+      font-family: inherit; transition: all var(--t);
+    }
+    .chart-tab.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); font-weight: 600; }
+
+    .imc-badge {
+      display: inline-block; padding: 2px 8px; border-radius: 4px;
+      font-size: 11px; font-weight: 600; margin-left: 6px;
+    }
+    .imc-normal  { background: rgba(34,197,94,.15);  color: var(--success); }
+    .imc-bajo    { background: rgba(245,158,11,.15); color: var(--warning); }
+    .imc-alto    { background: rgba(239,68,68,.15);  color: var(--danger); }
+
+    .profile-row {
+      display: flex; align-items: center; gap: 10px;
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); padding: 12px 14px; margin-bottom: 14px;
+    }
+    .profile-row label { font-size: 13px; color: var(--muted); flex-shrink: 0; }
+    .profile-row input {
+      width: 70px; background: var(--bg); border: 1px solid var(--border2);
+      border-radius: var(--rx); color: var(--text); font-size: 15px; font-weight: 600;
+      font-family: inherit; padding: 6px 10px; text-align: center;
+      -moz-appearance: textfield;
+    }
+    .profile-row input::-webkit-outer-spin-button,
+    .profile-row input::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .profile-row input:focus { outline: none; border-color: var(--accent); }
+    .profile-row .pr-unit { font-size: 12px; color: var(--muted); }
+    .profile-row .pr-save {
+      margin-left: auto; background: var(--accent); color: #000; border: none;
+      border-radius: var(--rx); padding: 6px 12px; font-size: 12px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+    }
+  </style>
+</head>
+<body>
+
+<!-- OFFLINE BANNER -->
+<div id="offline-banner" class="hidden">Sin conexión — cambios pendientes de sincronizar</div>
+
+<div id="app">
+
+  <!-- ═══ LOADING ═══════════════════════════════════════════ -->
+  <div id="screen-loading" class="screen active">
+    <div class="spinner"></div>
+    <p style="font-size:13px;color:var(--muted)">Cargando...</p>
+  </div>
+
+  <!-- ═══ AUTH ══════════════════════════════════════════════ -->
+  <div id="screen-auth" class="screen">
+    <div class="auth-logo">🏋️</div>
+    <h2 class="auth-title">goana<em>Fit</em></h2>
+    <p class="auth-sub">Registra tus sesiones de hipertrofia y sigue tu progreso directamente en Google Sheets.</p>
+    <div id="auth-error" class="auth-error hidden"></div>
+    <button class="btn-google" onclick="handleConnectGoogle()">
+      <svg width="18" height="18" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Conectar con Google
+    </button>
+  </div>
+
+  <!-- ═══ DASHBOARD ═════════════════════════════════════════ -->
+  <div id="screen-dashboard" class="screen">
+    <div class="app-header">
+      <h1>goana<em>Fit</em></h1>
+      <button class="ghost-btn" onclick="logout()">Salir</button>
+    </div>
+    <div class="dash-pad">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" id="streak-current">0</div>
+          <div class="stat-lbl">🔥 Racha actual</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="streak-record">0</div>
+          <div class="stat-lbl">🏆 Récord</div>
+        </div>
+      </div>
+
+      <div class="rec-card" id="rec-card">
+        <div class="rec-icon" id="rec-icon">💪</div>
+        <div>
+          <div class="rec-title" id="rec-title">¡Hora de entrenar!</div>
+          <div class="rec-sub"  id="rec-sub">Comienza tu sesión de hoy</div>
+        </div>
+      </div>
+
+      <!-- Phase card -->
+      <div class="phase-card" id="phase-card">
+        <div class="phase-badge" id="phase-badge">F1</div>
+        <div class="phase-info">
+          <div class="phase-name" id="phase-name">Fase 1 · Mantenimiento</div>
+          <div class="phase-desc" id="phase-desc">Pesos ligeros, trabaja la técnica. RPE 5-6.</div>
+        </div>
+        <div class="phase-changer">
+          <div class="phase-dot active" id="pdot-1" onclick="setFase(1)" title="Fase 1"></div>
+          <div class="phase-dot"        id="pdot-2" onclick="setFase(2)" title="Fase 2"></div>
+          <div class="phase-dot"        id="pdot-3" onclick="setFase(3)" title="Fase 3"></div>
+        </div>
+      </div>
+
+      <button class="btn-primary" id="dash-start-btn" onclick="openCheckin()">
+        EMPEZAR ENTRENAMIENTO HOY
+      </button>
+
+      <!-- Edit / delete today's session -->
+      <div id="today-actions" class="hidden" style="display:flex;gap:8px;margin-top:10px;">
+        <button onclick="editTodayWorkout()"
+          style="flex:1;padding:13px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;">
+          ✏️ Editar sesión
+        </button>
+        <button onclick="deleteTodayWorkout()"
+          style="flex:1;padding:13px 8px;background:var(--card);border:1px solid rgba(239,68,68,.35);border-radius:var(--r);color:var(--danger);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;">
+          🗑 Borrar sesión
+        </button>
+      </div>
+
+      <div class="section-lbl">Este mes</div>
+      <div class="cal-card">
+        <div class="cal-head">
+          <button class="cal-nav" onclick="navCal(-1)">‹</button>
+          <span class="cal-month" id="cal-lbl"></span>
+          <button class="cal-nav" onclick="navCal(1)">›</button>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
+
+      <button class="btn-secondary" onclick="openHistory()">Ver historial de progreso →</button>
+    </div>
+  </div>
+
+  <!-- ═══ WORKOUT ════════════════════════════════════════════ -->
+  <div id="screen-workout" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="confirmExit()">←</button>
+      <h1>Sesión de hoy</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="workout-meta">
+      <div class="workout-date-lbl" id="workout-date-lbl"></div>
+      <div class="workout-hint">7 ejercicios · 3 series · descansa 90 s entre series</div>
+    </div>
+    <div class="ex-list" id="ex-list"></div>
+    <div class="workout-footer">
+      <button class="btn-primary" id="save-btn" onclick="handleSave()" disabled>
+        GUARDAR SESIÓN
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ CHECK-IN ════════════════════════════════════════════ -->
+  <div id="screen-checkin" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>Antes de entrenar</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="ci-pad">
+
+      <!-- Q1: Radio hoy -->
+      <div class="ci-block">
+        <div class="ci-q">¿Tienes sesión de <strong>radioterapia hoy</strong>?</div>
+        <div class="pair-btns">
+          <button class="pair-btn selected" id="radio-no" onclick="setCiRadio(false)">No</button>
+          <button class="pair-btn" id="radio-si" onclick="setCiRadio(true)">Sí, hoy tengo radio</button>
+        </div>
+      </div>
+
+      <!-- Q2: Energy -->
+      <div class="ci-block">
+        <div class="ci-q">¿Cómo está tu <strong>nivel de energía</strong> hoy?</div>
+        <div class="ci-hint">1 = agotada &nbsp;·&nbsp; 10 = con mucha energía</div>
+        <div class="scale-row" id="energia-row"></div>
+      </div>
+
+      <!-- Q3: Skin -->
+      <div class="ci-block">
+        <div class="ci-q">¿Cómo está la <strong>piel</strong> de la zona tratada?</div>
+        <div class="skin-row" id="skin-row"></div>
+      </div>
+
+      <!-- Q4: Discomfort left side -->
+      <div class="ci-block">
+        <div class="ci-q">¿Molestia en el <strong>lado izquierdo</strong>?</div>
+        <div class="ci-hint">0 = sin molestia &nbsp;·&nbsp; 5 = mucha molestia</div>
+        <div class="scale-row" id="molestia-row"></div>
+      </div>
+
+      <!-- Adaptation summary -->
+      <div id="ci-adaptation" class="adaptation-card hidden"></div>
+
+      <button class="btn-primary" id="ci-start-btn" onclick="startWorkoutFromCheckin()">
+        COMENZAR ENTRENAMIENTO
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ HISTORY ════════════════════════════════════════════ -->
+  <div id="screen-history" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>Progreso</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="hist-pad">
+      <div class="sel-wrap">
+        <select id="ex-sel" onchange="renderHistExercise(this.value)"></select>
+      </div>
+      <div class="chart-card">
+        <div class="chart-lbl">Peso máximo por sesión (kg)</div>
+        <canvas id="progress-chart"></canvas>
+      </div>
+      <div id="hist-tbl" class="tbl-wrap"></div>
+    </div>
+  </div>
+
+</div><!-- #app -->
+
+<!-- FLOATING TIMER -->
+<div id="floating-timer" class="hidden">
+  <div class="tmr-svg-wrap">
+    <svg width="50" height="50" viewBox="0 0 50 50">
+      <circle class="tmr-bg"   cx="25" cy="25" r="22"/>
+      <circle class="tmr-prog" cx="25" cy="25" r="22" id="tmr-circle"/>
+    </svg>
+    <div class="tmr-inner-text" id="tmr-display">1:30</div>
+  </div>
+  <div class="tmr-info">
+    <div class="tmr-lbl"    id="tmr-lbl">Descansando...</div>
+    <div class="tmr-status running" id="tmr-status">En curso</div>
+  </div>
+  <div class="tmr-btns">
+    <button class="tmr-btn" id="tmr-pause-btn" onclick="togglePause()" title="Pausar/Reanudar">⏸</button>
+    <button class="tmr-btn" onclick="resetTimer()" title="Reiniciar">↺</button>
+    <button class="tmr-btn" onclick="skipTimer()"  title="Saltar">⏭</button>
+  </div>
+</div>
+
+<!-- TOASTS -->
+<div id="toast-root"></div>
+
+<!-- SCRIPTS -->
+<script src="config.js"></script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════
+// CONSTANTS
+// ═══════════════════════════════════════════════════════════
+
+const EXERCISES = [
+  { name: 'Sentadilla Goblet',     sets: 3, reps: 12, note: 'Sujeta una mancuerna contra el pecho para estabilidad sin tensión.' },
+  { name: 'Remo a una mano',       sets: 3, reps: 10, note: 'Apoya la mano derecha en banco para controlar el lado izquierdo.' },
+  { name: 'Zancadas / Lunges',     sets: 3, reps: 12, note: 'Paso largo, rodillas a 90°, para ganar volumen en tren inferior.' },
+  { name: 'Press Militar Sentada', sets: 3, reps: 10, note: 'Con mancuernas sentada; si brazo izquierdo no sube del todo, bajar peso.' },
+  { name: 'Curl de Bíceps',        sets: 3, reps: 12, note: 'Codos pegados al cuerpo, sin balanceo.' },
+  { name: 'Extensión de Tríceps',  sets: 3, reps: 12, note: 'Tras nuca si no molesta; si hay tirantez, sustituir por kickback.' },
+  { name: 'Bird-Dog',              sets: 3, reps: 12, note: 'En cuadrupedia, sin presión en el pecho; trabaja core y espalda baja.' },
+];
+
+const SCOPES    = 'https://www.googleapis.com/auth/spreadsheets';
+const SHTS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
+const CIRC      = 2 * Math.PI * 22; // 138.23 — svg timer circumference
+
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const WDAYS  = ['L','M','X','J','V','S','D'];
+
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+
+const S = {
+  token:        null,
+  tokenExpiry:  null,
+  sessions:     [],
+  config:       {},
+  calDate:      new Date(),
+  workout:      null,
+  chart:        null,
+  offline:      !navigator.onLine,
+  pending:      [],
+  fase:         parseInt(localStorage.getItem('gfit_fase') || '1'),
+  checkin:      { radioHoy: false, energia: 7, piel: 'Normal', molestia: 0 },
+};
+
+const TMR = { running: false, paused: false, secs: 90, iv: null, label: '' };
+
+// ═══════════════════════════════════════════════════════════
+// PHASE LOGIC
+// ═══════════════════════════════════════════════════════════
+
+const FASE_INFO = {
+  1: {
+    badge: 'F1', cls: '',
+    name: 'Fase 1 · Mantenimiento',
+    desc: 'Pesos ligeros, trabaja la técnica. Semanas de radio: mantén pesos, RPE 5-6.',
+    rpe: '5-6', tip: 'Termina cada serie con sensación de que podrías hacer 4-5 repeticiones más.',
+  },
+  2: {
+    badge: 'F2', cls: 'phase-2',
+    name: 'Fase 2 · Escucha activa',
+    desc: 'Pico de radio. Progresa en calidad, no en peso. Auto-regula según tu energía.',
+    rpe: '6-7', tip: 'Si la piel está tirante, reduce el rango de movimiento en vez de bajar peso.',
+  },
+  3: {
+    badge: 'F3', cls: 'phase-3',
+    name: 'Fase 3 · Crecimiento',
+    desc: 'Post-radio. Sobrecarga progresiva: +0.5–1 kg cuando completes todas las series.',
+    rpe: '8-9', tip: '¡Hora de buscar la mejora! Sube peso cuando hagas todas las reps con buena técnica.',
+  },
+};
+
+function setFase(n) {
+  S.fase = n;
+  localStorage.setItem('gfit_fase', n);
+  renderFaseCard();
+}
+
+function renderFaseCard() {
+  const f = FASE_INFO[S.fase];
+  document.getElementById('phase-badge').textContent = f.badge;
+  document.getElementById('phase-badge').className   = 'phase-badge ' + f.cls;
+  document.getElementById('phase-name').textContent  = f.name;
+  document.getElementById('phase-desc').textContent  = f.desc;
+  [1,2,3].forEach(i => {
+    const dot = document.getElementById(`pdot-${i}`);
+    if (dot) dot.className = 'phase-dot' + (i === S.fase ? ' active' : '');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// CHECK-IN
+// ═══════════════════════════════════════════════════════════
+
+const SKIN_OPTS = ['Normal','Roja','Sensible','Tirante'];
+
+function openCheckin() {
+  if (!getRec().train) { toast('Ya entrenaste hoy — ¡descansa!','info'); return; }
+  buildCheckinUI();
+  showScreen('checkin');
+}
+
+function buildCheckinUI() {
+  // Radio buttons
+  const ci = S.checkin;
+  document.getElementById('radio-no').className = 'pair-btn' + (!ci.radioHoy ? ' selected' : '');
+  document.getElementById('radio-si').className = 'pair-btn' + ( ci.radioHoy ? ' selected-warn' : '');
+
+  // Energy 1-10
+  const eRow = document.getElementById('energia-row');
+  eRow.innerHTML = '';
+  for (let i=1; i<=10; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'scale-btn' + energyClass(i, ci.energia);
+    btn.textContent = i;
+    btn.onclick = () => { ci.energia = i; buildCheckinUI(); updateAdaptation(); };
+    eRow.appendChild(btn);
+  }
+
+  // Skin
+  const sRow = document.getElementById('skin-row');
+  sRow.innerHTML = '';
+  SKIN_OPTS.forEach(opt => {
+    const btn = document.createElement('button');
+    const isSel = ci.piel === opt;
+    btn.className = 'pair-btn' + (isSel ? (opt==='Tirante'?' selected-warn':' selected') : '');
+    btn.textContent = opt;
+    btn.onclick = () => { ci.piel = opt; buildCheckinUI(); updateAdaptation(); };
+    sRow.appendChild(btn);
+  });
+
+  // Molestia 0-5
+  const mRow = document.getElementById('molestia-row');
+  mRow.innerHTML = '';
+  for (let i=0; i<=5; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'scale-btn' + molestiaClass(i, ci.molestia);
+    btn.textContent = i;
+    btn.onclick = () => { ci.molestia = i; buildCheckinUI(); updateAdaptation(); };
+    mRow.appendChild(btn);
+  }
+
+  updateAdaptation();
+}
+
+function energyClass(val, sel) {
+  if (val !== sel) return '';
+  if (val >= 7) return ' sel-green';
+  if (val >= 4) return ' sel-yellow';
+  return ' sel-red';
+}
+function molestiaClass(val, sel) {
+  if (val !== sel) return '';
+  if (val <= 1) return ' sel-green';
+  if (val <= 3) return ' sel-yellow';
+  return ' sel-red';
+}
+
+function setCiRadio(v) {
+  S.checkin.radioHoy = v;
+  buildCheckinUI();
+}
+
+function updateAdaptation() {
+  const ci  = S.checkin;
+  const f   = FASE_INFO[S.fase];
+  const msg = document.getElementById('ci-adaptation');
+  const lines = [];
+  let warn = false;
+
+  if (ci.radioHoy) {
+    lines.push('⚡ Hoy tienes radio → Esfuerzo moderado (RPE 5-6). Mantén el rango de movimiento del brazo izquierdo.');
+    warn = true;
+  }
+  if (ci.energia < 5) {
+    lines.push('🔋 Energía baja → Considera hacer <strong>2 series</strong> de cada ejercicio en vez de 3, o bajar un 20% el peso.');
+    warn = true;
+  }
+  if (ci.piel === 'Tirante' || ci.piel === 'Sensible') {
+    lines.push(`🩹 Piel ${ci.piel.toLowerCase()} → En el Press Militar Sentada, reduce el rango o cámbialo por elevaciones laterales.`);
+    warn = true;
+  }
+  if (ci.molestia >= 4) {
+    lines.push('⚠️ Molestia alta → Evita el Press Militar hoy. Si molesta la zona de la cicatriz, para y descansa.');
+    warn = true;
+  }
+  if (!lines.length) {
+    lines.push(`✅ Todo en orden. Objetivo de hoy: RPE ${f.rpe}. ${f.tip}`);
+  }
+
+  msg.innerHTML = `<strong>${warn ? '⚠️ Adaptaciones sugeridas' : '✅ Lista para entrenar'}</strong>${lines.map(l=>`<br>· ${l}`).join('')}`;
+  msg.className = 'adaptation-card' + (warn ? '' : ' ok');
+  msg.classList.remove('hidden');
+}
+
+function startWorkoutFromCheckin() {
+  // Save check-in data to sheets (async, don't block UI)
+  saveCheckin().catch(e => console.warn('checkin save:', e));
+  startWorkout();
+}
+
+async function saveCheckin() {
+  const ci = S.checkin;
+  const row = [todayStr(), ci.radioHoy?'true':'false', ci.energia, ci.piel, ci.molestia];
+  if (S.offline) { queueAction({ type:'checkin', row }); return; }
+  await api('POST', '/values/checkins!A:E:append', { values:[row] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+}
+
+// Warn banner inside workout for specific conditions
+function getWorkoutWarnings() {
+  const ci = S.checkin;
+  const warns = [];
+  if (ci.radioHoy) warns.push({ text:'Hoy hay radio — RPE 5-6. No fuerces el rango.', type:'warn' });
+  if (ci.energia < 5) warns.push({ text:`Energía baja (${ci.energia}/10) — considera hacer solo 2 series hoy.`, type:'warn' });
+  return warns;
+}
+
+function getExerciseWarn(exerciseName) {
+  const ci = S.checkin;
+  if (exerciseName === 'Press Militar Sentada') {
+    if (ci.molestia >= 4)
+      return { text:'Molestia alta en el lado izquierdo — reduce el peso o sustituye por elevaciones laterales.', type:'danger' };
+    if (ci.piel === 'Tirante' || ci.piel === 'Sensible')
+      return { text:`Piel ${ci.piel.toLowerCase()} — reduce el rango de movimiento o baja el peso.`, type:'warn' };
+  }
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+
+const todayStr = () => fmtDate(new Date());
+
+function fmtDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function parseDate(s) {
+  if (!s) return null;
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(y, m-1, d);
+}
+function diffDays(a, b) {
+  const da = new Date(a), db = new Date(b);
+  da.setHours(0,0,0,0); db.setHours(0,0,0,0);
+  return Math.round((db - da) / 86400000);
+}
+function fmtTime(s) { return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
+
+function toast(msg, type='info', ms=3000) {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-root').appendChild(el);
+  setTimeout(() => el.remove(), ms + 300);
+}
+
+function playBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, .18, .36].forEach(off => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = 880;
+      g.gain.setValueAtTime(.35, ctx.currentTime + off);
+      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + off + .14);
+      o.start(ctx.currentTime + off); o.stop(ctx.currentTime + off + .14);
+    });
+  } catch(_) {}
+}
+
+function isConfigOk() {
+  try {
+    return CLIENT_ID    && !CLIENT_ID.startsWith('TU_')
+        && SPREADSHEET_ID && !SPREADSHEET_ID.startsWith('TU_');
+  } catch(_) { return false; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ROUTER
+// ═══════════════════════════════════════════════════════════
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => {
+    s.style.display = 'none'; s.classList.remove('active');
+  });
+  const el = document.getElementById(`screen-${name}`);
+  if (!el) return;
+  const flexScreens = ['auth', 'loading'];
+  el.style.display = flexScreens.includes(name) ? 'flex' : 'block';
+  el.classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════
+
+let tokenClient = null;
+
+function waitGIS() {
+  return new Promise(ok => {
+    if (window.google?.accounts) { ok(); return; }
+    const id = setInterval(() => { if (window.google?.accounts) { clearInterval(id); ok(); } }, 120);
+  });
+}
+
+function initTokenClient() {
+  if (tokenClient) return;
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: onToken,
+  });
+}
+
+async function handleConnectGoogle() {
+  if (!isConfigOk()) {
+    const el = document.getElementById('auth-error');
+    el.innerHTML = `<strong>⚠️ Configuración incompleta</strong><br>
+      Edita <code>config.js</code> y rellena <code>CLIENT_ID</code> y <code>SPREADSHEET_ID</code>.<br>
+      Consulta <code>README.md</code> para instrucciones paso a paso.`;
+    el.classList.remove('hidden');
+    return;
+  }
+  await waitGIS();
+  initTokenClient();
+  tokenClient.requestAccessToken({ prompt: 'consent' });
+}
+
+async function onToken(resp) {
+  if (resp.error) { toast('Error de auth: ' + resp.error, 'error'); return; }
+  S.token = resp.access_token;
+  S.tokenExpiry = Date.now() + resp.expires_in * 1000;
+  localStorage.setItem('gfit_tok', S.token);
+  localStorage.setItem('gfit_exp', S.tokenExpiry);
+  await boot();
+}
+
+function checkStoredToken() {
+  const tok = localStorage.getItem('gfit_tok');
+  const exp = +localStorage.getItem('gfit_exp');
+  if (tok && exp && Date.now() < exp - 60000) {
+    S.token = tok; S.tokenExpiry = exp; return true;
+  }
+  return false;
+}
+
+async function refreshToken() {
+  if (S.token && S.tokenExpiry && Date.now() < S.tokenExpiry - 60000) return true;
+  if (!tokenClient) return false;
+  return new Promise(ok => {
+    const prev = tokenClient.callback;
+    tokenClient.callback = r => {
+      tokenClient.callback = prev;
+      if (!r.error) {
+        S.token = r.access_token;
+        S.tokenExpiry = Date.now() + r.expires_in * 1000;
+        localStorage.setItem('gfit_tok', S.token);
+        localStorage.setItem('gfit_exp', S.tokenExpiry);
+        ok(true);
+      } else ok(false);
+    };
+    tokenClient.requestAccessToken({ prompt: '' });
+  });
+}
+
+function logout() {
+  localStorage.removeItem('gfit_tok'); localStorage.removeItem('gfit_exp');
+  S.token = null; S.tokenExpiry = null;
+  skipTimer();
+  showScreen('auth');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHEETS API
+// ═══════════════════════════════════════════════════════════
+
+async function api(method, path, body, params) {
+  if (S.offline) throw Object.assign(new Error('offline'), {code:'offline'});
+  if (!S.token)  throw Object.assign(new Error('no-token'), {code:'no-token'});
+
+  const url = `${SHTS_BASE}/${SPREADSHEET_ID}${path}${params ? '?'+params : ''}`;
+  const opt = { method, headers: { Authorization: `Bearer ${S.token}`, 'Content-Type': 'application/json' } };
+  if (body) opt.body = JSON.stringify(body);
+
+  let res = await fetch(url, opt);
+  if (res.status === 401) {
+    const ok = await refreshToken();
+    if (!ok) { logout(); throw Object.assign(new Error('auth-expired'), {code:'auth-expired'}); }
+    opt.headers.Authorization = `Bearer ${S.token}`;
+    res = await fetch(url, opt);
+  }
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e.error?.message || `HTTP ${res.status}`);
+  }
+  const txt = await res.text();
+  return txt ? JSON.parse(txt) : {};
+}
+
+async function ensureSheets() {
+  const data  = await api('GET', '');
+  const exist = (data.sheets||[]).map(s => s.properties.title);
+  const reqs  = ['sesiones','config','checkins'].filter(n => !exist.includes(n))
+                  .map(title => ({ addSheet: { properties: { title } } }));
+  if (reqs.length) {
+    await api('POST', ':batchUpdate', { requests: reqs });
+    if (!exist.includes('config'))
+      await api('PUT', '/values/config!A1:B5',
+        { values:[['clave','valor'],['streak_actual','0'],['streak_record','0'],['ultimo_entrenamiento','']] },
+        'valueInputOption=RAW');
+    if (!exist.includes('checkins'))
+      await api('PUT', '/values/checkins!A1:E1',
+        { values:[['fecha','radio_hoy','nivel_energia','estado_piel','molestia_izq']] }, 'valueInputOption=RAW');
+  }
+  // Always update sesiones header (handles migration from old 6-col format)
+  await api('PUT', '/values/sesiones!A1:H1',
+    { values:[['fecha','ejercicio','reps_1','reps_2','reps_3','peso_1','peso_2','peso_3']] }, 'valueInputOption=RAW');
+}
+
+// Delete all rows for a given date from "sesiones" sheet
+async function deleteSessionsByDate(date) {
+  const data = await api('GET', '/values/sesiones!A:A');
+  const rows = data.values || [];
+  const toDelete = [];
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i][0] === date) toDelete.push(i); // 0-indexed row position
+  }
+  if (!toDelete.length) return;
+
+  const meta    = await api('GET', '');
+  const sheetId = meta.sheets.find(s => s.properties.title === 'sesiones')?.properties.sheetId;
+  if (sheetId === undefined) return;
+
+  // Delete from bottom to top so indices don't shift
+  const requests = [...toDelete].reverse().map(idx => ({
+    deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: idx, endIndex: idx + 1 } }
+  }));
+  await api('POST', ':batchUpdate', { requests });
+
+  S.sessions = S.sessions.filter(s => s.fecha !== date);
+  localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
+}
+
+async function loadSessions() {
+  try {
+    const d = await api('GET', '/values/sesiones!A2:H');
+    S.sessions = [];
+    (d.values||[]).forEach(r => {
+      if (!r[0]) return;
+      // Detect format: old format has true/false in col F (index 5)
+      if (r[5] === 'true' || r[5] === 'false') {
+        // OLD format: fecha|ejercicio|serie|peso_kg|reps|completada
+        S.sessions.push({ fecha:r[0], ejercicio:r[1], serie:+r[2]||0, peso_kg:+r[3]||0, reps:+r[4]||0, completada:r[5]==='true' });
+      } else {
+        // NEW format: fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3
+        [0,1,2].forEach(i => S.sessions.push({
+          fecha:r[0], ejercicio:r[1], serie:i+1,
+          reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
+        }));
+      }
+    });
+    localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
+  } catch(e) {
+    if (e.code === 'offline') {
+      const c = localStorage.getItem('gfit_sess');
+      if (c) S.sessions = JSON.parse(c);
+    } else throw e;
+  }
+}
+
+async function loadConfig() {
+  try {
+    const d = await api('GET', '/values/config!A2:B');
+    S.config = {};
+    (d.values||[]).forEach(r => { if(r[0]) S.config[r[0]] = r[1]||''; });
+    localStorage.setItem('gfit_cfg', JSON.stringify(S.config));
+  } catch(e) {
+    if (e.code === 'offline') {
+      const c = localStorage.getItem('gfit_cfg');
+      if (c) S.config = JSON.parse(c);
+    } else throw e;
+  }
+}
+
+async function appendRows(rows) {
+  if (S.offline) { queueAction({ type:'append', rows }); return; }
+  await api('POST', '/values/sesiones!A:H:append', { values: rows },
+    'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+  // Local cache is already updated optimistically in handleSave()
+}
+
+async function setCfg(key, value) {
+  S.config[key] = String(value);
+  localStorage.setItem('gfit_cfg', JSON.stringify(S.config));
+  if (S.offline) { queueAction({ type:'cfg', key, value: String(value) }); return; }
+  const d = await api('GET', '/values/config!A:A');
+  const rows = d.values||[];
+  let ri = -1;
+  for (let i=0; i<rows.length; i++) if (rows[i][0]===key) { ri = i+1; break; }
+  if (ri > 0)
+    await api('PUT', `/values/config!B${ri}`, { values:[[String(value)]] }, 'valueInputOption=RAW');
+  else
+    await api('POST', '/values/config!A:B:append', { values:[[key,String(value)]] },
+      'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+}
+
+// ═══════════════════════════════════════════════════════════
+// OFFLINE QUEUE
+// ═══════════════════════════════════════════════════════════
+
+function queueAction(a) {
+  S.pending.push(a);
+  localStorage.setItem('gfit_q', JSON.stringify(S.pending));
+}
+
+async function syncQueue() {
+  const q = [...S.pending]; S.pending = []; localStorage.removeItem('gfit_q');
+  for (const a of q) {
+    try {
+      if (a.type === 'append') await api('POST', '/values/sesiones!A:F:append', { values:a.rows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+      else if (a.type === 'cfg') await setCfg(a.key, a.value);
+    } catch(_) { S.pending.push(a); }
+  }
+  if (S.pending.length) {
+    localStorage.setItem('gfit_q', JSON.stringify(S.pending));
+    toast(`${S.pending.length} cambios pendientes`, 'warning');
+  } else if (q.length) toast('Sincronización completada ✓', 'success');
+}
+
+window.addEventListener('online', () => {
+  S.offline = false;
+  document.getElementById('offline-banner').classList.add('hidden');
+  if (S.pending.length) syncQueue();
+});
+window.addEventListener('offline', () => {
+  S.offline = true;
+  document.getElementById('offline-banner').classList.remove('hidden');
+  toast('Sin conexión — los cambios se guardarán localmente', 'warning');
+});
+
+// ═══════════════════════════════════════════════════════════
+// STREAK & RECOMMENDATIONS
+// ═══════════════════════════════════════════════════════════
+
+function calcStreak() {
+  const dates = [...new Set(S.sessions.map(s=>s.fecha))].sort();
+  if (!dates.length) return { cur:0, rec:0 };
+
+  let streak=1, max=1;
+  for (let i=1; i<dates.length; i++) {
+    diffDays(dates[i-1], dates[i]) <= 2 ? (streak++, max=Math.max(max,streak)) : (streak=1);
+  }
+  const sinceLast = diffDays(dates[dates.length-1], todayStr());
+  const rec = Math.max(max, +(S.config.streak_record||0));
+  return { cur: sinceLast<=2 ? streak : 0, rec };
+}
+
+function getRec() {
+  const dates = [...new Set(S.sessions.map(s=>s.fecha))].sort();
+  if (!dates.length) return { icon:'💪', title:'¡Empieza hoy!', sub:'No tienes sesiones aún', train:true };
+  const since = diffDays(dates[dates.length-1], todayStr());
+  if (since===0) return { icon:'✅', title:'Ya entrenaste hoy', sub:'Descansa bien — ¡gran trabajo!', train:false };
+  if (since===1) return { icon:'😴', title:'Día de descanso',  sub:'Entrenaste ayer — recupérate', train:false };
+  if (since===2) return { icon:'🔥', title:'¡Toca entrenar!',  sub:'Llevas 2 días de descanso', train:true };
+  return { icon:'⚡', title:'¡Vuelve a la rutina!', sub:`Última sesión hace ${since} días`, train:true };
+}
+
+function getLastWeights() {
+  const w = {};
+  EXERCISES.forEach(ex => {
+    const rows = S.sessions.filter(s=>s.ejercicio===ex.name);
+    if (!rows.length) { w[ex.name]={}; return; }
+    const lastDate = rows.map(r=>r.fecha).sort().reverse()[0];
+    w[ex.name] = {};
+    rows.filter(r=>r.fecha===lastDate).forEach(r => { w[ex.name][r.serie] = r.peso_kg; });
+  });
+  return w;
+}
+
+// ═══════════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════════
+
+function renderDash() {
+  const { cur, rec } = calcStreak();
+  document.getElementById('streak-current').textContent = cur;
+  document.getElementById('streak-record').textContent  = rec;
+
+  const r = getRec();
+  document.getElementById('rec-icon').textContent  = r.icon;
+  document.getElementById('rec-title').textContent = r.title;
+  document.getElementById('rec-sub').textContent   = r.sub;
+
+  const btn = document.getElementById('dash-start-btn');
+  btn.disabled    = !r.train;
+  btn.textContent = r.train ? 'EMPEZAR ENTRENAMIENTO HOY' : 'YA ENTRENASTE HOY';
+
+  // Show edit/delete buttons only when trained today
+  const trainedToday = S.sessions.some(s => s.fecha === todayStr());
+  const actions = document.getElementById('today-actions');
+  if (actions) actions.classList.toggle('hidden', !trainedToday);
+
+  renderFaseCard();
+  renderCal();
+}
+
+function renderCal() {
+  const y = S.calDate.getFullYear(), m = S.calDate.getMonth();
+  document.getElementById('cal-lbl').textContent = `${MONTHS[m]} ${y}`;
+
+  const todayS = todayStr();
+  const trained = new Set(S.sessions.filter(s=>{
+    const d=parseDate(s.fecha); return d&&d.getFullYear()===y&&d.getMonth()===m;
+  }).map(s=>s.fecha));
+
+  const grid = document.getElementById('cal-grid');
+  grid.innerHTML = '';
+
+  WDAYS.forEach(d => { const e=document.createElement('div'); e.className='cal-dname'; e.textContent=d; grid.appendChild(e); });
+
+  const firstDay = new Date(y,m,1).getDay();
+  const offset   = (firstDay+6)%7;
+  for (let i=0;i<offset;i++) { const e=document.createElement('div'); e.className='cal-day empty'; e.textContent='·'; grid.appendChild(e); }
+
+  const days = new Date(y,m+1,0).getDate();
+  for (let d=1; d<=days; d++) {
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const e  = document.createElement('div');
+    e.className = 'cal-day' + (trained.has(ds)?' trained':'') + (ds===todayS?' today':'');
+    e.textContent = d;
+    grid.appendChild(e);
+  }
+}
+
+function navCal(dir) { S.calDate.setMonth(S.calDate.getMonth()+dir); renderCal(); }
+
+// ═══════════════════════════════════════════════════════════
+// WORKOUT SESSION
+// ═══════════════════════════════════════════════════════════
+
+function editTodayWorkout() {
+  const date = todayStr();
+  const saved = S.sessions.filter(s => s.fecha === date);
+  S.workout = {
+    date, editing: true,
+    exercises: EXERCISES.map(ex => ({
+      name: ex.name, sets: ex.sets, targetReps: ex.reps,
+      series: Array.from({length: ex.sets}, (_, i) => {
+        const row = saved.find(s => s.ejercicio === ex.name && s.serie === i + 1);
+        return { weight: row ? row.peso_kg : 0, reps: row ? row.reps : ex.reps, done: row ? row.completada : false };
+      }),
+    })),
+  };
+  renderWorkout();
+  showScreen('workout');
+}
+
+async function deleteTodayWorkout() {
+  if (!confirm('¿Borrar la sesión de hoy? Esta acción no se puede deshacer.')) return;
+  try {
+    if (!S.offline) await deleteSessionsByDate(todayStr());
+    else {
+      S.sessions = S.sessions.filter(s => s.fecha !== todayStr());
+      localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
+      queueAction({ type: 'delete_date', date: todayStr() });
+    }
+    const { cur, rec } = calcStreak();
+    await setCfg('streak_actual', cur);
+    const lastDate = [...new Set(S.sessions.map(s=>s.fecha))].sort().reverse()[0] || '';
+    await setCfg('ultimo_entrenamiento', lastDate);
+    toast('Sesión borrada', 'success');
+    renderDash();
+  } catch(e) { toast('Error al borrar: ' + e.message, 'error'); }
+}
+
+function startWorkout() {
+  if (!S.workout?.editing && !getRec().train) { toast('Ya entrenaste hoy — ¡descansa!','info'); return; }
+  const lw = getLastWeights();
+  if (!S.workout?.editing) S.workout = {
+    date: todayStr(),
+    editing: false,
+    exercises: EXERCISES.map(ex => ({
+      name: ex.name, sets: ex.sets, targetReps: ex.reps,
+      series: Array.from({length:ex.sets},(_,i) => ({
+        weight: lw[ex.name]?.[i+1] ?? 0,
+        reps: ex.reps, done: false,
+      })),
+    })),
+  };
+  renderWorkout();
+  showScreen('workout');
+}
+
+function renderWorkout() {
+  const d = parseDate(S.workout.date);
+  const dn = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  document.getElementById('workout-date-lbl').textContent =
+    `${dn[d.getDay()]} ${d.getDate()} de ${MONTHS[d.getMonth()].toLowerCase()}`;
+
+  // Header title: editing vs new
+  document.querySelector('#screen-workout .app-header h1').textContent =
+    S.workout.editing ? 'Editando sesión' : 'Sesión de hoy';
+
+  // Workout-level warnings (energy, radio)
+  const existingWarn = document.getElementById('workout-global-warn');
+  if (existingWarn) existingWarn.remove();
+  const warns = getWorkoutWarnings();
+  if (warns.length) {
+    const div = document.createElement('div');
+    div.id = 'workout-global-warn';
+    div.className = 'workout-warn';
+    div.innerHTML = warns.map(w => `· ${w.text}`).join('<br>');
+    document.querySelector('.workout-meta').after(div);
+  }
+
+  const list = document.getElementById('ex-list');
+  list.innerHTML = '';
+
+  S.workout.exercises.forEach((ex, ei) => {
+    const def = EXERCISES[ei];
+    const vUrl = (typeof VIDEO_URLS!=='undefined' && VIDEO_URLS[ex.name]) ? VIDEO_URLS[ex.name] : null;
+    const doneCnt = ex.series.filter(s=>s.done).length;
+    const allDone = doneCnt===ex.sets;
+
+    const card = document.createElement('div');
+    card.className = 'ex-card' + (allDone?' done':'');
+    card.id = `ec-${ei}`;
+
+    card.innerHTML = `
+      <div class="ex-hd">
+        <span class="ex-num" id="enum-${ei}">${ei+1}</span>
+        <span class="ex-name">${ex.name}</span>
+        ${vUrl
+          ? `<a href="${vUrl}" target="_blank" rel="noopener" class="video-link" title="Ver vídeo técnico">🎬</a>`
+          : `<span class="video-link disabled" title="URL no configurada — edita config.js">🎬</span>`}
+        <button class="note-toggle" onclick="toggleNote(${ei})">📝</button>
+      </div>
+      <div class="ex-note hidden" id="enote-${ei}">${def.note}</div>
+      <div class="ex-prog${allDone?' all-done':''}" id="eprog-${ei}">
+        ${allDone ? '✅ Completado' : `Serie ${doneCnt} de ${ex.sets}`}
+      </div>
+      <div class="series-col-headers">
+        <span class="col-spacer"></span>
+        <span class="col-lbl">Peso</span>
+        <span class="col-lbl">Reps</span>
+        <span class="col-chk"></span>
+      </div>
+      ${ex.series.map((s,si) => `
+        <div class="series-row${s.done?' s-done':''}" id="sr-${ei}-${si}">
+          <span class="s-lbl">S${si+1}</span>
+          <div class="s-inputs">
+            <div class="inp-wrap">
+              <input type="number" id="w-${ei}-${si}"
+                value="${s.weight !== '' ? s.weight : 0}"
+                min="0" step="0.5" inputmode="decimal"
+                oninput="updWD(${ei},${si},'w',this.value);checkSave()">
+              <span class="inp-unit">kg</span>
+            </div>
+            <div class="inp-wrap">
+              <input type="number" id="r-${ei}-${si}"
+                value="${s.reps}" placeholder="${ex.targetReps}"
+                min="0" max="99" inputmode="numeric"
+                oninput="updWD(${ei},${si},'r',this.value);checkSave()">
+              <span class="inp-unit">rep</span>
+            </div>
+          </div>
+          <button class="s-check-btn${s.done?' checked':''}" id="schk-${ei}-${si}"
+                  onclick="toggleSerie(${ei},${si})"
+                  title="${s.done?'Desmarcar':'Marcar completada'}">
+            ${s.done?'✓':''}
+          </button>
+        </div>
+      `).join('')}
+    `;
+    list.appendChild(card);
+  });
+  checkSave();
+}
+
+function toggleNote(ei) {
+  document.getElementById(`enote-${ei}`).classList.toggle('hidden');
+}
+
+function updWD(ei, si, field, val) {
+  if (!S.workout) return;
+  const s = S.workout.exercises[ei].series[si];
+  if (field==='w') s.weight = val==='' ? '' : parseFloat(val);
+  if (field==='r') s.reps   = parseInt(val)||0;
+}
+
+function toggleSerie(ei, si) {
+  const ex = S.workout.exercises[ei];
+  const s  = ex.series[si];
+
+  // Sync from DOM first
+  const wEl = document.getElementById(`w-${ei}-${si}`);
+  const rEl = document.getElementById(`r-${ei}-${si}`);
+  s.weight = wEl.value==='' ? '' : parseFloat(wEl.value);
+  s.done = !s.done;
+
+  if (s.done) {
+    // Al marcar como hecha: rellenar reps con el objetivo si no hay valor manual
+    const typed = parseInt(rEl.value);
+    if (!typed || isNaN(typed)) {
+      rEl.value = ex.targetReps;
+      s.reps = ex.targetReps;
+    } else {
+      s.reps = typed;
+    }
+  } else {
+    s.reps = parseInt(rEl.value) || ex.targetReps;
+  }
+
+  // Update row
+  const row = document.getElementById(`sr-${ei}-${si}`);
+  const btn = document.getElementById(`schk-${ei}-${si}`);
+  row.classList.toggle('s-done', s.done);
+  btn.classList.toggle('checked', s.done);
+  btn.textContent = s.done ? '✓' : '';
+
+  // Update card progress
+  const done  = ex.series.filter(s=>s.done).length;
+  const all   = done===ex.sets;
+  const card  = document.getElementById(`ec-${ei}`);
+  const prog  = document.getElementById(`eprog-${ei}`);
+  const enum_ = document.getElementById(`enum-${ei}`);
+  card.classList.toggle('done', all);
+  enum_.style.background = all ? 'var(--accent)' : '';
+  enum_.style.color      = all ? '#0f0f0f' : '';
+  prog.textContent = all ? '✅ Completado' : `Serie ${done} de ${ex.sets}`;
+  prog.className   = 'ex-prog' + (all?' all-done':'');
+
+  if (s.done) startTimer(`${ex.name} · S${si+1}`);
+  checkSave();
+}
+
+function checkSave() {
+  if (!S.workout) return;
+  let ok = true;
+  S.workout.exercises.forEach((ex, ei) => {
+    ex.series.forEach((_, si) => {
+      const el = document.getElementById(`w-${ei}-${si}`);
+      if (!el || el.value.trim()==='' || isNaN(parseFloat(el.value))) ok = false;
+    });
+  });
+  document.getElementById('save-btn').disabled = !ok;
+}
+
+function confirmExit() {
+  if (confirm('¿Salir? Los datos no guardados se perderán.')) { skipTimer(); showScreen('dashboard'); }
+}
+
+async function handleSave() {
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = 'GUARDANDO...';
+
+  // Sync all inputs from DOM
+  S.workout.exercises.forEach((ex,ei) => {
+    ex.series.forEach((s,si) => {
+      const w = document.getElementById(`w-${ei}-${si}`);
+      const r = document.getElementById(`r-${ei}-${si}`);
+      s.weight = w?.value==='' ? 0 : parseFloat(w?.value)||0;
+      s.reps   = parseInt(r?.value)||ex.targetReps;
+    });
+  });
+
+  // NEW FORMAT: 1 row per exercise — fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3
+  const rows = S.workout.exercises.map(ex => [
+    S.workout.date, ex.name,
+    ex.series[0]?.reps ?? ex.targetReps,
+    ex.series[1]?.reps ?? ex.targetReps,
+    ex.series[2]?.reps ?? ex.targetReps,
+    ex.series[0]?.weight ?? 0,
+    ex.series[1]?.weight ?? 0,
+    ex.series[2]?.weight ?? 0,
+  ]);
+
+  // If editing, remove old rows from local cache first
+  if (S.workout.editing) {
+    S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
+  }
+
+  // Optimistic local update (expand to internal format)
+  rows.forEach(r => {
+    [0,1,2].forEach(i => S.sessions.push({
+      fecha:r[0], ejercicio:r[1], serie:i+1,
+      reps:r[2+i], peso_kg:r[5+i], completada:true,
+    }));
+  });
+  localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
+
+  try {
+    if (S.workout.editing && !S.offline) await deleteSessionsByDate(S.workout.date);
+    await appendRows(rows);
+    const {cur,rec} = calcStreak();
+    await setCfg('streak_actual', cur);
+    await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
+    await setCfg('ultimo_entrenamiento', S.workout.date);
+  } catch(e) {
+    if (e.code !== 'offline') toast('Error al guardar: '+e.message, 'error');
+  }
+
+  skipTimer();
+  showSuccess();
+}
+
+function showSuccess() {
+  const ov = document.createElement('div');
+  ov.id = 'success-overlay';
+  ov.innerHTML = '<div class="success-inner"><div class="success-emoji">🏆</div><div class="success-msg">¡Sesión guardada!</div></div>';
+  document.body.appendChild(ov);
+  setTimeout(() => {
+    ov.remove();
+    S.workout = null;
+    renderDash();
+    showScreen('dashboard');
+  }, 1900);
+}
+
+// ═══════════════════════════════════════════════════════════
+// TIMER
+// ═══════════════════════════════════════════════════════════
+
+function startTimer(label) {
+  clearInterval(TMR.iv);
+  Object.assign(TMR, { running:true, paused:false, secs:90, label });
+  const ft = document.getElementById('floating-timer');
+  ft.classList.remove('hidden');
+  document.getElementById('tmr-lbl').textContent = label;
+  document.getElementById('tmr-pause-btn').textContent = '⏸';
+  updTimerUI();
+  TMR.iv = setInterval(timerTick, 1000);
+}
+
+function timerTick() {
+  if (TMR.paused) return;
+  TMR.secs--;
+  if (TMR.secs <= 0) {
+    TMR.secs = 0; clearInterval(TMR.iv); TMR.running = false;
+    updTimerUI();
+    playBeep();
+    const st = document.getElementById('tmr-status');
+    st.textContent = '¡Listo! 🎉'; st.className = 'tmr-status done';
+    setTimeout(() => document.getElementById('floating-timer').classList.add('hidden'), 3500);
+    return;
+  }
+  updTimerUI();
+}
+
+function updTimerUI() {
+  document.getElementById('tmr-display').textContent = fmtTime(TMR.secs);
+  const offset = CIRC * (1 - TMR.secs/90);
+  const circle = document.getElementById('tmr-circle');
+  circle.style.strokeDashoffset = offset;
+  circle.setAttribute('class', 'tmr-prog' + (TMR.secs <= 15 ? ' urgent' : ''));
+
+  const st = document.getElementById('tmr-status');
+  if (TMR.paused) { st.textContent='En pausa'; st.className='tmr-status paused'; }
+  else if (TMR.running) { st.textContent='Descansando'; st.className='tmr-status running'; }
+}
+
+function togglePause() {
+  TMR.paused = !TMR.paused;
+  document.getElementById('tmr-pause-btn').textContent = TMR.paused ? '▶' : '⏸';
+  updTimerUI();
+}
+
+function resetTimer() {
+  clearInterval(TMR.iv);
+  Object.assign(TMR, { secs:90, paused:false, running:true });
+  document.getElementById('tmr-pause-btn').textContent = '⏸';
+  updTimerUI();
+  TMR.iv = setInterval(timerTick, 1000);
+}
+
+function skipTimer() {
+  clearInterval(TMR.iv);
+  Object.assign(TMR, { running:false, paused:false, secs:90 });
+  document.getElementById('floating-timer').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════════
+
+function openHistory() {
+  const sel = document.getElementById('ex-sel');
+  sel.innerHTML = EXERCISES.map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
+  renderHistExercise(EXERCISES[0].name);
+  showScreen('history');
+}
+
+function renderHistExercise(name) {
+  const rows = S.sessions.filter(s => s.ejercicio === name);
+
+  // Max weight per date for chart
+  const byDate = {};
+  rows.forEach(s => {
+    if (!byDate[s.fecha]) byDate[s.fecha] = 0;
+    byDate[s.fecha] = Math.max(byDate[s.fecha], s.peso_kg);
+  });
+  const dates = Object.keys(byDate).sort();
+  renderChart(dates, dates.map(d => byDate[d]));
+
+  // Table
+  const tbl = document.getElementById('hist-tbl');
+  if (!rows.length) {
+    tbl.innerHTML = `<div class="empty-st"><div class="e-icon">📊</div><p>Sin datos aún para este ejercicio</p></div>`;
+    return;
+  }
+  const sorted = [...rows].sort((a,b) => b.fecha.localeCompare(a.fecha)||a.serie-b.serie);
+  tbl.innerHTML = `
+    <table class="hist-table">
+      <thead><tr><th>Fecha</th><th>Serie</th><th>Peso</th><th>Reps</th></tr></thead>
+      <tbody>
+        ${sorted.map(r=>`
+          <tr>
+            <td>${r.fecha}</td>
+            <td>S${r.serie}</td>
+            <td class="w-cell">${r.peso_kg} kg</td>
+            <td>${r.reps}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+function renderChart(labels, data) {
+  if (S.chart) { S.chart.destroy(); S.chart = null; }
+  const ctx = document.getElementById('progress-chart').getContext('2d');
+  if (!labels.length) { ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); return; }
+  S.chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'kg', data,
+        borderColor: '#a3e635',
+        backgroundColor: 'rgba(163,230,53,.1)',
+        borderWidth: 2, pointBackgroundColor: '#a3e635',
+        pointRadius: 4, pointHoverRadius: 6,
+        fill: true, tension: .35,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { ticks: { color:'#666', font:{size:10}, maxTicksLimit:6 }, grid:{ color:'#222' } },
+        y: { ticks: { color:'#666', font:{size:11} }, grid:{ color:'#222' }, beginAtZero:false },
+      },
+    },
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════
+
+async function boot() {
+  showScreen('loading');
+
+  const pq = localStorage.getItem('gfit_q');
+  if (pq) S.pending = JSON.parse(pq);
+
+  if (S.offline) {
+    const cs = localStorage.getItem('gfit_sess');
+    const cc = localStorage.getItem('gfit_cfg');
+    if (cs) S.sessions = JSON.parse(cs);
+    if (cc) S.config   = JSON.parse(cc);
+    toast('Modo sin conexión — datos en caché', 'warning');
+    renderDash(); showScreen('dashboard'); return;
+  }
+
+  try {
+    await ensureSheets();
+    await Promise.all([loadSessions(), loadConfig()]);
+    if (S.pending.length) await syncQueue();
+    renderDash();
+    showScreen('dashboard');
+  } catch(e) {
+    console.error('boot:', e);
+    if (e.code==='auth-expired' || e.code==='no-token') {
+      showScreen('auth'); return;
+    }
+    // Show actionable error on auth screen
+    showScreen('auth');
+    const errEl = document.getElementById('auth-error');
+    const msg   = e.message || '';
+    let html;
+    if (msg.includes('not been used') || msg.includes('disabled') || msg.includes('accessNotConfigured')) {
+      html = `<strong>⚠️ Google Sheets API no activada</strong><br>
+        Ve a <strong>Google Cloud Console → APIs y servicios → Biblioteca</strong>,
+        busca <em>Google Sheets API</em> y pulsa <strong>Habilitar</strong>.
+        Luego vuelve aquí y conecta de nuevo.`;
+    } else if (msg.includes('404') || msg.includes('not found') || msg.includes('NOT_FOUND')) {
+      html = `<strong>⚠️ Spreadsheet no encontrado</strong><br>
+        Verifica que el <code>SPREADSHEET_ID</code> en <code>config.js</code> sea correcto
+        y que la hoja esté en tu Google Drive.`;
+    } else if (msg.includes('403') || msg.includes('forbidden') || msg.includes('PERMISSION_DENIED')) {
+      html = `<strong>⚠️ Sin permisos</strong><br>
+        Asegúrate de que tu cuenta tiene acceso a la hoja de cálculo
+        y de que la Google Sheets API está habilitada en tu proyecto.`;
+    } else {
+      html = `<strong>⚠️ Error al conectar con Google Sheets</strong><br>
+        <code>${msg || 'Error desconocido'}</code><br><br>
+        Revisa que la <strong>Google Sheets API</strong> esté habilitada en Google Cloud Console.`;
+    }
+    errEl.innerHTML = html +
+      `<br><br><button onclick="location.reload()"
+        style="background:var(--accent);color:#000;border:none;padding:8px 16px;border-radius:6px;font-weight:600;cursor:pointer;font-family:inherit;">
+        Reintentar
+      </button>`;
+    errEl.classList.remove('hidden');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!navigator.onLine) document.getElementById('offline-banner').classList.remove('hidden');
+
+  if (!isConfigOk()) {
+    showScreen('auth');
+    const el = document.getElementById('auth-error');
+    el.innerHTML = `<strong>⚠️ Configuración incompleta</strong><br>
+      Edita <code>config.js</code> y rellena <code>CLIENT_ID</code> y <code>SPREADSHEET_ID</code>.<br>
+      Consulta <code>README.md</code> para las instrucciones paso a paso.`;
+    el.classList.remove('hidden');
+    return;
+  }
+
+  if (checkStoredToken()) {
+    waitGIS().then(() => initTokenClient()); // init for future refreshes
+    await boot();
+  } else {
+    showScreen('auth');
+  }
+});
+</script>
+</body>
+</html>
