@@ -582,6 +582,55 @@
       border-radius: var(--rx); padding: 6px 12px; font-size: 12px; font-weight: 700;
       cursor: pointer; font-family: inherit;
     }
+
+    /* ── Menu screen ───────────────────────────────────────── */
+    .menu-pad { padding: 12px 16px 16px; }
+
+    .menu-ab-toggle { display: flex; gap: 4px; }
+    .mab-btn {
+      padding: 5px 12px; border: 1.5px solid var(--border2); border-radius: 20px;
+      background: none; color: var(--muted); font-size: 12px; font-weight: 600;
+      cursor: pointer; font-family: inherit; transition: all var(--t);
+    }
+    .mab-btn.active { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+
+    .meal-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); margin-bottom: 10px; overflow: hidden;
+      transition: border-color var(--t), background var(--t);
+    }
+    .meal-card.checked { border-color: rgba(163,230,53,.4); background: linear-gradient(to bottom, rgba(163,230,53,.05), var(--card)); }
+
+    .meal-hd {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-bottom: 1px solid var(--border);
+    }
+    .meal-card.checked .meal-hd { border-color: rgba(163,230,53,.15); }
+    .meal-lbl { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); flex: 1; }
+    .meal-card.checked .meal-lbl { color: var(--accent); }
+
+    .meal-body {
+      padding: 11px 14px;
+      font-size: 14px; line-height: 1.65; color: var(--text);
+    }
+
+    .week-day-block {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--r); margin-bottom: 10px; overflow: hidden;
+    }
+    .week-day-block.today { border-color: rgba(163,230,53,.4); }
+    .week-day-title {
+      padding: 10px 14px; font-size: 13px; font-weight: 700;
+      border-bottom: 1px solid var(--border); color: var(--muted);
+    }
+    .week-day-block.today .week-day-title { color: var(--accent); }
+    .week-meal-row {
+      padding: 7px 14px; display: flex; gap: 10px; align-items: baseline;
+      border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .week-meal-row:last-child { border-bottom: none; }
+    .week-meal-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); flex-shrink: 0; width: 62px; }
+    .week-meal-txt { color: var(--text); line-height: 1.4; }
   </style>
 </head>
 <body>
@@ -682,6 +731,7 @@
 
       <button class="btn-secondary" onclick="openHistory()">Ver historial de progreso →</button>
       <button class="btn-secondary" onclick="openBodyScreen()" style="margin-top:6px">Ver peso y medidas →</button>
+      <button class="btn-secondary" onclick="openMenuScreen()" style="margin-top:6px">Ver menú semanal →</button>
     </div>
   </div>
 
@@ -872,6 +922,38 @@
     </div>
   </div>
 
+  <!-- ═══ MENÚ SEMANAL ════════════════════════════════════════ -->
+  <div id="screen-menu" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>Menú</h1>
+      <div class="menu-ab-toggle">
+        <button class="mab-btn active" id="mab-a" onclick="setMenuSemana('A')">Menú A</button>
+        <button class="mab-btn"        id="mab-b" onclick="setMenuSemana('B')">Menú B</button>
+      </div>
+    </div>
+
+    <div class="menu-pad">
+      <div id="menu-warn" class="workout-warn hidden" style="margin:0 0 12px"></div>
+
+      <div class="chart-tabs" style="margin-bottom:14px">
+        <button class="chart-tab active" id="view-hoy"    onclick="setMenuView('hoy')">Hoy</button>
+        <button class="chart-tab"        id="view-semana" onclick="setMenuView('semana')">Esta semana</button>
+      </div>
+
+      <!-- Vista hoy -->
+      <div id="menu-hoy-view">
+        <div class="section-lbl" id="menu-hoy-lbl">Lunes</div>
+        <div id="menu-meal-cards"></div>
+      </div>
+
+      <!-- Vista semana -->
+      <div id="menu-semana-view" class="hidden">
+        <div id="menu-week-grid"></div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- #app -->
 
 <!-- FLOATING TIMER -->
@@ -944,6 +1026,8 @@ const S = {
   medidas:      [],
   bodyChart:    null,
   altura:       parseFloat(localStorage.getItem('gfit_altura') || '0'),
+  menuSemana:   localStorage.getItem('gfit_menu_sem') || 'A',
+  menuView:     'hoy',
 };
 
 const TMR = { running: false, paused: false, secs: 90, iv: null, label: '' };
@@ -1958,6 +2042,169 @@ function renderChart(labels, data) {
       },
     },
   });
+}
+
+// ═══════════════════════════════════════════════════════════
+// MENÚ SEMANAL
+// ═══════════════════════════════════════════════════════════
+
+// Desayuno y merienda son iguales en ambos menús
+const _DE = [
+  'Café con leche + 20g proteína en polvo\nPan integral (60g) con huevo y espinacas, 1 cda aceite / 50g aguacate\n1 pieza fruta',
+  'Café con leche + 20g proteína en polvo\nPan integral (60g) con 50g queso, 1 cda aceite / 50g aguacate\n1 pieza fruta',
+  'Café con leche\nGachas de avena y proteína (40g avena, 30g proteína, 1 vaso leche)\nEncima: 1 taza arándanos/fresas y ½ puñado frutos secos',
+  'Café con leche + 20g proteína en polvo\nPan integral (60g) con huevo y espinacas, 1 cda aceite / 50g aguacate\n1 pieza fruta',
+  'Café con leche\nGachas de avena y proteína (40g avena, 30g proteína, 1 vaso leche)\nEncima: 1 taza arándanos/fresas y ½ puñado frutos secos',
+  'Café con leche + 20g proteína en polvo\nPan integral (60g) con 50g queso, 1 cda aceite / 50g aguacate\n1 pieza fruta',
+  'Café con leche\nGachas de avena y proteína (40g avena, 30g proteína, 1 vaso leche)\nEncima: 1 taza arándanos/fresas y ½ puñado frutos secos',
+];
+const _ME = [
+  'Leche con cacao · 1 puñado (20g) frutos secos',
+  'Galletas de avena y chocolate (3u) · 1 puñado (20g) frutos secos',
+  'Leche con cacao · 1 puñado (20g) frutos secos',
+  'Galletas de avena y chocolate (3u) · 1 puñado (20g) frutos secos',
+  'Yogur natural con 20g frutos secos y 1 pieza fruta',
+  'Leche con cacao · 1 puñado (20g) frutos secos',
+  'Brownie casero',
+];
+
+const MENUS = {
+  A: {
+    de: _DE,
+    al: [
+      'Tomate aliñado con sardinas\nGarbanzos con espinacas\n1 fruta cítrica (mandarina/naranja)',
+      'Champiñones al ajillo\nPechuga a la plancha · Guarnición de arroz\n1 pieza fruta',
+      'Ensalada de pasta de lenteja roja\n1 fruta cítrica (mandarina/naranja)',
+      'Zanahoria en bastoncitos con hummus\nDorada al horno con patata, cebolla y tomate\n1 pieza fruta',
+      'Ensalada de lentejas con pimientos, cottage y mostaza con miel\n1 fruta cítrica',
+      'Ensalada al gusto\nEspaguetis integrales con gambas\n1 pieza fruta',
+      'Salteado de ternera con pimientos y arroz integral\n1 pieza fruta',
+    ],
+    me: _ME,
+    ce: [
+      'Brócoli salteado al ajillo\nSalmón a la plancha\n1 pieza fruta',
+      'Zanahoria en bastoncitos con hummus\nTostada integral con aguacate, huevo duro y semillas\n1 pieza fruta',
+      'Verduras asadas al gusto\nMuslo de pollo al horno con patata\n1 pieza fruta',
+      'Bowl: yogur natural + 30g proteína, 1 fruta troceada, 20g anacardos/almendras, 10g pipas calabaza',
+      'Coliflor con cúrcuma\nTosta con pechuga y parmesano\n1 pieza fruta',
+      'Ensalada con atún, huevo cocido, pimiento rojo, aceitunas, espinacas, canónigo y aceite\n1 pieza fruta',
+      'Huevos revueltos con calabacín · Mayonesa de aguacate y cilantro\n1 pieza fruta',
+    ],
+  },
+  B: {
+    de: _DE,
+    al: [
+      'Potaje de lentejas con calabaza, cebolla, zanahoria y espinacas\n1 fruta cítrica (mandarina/naranja)',
+      'Ensalada de espinacas, tomate y cebolla\nPollo al chilindrón · Patatas prebióticas\n1 pieza fruta',
+      'Potaje de lentejas con calabaza, cebolla, zanahoria y espinacas\n1 fruta cítrica (mandarina/naranja)',
+      'Zanahoria en bastoncitos con hummus\nSardinas a la plancha · Patatas prebióticas\n1 pieza fruta',
+      'Sopa de pollo con garbanzos, jengibre y cúrcuma\n1 fruta cítrica',
+      'Pasta con huevo cocido y verduras\n1 pieza fruta',
+      'Zanahoria en bastoncitos con hummus\nGuiso de ternera y patata\n1 pieza fruta',
+    ],
+    me: _ME,
+    ce: [
+      'Ensalada de brotes tiernos, zanahoria, cebolla y aceitunas\nDorada a la plancha\n1 pieza fruta',
+      'Tomate con aguacate · Huevos revueltos con setas\n1 pieza fruta',
+      'Alcachofas con gambas al limón · Pechuga a la plancha\n1 pieza fruta',
+      'Bowl: yogur natural + 30g proteína, 1 fruta troceada, 20g pistachos, 10g pipas calabaza',
+      'Pizza fajita de barbacoa\n1 pieza fruta',
+      'Espárragos salteados · Pescado blanco a la plancha\nMayonesa de aguacate y cilantro\n1 pieza fruta',
+      'Bowl: yogur natural + 30g proteína, 1 fruta troceada, 20g pistachos, 10g pipas calabaza',
+    ],
+  },
+};
+
+const MEAL_LABELS = { de:'Desayuno', al:'Almuerzo', me:'Merienda', ce:'Cena' };
+const DAY_NAMES   = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+
+function weekDayIdx() {
+  const d = new Date().getDay();
+  return d === 0 ? 6 : d - 1; // 0=Lun … 6=Dom
+}
+
+function openMenuScreen() {
+  if (!S.menuView) S.menuView = 'hoy';
+  renderMenuScreen();
+  showScreen('menu');
+}
+
+function setMenuSemana(ab) {
+  S.menuSemana = ab;
+  localStorage.setItem('gfit_menu_sem', ab);
+  renderMenuScreen();
+}
+
+function setMenuView(view) {
+  S.menuView = view;
+  renderMenuScreen();
+}
+
+function renderMenuScreen() {
+  // A/B toggle
+  document.getElementById('mab-a').className = 'mab-btn' + (S.menuSemana === 'A' ? ' active' : '');
+  document.getElementById('mab-b').className = 'mab-btn' + (S.menuSemana === 'B' ? ' active' : '');
+  // View tabs
+  document.getElementById('view-hoy').classList.toggle('active', S.menuView === 'hoy');
+  document.getElementById('view-semana').classList.toggle('active', S.menuView === 'semana');
+  document.getElementById('menu-hoy-view').classList.toggle('hidden', S.menuView !== 'hoy');
+  document.getElementById('menu-semana-view').classList.toggle('hidden', S.menuView !== 'semana');
+  // Adaptation warning
+  const warn = document.getElementById('menu-warn');
+  if (S.checkin.radioHoy || S.checkin.energia < 5) {
+    warn.textContent = S.checkin.radioHoy
+      ? '⚡ Hoy tienes radio — prioriza caldos y platos ligeros. Hidrátate bien.'
+      : `⚡ Energía baja (${S.checkin.energia}/10) — come platos reconfortantes y de fácil digestión.`;
+    warn.classList.remove('hidden');
+  } else {
+    warn.classList.add('hidden');
+  }
+  const menu = MENUS[S.menuSemana];
+  if (S.menuView === 'hoy') renderMenuHoy(menu);
+  else renderMenuSemana(menu);
+}
+
+function renderMenuHoy(menu) {
+  const dayIdx = weekDayIdx();
+  document.getElementById('menu-hoy-lbl').textContent = DAY_NAMES[dayIdx];
+  const checks = getTodayMenuChecks();
+  document.getElementById('menu-meal-cards').innerHTML =
+    ['de','al','me','ce'].map(key => {
+      const done  = !!checks[key];
+      const lines = menu[key][dayIdx].split('\n').map(l => `<div>${l}</div>`).join('');
+      return `
+        <div class="meal-card${done ? ' checked' : ''}">
+          <div class="meal-hd">
+            <span class="meal-lbl">${MEAL_LABELS[key]}</span>
+            <button class="s-check-btn${done ? ' checked' : ''}" onclick="toggleMealCheck('${key}')">${done ? '✓' : ''}</button>
+          </div>
+          <div class="meal-body">${lines}</div>
+        </div>`;
+    }).join('');
+}
+
+function renderMenuSemana(menu) {
+  const todayIdx = weekDayIdx();
+  document.getElementById('menu-week-grid').innerHTML = DAY_NAMES.map((day, i) => `
+    <div class="week-day-block${i === todayIdx ? ' today' : ''}">
+      <div class="week-day-title">${day}${i === todayIdx ? ' · Hoy' : ''}</div>
+      ${['de','al','me','ce'].map(key => `
+        <div class="week-meal-row">
+          <span class="week-meal-lbl">${MEAL_LABELS[key]}</span>
+          <span class="week-meal-txt">${menu[key][i].split('\n')[0]}</span>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
+function getTodayMenuChecks() {
+  return JSON.parse(localStorage.getItem('gfit_menu_' + todayStr()) || '{}');
+}
+
+function toggleMealCheck(meal) {
+  const checks = getTodayMenuChecks();
+  checks[meal] = !checks[meal];
+  localStorage.setItem('gfit_menu_' + todayStr(), JSON.stringify(checks));
+  renderMenuHoy(MENUS[S.menuSemana]);
 }
 
 // ═══════════════════════════════════════════════════════════
