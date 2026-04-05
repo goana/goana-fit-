@@ -670,6 +670,17 @@
       <button class="ghost-btn" onclick="logout()">Salir</button>
     </div>
     <div class="dash-pad">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+        <button onclick="openHistory()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
+          📊<br>Progreso
+        </button>
+        <button onclick="openBodyScreen()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
+          📏<br>Cuerpo
+        </button>
+        <button onclick="openMenuScreen()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
+          🥗<br>Menú
+        </button>
+      </div>
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-val" id="streak-current">0</div>
@@ -729,17 +740,6 @@
         <div class="cal-grid" id="cal-grid"></div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px">
-        <button onclick="openHistory()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
-          📊<br>Progreso
-        </button>
-        <button onclick="openBodyScreen()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
-          📏<br>Cuerpo
-        </button>
-        <button onclick="openMenuScreen()" style="padding:14px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;line-height:1.4;text-align:center;">
-          🥗<br>Menú
-        </button>
-      </div>
     </div>
   </div>
 
