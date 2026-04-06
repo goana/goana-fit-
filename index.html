@@ -278,6 +278,17 @@
     }
     .s-check-btn.checked { background: var(--accent); border-color: var(--accent); color: #0f0f0f; }
 
+    .plank-tmr-btn {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      border: 2px solid var(--accent); background: none; cursor: pointer;
+      color: var(--accent); font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--t), color var(--t);
+    }
+    .plank-tmr-btn.running {
+      background: var(--accent); color: #0f0f0f;
+    }
+
     .workout-footer { padding: 16px 14px; }
 
     /* ── Floating Timer ────────────────────────────────────── */
@@ -1773,6 +1784,7 @@ function renderWorkout() {
               <span class="inp-unit">${ex.unit || 'rep'}</span>
             </div>
           </div>
+          ${ex.unit === 'seg' ? `<button class="plank-tmr-btn" id="ptmr-${ei}-${si}" onclick="togglePlankTimer(${ei},${si})" title="Iniciar temporizador">▶</button>` : ''}
           <button class="s-check-btn${s.done?' checked':''}" id="schk-${ei}-${si}"
                   onclick="toggleSerie(${ei},${si})"
                   title="${s.done?'Desmarcar':'Marcar completada'}">
@@ -2010,6 +2022,49 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLANK INLINE TIMER
+// ═══════════════════════════════════════════════════════════
+
+const PLANK_TMR = { ei: null, si: null, secs: 0, iv: null };
+
+function togglePlankTimer(ei, si) {
+  // Si ya está corriendo esta misma serie, cancelar
+  if (PLANK_TMR.iv && PLANK_TMR.ei === ei && PLANK_TMR.si === si) {
+    clearInterval(PLANK_TMR.iv);
+    PLANK_TMR.iv = null;
+    const btn = document.getElementById(`ptmr-${ei}-${si}`);
+    btn.textContent = '▶'; btn.classList.remove('running');
+    return;
+  }
+  // Cancelar cualquier timer de plancha en curso
+  if (PLANK_TMR.iv) {
+    clearInterval(PLANK_TMR.iv);
+    const old = document.getElementById(`ptmr-${PLANK_TMR.ei}-${PLANK_TMR.si}`);
+    if (old) { old.textContent = '▶'; old.classList.remove('running'); }
+  }
+  const rEl = document.getElementById(`r-${ei}-${si}`);
+  const total = parseInt(rEl?.value) || S.workout.exercises[ei].targetReps;
+  PLANK_TMR.ei = ei; PLANK_TMR.si = si; PLANK_TMR.secs = total;
+
+  const btn = document.getElementById(`ptmr-${ei}-${si}`);
+  btn.textContent = total + 's'; btn.classList.add('running');
+
+  PLANK_TMR.iv = setInterval(() => {
+    PLANK_TMR.secs--;
+    if (PLANK_TMR.secs <= 0) {
+      clearInterval(PLANK_TMR.iv); PLANK_TMR.iv = null;
+      btn.textContent = '▶'; btn.classList.remove('running');
+      playBeep();
+      // Marcar la serie como hecha si no lo está ya
+      const s = S.workout.exercises[ei].series[si];
+      if (!s.done) toggleSerie(ei, si);
+    } else {
+      btn.textContent = PLANK_TMR.secs + 's';
+    }
+  }, 1000);
 }
 
 // ═══════════════════════════════════════════════════════════
