@@ -1447,10 +1447,13 @@ async function loadSessions() {
         S.sessions.push({ fecha:r[0], ejercicio:r[1], serie:+r[2]||0, peso_kg:+r[3]||0, reps:+r[4]||0, completada:r[5]==='true' });
       } else {
         // NEW format: fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3
-        [0,1,2].forEach(i => S.sessions.push({
-          fecha:r[0], ejercicio:r[1], serie:i+1,
-          reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
-        }));
+        [0,1,2].forEach(i => {
+          if (r[2+i] === '' || r[2+i] === undefined) return; // serie no completada
+          S.sessions.push({
+            fecha:r[0], ejercicio:r[1], serie:i+1,
+            reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
+          });
+        });
       }
     });
     localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
@@ -1829,14 +1832,8 @@ function toggleSerie(ei, si) {
 
 function checkSave() {
   if (!S.workout) return;
-  let ok = true;
-  S.workout.exercises.forEach((ex, ei) => {
-    ex.series.forEach((_, si) => {
-      const el = document.getElementById(`w-${ei}-${si}`);
-      if (!el || el.value.trim()==='' || isNaN(parseFloat(el.value))) ok = false;
-    });
-  });
-  document.getElementById('save-btn').disabled = !ok;
+  const anyDone = S.workout.exercises.some(ex => ex.series.some(s => s.done));
+  document.getElementById('save-btn').disabled = !anyDone;
 }
 
 function confirmExit() {
@@ -1858,15 +1855,18 @@ async function handleSave() {
   });
 
   // NEW FORMAT: 1 row per exercise — fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3
-  const rows = S.workout.exercises.map(ex => [
-    S.workout.date, ex.name,
-    ex.series[0]?.reps ?? ex.targetReps,
-    ex.series[1]?.reps ?? ex.targetReps,
-    ex.series[2]?.reps ?? ex.targetReps,
-    ex.series[0]?.weight ?? 0,
-    ex.series[1]?.weight ?? 0,
-    ex.series[2]?.weight ?? 0,
-  ]);
+  // Only include exercises with at least one completed series; undone series saved as ''
+  const rows = S.workout.exercises
+    .filter(ex => ex.series.some(s => s.done))
+    .map(ex => [
+      S.workout.date, ex.name,
+      ex.series[0]?.done ? (ex.series[0].reps ?? ex.targetReps) : '',
+      ex.series[1]?.done ? (ex.series[1].reps ?? ex.targetReps) : '',
+      ex.series[2]?.done ? (ex.series[2].reps ?? ex.targetReps) : '',
+      ex.series[0]?.done ? (ex.series[0].weight ?? 0) : '',
+      ex.series[1]?.done ? (ex.series[1].weight ?? 0) : '',
+      ex.series[2]?.done ? (ex.series[2].weight ?? 0) : '',
+    ]);
 
   // If editing, remove old rows from local cache first
   if (S.workout.editing) {
@@ -1875,10 +1875,13 @@ async function handleSave() {
 
   // Optimistic local update (expand to internal format)
   rows.forEach(r => {
-    [0,1,2].forEach(i => S.sessions.push({
-      fecha:r[0], ejercicio:r[1], serie:i+1,
-      reps:r[2+i], peso_kg:r[5+i], completada:true,
-    }));
+    [0,1,2].forEach(i => {
+      if (r[2+i] === '') return; // skip undone series
+      S.sessions.push({
+        fecha:r[0], ejercicio:r[1], serie:i+1,
+        reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
+      });
+    });
   });
   localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
 
@@ -1893,21 +1896,9 @@ async function handleSave() {
     if (e.code !== 'offline') toast('Error al guardar: '+e.message, 'error');
   }
 
-  skipTimer();
-  showSuccess();
-}
-
-function showSuccess() {
-  const ov = document.createElement('div');
-  ov.id = 'success-overlay';
-  ov.innerHTML = '<div class="success-inner"><div class="success-emoji">🏆</div><div class="success-msg">¡Sesión guardada!</div></div>';
-  document.body.appendChild(ov);
-  setTimeout(() => {
-    ov.remove();
-    S.workout = null;
-    renderDash();
-    showScreen('dashboard');
-  }, 1900);
+  S.workout.editing = true; // próximo guardado también borrará las filas anteriores
+  btn.disabled = false; btn.textContent = 'GUARDAR';
+  toast('Sesión guardada', 'success');
 }
 
 // ═══════════════════════════════════════════════════════════
