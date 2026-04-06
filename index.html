@@ -1816,7 +1816,7 @@ function toggleSerie(ei, si) {
   // Sync from DOM first
   const wEl = document.getElementById(`w-${ei}-${si}`);
   const rEl = document.getElementById(`r-${ei}-${si}`);
-  s.weight = wEl.value==='' ? '' : parseFloat(wEl.value);
+  s.weight = wEl ? (wEl.value==='' ? '' : parseFloat(wEl.value)) : 0;
   s.done = !s.done;
 
   if (s.done) {
