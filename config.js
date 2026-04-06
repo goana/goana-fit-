@@ -21,4 +21,5 @@ const VIDEO_URLS = {
   'Extensión de Tríceps':  'https://youtube.com/shorts/FpSPAppMbds?si=gDb8ZfO-WOfXdlzS',
   'Bird-Dog':              'https://youtu.be/O1HWwhYmQGE?si=INuIIJ71pUzbhEC5',
   'Plancha Frontal':       'https://youtube.com/shorts/WRS7srxj0QM?si=4TnvU9R5NnWlRNjN',
+  'Deadbug':               'https://youtube.com/shorts/fzVzaIWOZUQ?si=wCoYZ8mrev_XOkt3',
 };
