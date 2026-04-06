@@ -1760,7 +1760,7 @@ function renderWorkout() {
       <div class="series-col-headers">
         <span class="col-spacer"></span>
         <span class="col-lbl">${!!ex.unit ? '' : 'Peso'}</span>
-        <span class="col-lbl">${!!ex.unit ? 'Seg' : 'Reps'}</span>
+        <span class="col-lbl">${ex.unit || 'Reps'}</span>
         <span class="col-chk"></span>
       </div>
       ${ex.series.map((s,si) => `
@@ -1810,26 +1810,30 @@ function updWD(ei, si, field, val) {
 }
 
 function toggleSerie(ei, si) {
+  if (!S.workout) return;
   const ex = S.workout.exercises[ei];
-  const s  = ex.series[si];
+  if (!ex) return;
+  const s = ex.series[si];
+  if (!s) return;
 
   // Sync from DOM first
   const wEl = document.getElementById(`w-${ei}-${si}`);
   const rEl = document.getElementById(`r-${ei}-${si}`);
-  s.weight = wEl ? (wEl.value==='' ? '' : parseFloat(wEl.value)) : 0;
+  s.weight = wEl ? (wEl.value === '' ? '' : parseFloat(wEl.value)) : 0;
   s.done = !s.done;
 
-  if (s.done) {
-    // Al marcar como hecha: rellenar reps con el objetivo si no hay valor manual
-    const typed = parseInt(rEl.value);
-    if (!typed || isNaN(typed)) {
-      rEl.value = ex.targetReps;
-      s.reps = ex.targetReps;
+  if (rEl) {
+    if (s.done) {
+      const typed = parseInt(rEl.value);
+      if (!typed || isNaN(typed)) {
+        rEl.value = ex.targetReps;
+        s.reps = ex.targetReps;
+      } else {
+        s.reps = typed;
+      }
     } else {
-      s.reps = typed;
+      s.reps = parseInt(rEl.value) || ex.targetReps;
     }
-  } else {
-    s.reps = parseInt(rEl.value) || ex.targetReps;
   }
 
   // Update row
