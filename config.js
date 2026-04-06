@@ -16,7 +16,7 @@ const VIDEO_URLS = {
   'Sentadilla Goblet':     'https://www.youtube.com/shorts/SpMrPG3RiCQ',
   'Remo a una mano':       'https://youtube.com/shorts/DnQytXQMqcw?si=C-mEoTpM49Vh4W70',
   'Zancadas / Lunges':     'https://youtu.be/-iGRWD09Jn8?si=B5pFsnJl0cqnnUoZ',
-  'Press Militar Sentada': 'https://youtu.be/oI3kX7cclb4?si=yfg-278oz5HVygC1',
+  'Press Militar Sentada': 'https://youtube.com/shorts/8yY0zXMjBd0?si=HdH4nmQc3YxQEQYB',
   'Curl de Bíceps':        'https://www.youtube.com/watch?v=HU2lghjU29Y',
   'Extensión de Tríceps':  'https://youtube.com/shorts/FpSPAppMbds?si=gDb8ZfO-WOfXdlzS',
   'Bird-Dog':              'https://youtu.be/O1HWwhYmQGE?si=INuIIJ71pUzbhEC5',
