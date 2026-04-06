@@ -1280,6 +1280,24 @@ function playBeep() {
   } catch(_) {}
 }
 
+function playPlankDone() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Dos tonos suaves descendentes
+    [[523, 0], [440, .35]].forEach(([freq, off]) => {
+      const o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = 'sine';
+      o.connect(g); g.connect(ctx.destination);
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0, ctx.currentTime + off);
+      g.gain.linearRampToValueAtTime(.18, ctx.currentTime + off + .05);
+      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + off + .5);
+      o.start(ctx.currentTime + off);
+      o.stop(ctx.currentTime + off + .5);
+    });
+  } catch(_) {}
+}
+
 function isConfigOk() {
   try {
     return CLIENT_ID    && !CLIENT_ID.startsWith('TU_')
@@ -2076,7 +2094,7 @@ function togglePlankTimer(ei, si) {
     if (PLANK_TMR.secs <= 0) {
       clearInterval(PLANK_TMR.iv); PLANK_TMR.iv = null;
       btn.textContent = '▶'; btn.classList.remove('running');
-      playBeep();
+      playPlankDone();
       // Marcar la serie como hecha si no lo está ya
       const s = S.workout.exercises[ei].series[si];
       if (!s.done) toggleSerie(ei, si);
