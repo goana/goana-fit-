@@ -1014,7 +1014,7 @@ const EXERCISES = [
   { name: 'Extensión de Tríceps',  sets: 3, reps: 12, note: 'Tras nuca si no molesta; si hay tirantez, sustituir por kickback.' },
   { name: 'Bird-Dog',              sets: 3, reps: 12, note: 'En cuadrupedia, sin presión en el pecho; trabaja core y espalda baja.' },
   { name: 'Plancha Frontal',       sets: 3, reps: 30, unit: 'seg', note: 'Sobre antebrazos, cuerpo recto. Si la piel izquierda tira, apoya rodillas.' },
-  { name: 'Deadbug',               sets: 3, reps: 10, note: 'Boca arriba, baja pierna y brazo contrario sin despegar la espalda. Trabaja el transverso sin tensión en la cicatriz.' },
+  { name: 'Deadbug',               sets: 3, reps: 10, unit: 'x lado', note: 'Boca arriba, baja pierna y brazo contrario sin despegar la espalda. Trabaja el transverso sin tensión en la cicatriz.' },
 ];
 
 const SCOPES    = 'https://www.googleapis.com/auth/spreadsheets';
@@ -1759,15 +1759,15 @@ function renderWorkout() {
       </div>
       <div class="series-col-headers">
         <span class="col-spacer"></span>
-        <span class="col-lbl">${ex.unit === 'seg' ? '' : 'Peso'}</span>
-        <span class="col-lbl">${ex.unit === 'seg' ? 'Seg' : 'Reps'}</span>
+        <span class="col-lbl">${!!ex.unit ? '' : 'Peso'}</span>
+        <span class="col-lbl">${!!ex.unit ? 'Seg' : 'Reps'}</span>
         <span class="col-chk"></span>
       </div>
       ${ex.series.map((s,si) => `
         <div class="series-row${s.done?' s-done':''}" id="sr-${ei}-${si}">
           <span class="s-lbl">S${si+1}</span>
           <div class="s-inputs">
-            ${ex.unit === 'seg' ? '' : `
+            ${!!ex.unit ? '' : `
             <div class="inp-wrap">
               <input type="number" id="w-${ei}-${si}"
                 value="${s.weight !== '' ? s.weight : 0}"
