@@ -995,7 +995,7 @@ const EXERCISES = [
   { name: 'Sentadilla Goblet',     sets: 3, reps: 12, note: 'Sujeta una mancuerna contra el pecho para estabilidad sin tensión.' },
   { name: 'Remo a una mano',       sets: 3, reps: 10, note: 'Apoya la mano derecha en banco para controlar el lado izquierdo.' },
   { name: 'Zancadas / Lunges',     sets: 3, reps: 12, note: 'Paso largo, rodillas a 90°, para ganar volumen en tren inferior.' },
-  { name: 'Press Militar Sentada', sets: 3, reps: 10, note: 'Con mancuernas sentada; si brazo izquierdo no sube del todo, bajar peso.' },
+  { name: 'Press Militar', sets: 3, reps: 10, note: 'Con mancuernas sentada; si brazo izquierdo no sube del todo, bajar peso.' },
   { name: 'Curl de Bíceps',        sets: 3, reps: 12, note: 'Codos pegados al cuerpo, sin balanceo.' },
   { name: 'Extensión de Tríceps',  sets: 3, reps: 12, note: 'Tras nuca si no molesta; si hay tirantez, sustituir por kickback.' },
   { name: 'Bird-Dog',              sets: 3, reps: 12, note: 'En cuadrupedia, sin presión en el pecho; trabaja core y espalda baja.' },
@@ -1166,7 +1166,7 @@ function updateAdaptation() {
     warn = true;
   }
   if (ci.piel === 'Tirante' || ci.piel === 'Sensible') {
-    lines.push(`🩹 Piel ${ci.piel.toLowerCase()} → En el Press Militar Sentada, reduce el rango o cámbialo por elevaciones laterales.`);
+    lines.push(`🩹 Piel ${ci.piel.toLowerCase()} → En el Press Militar, reduce el rango o cámbialo por elevaciones laterales.`);
     warn = true;
   }
   if (ci.molestia >= 4) {
@@ -1206,7 +1206,7 @@ function getWorkoutWarnings() {
 
 function getExerciseWarn(exerciseName) {
   const ci = S.checkin;
-  if (exerciseName === 'Press Militar Sentada') {
+  if (exerciseName === 'Press Militar') {
     if (ci.molestia >= 4)
       return { text:'Molestia alta en el lado izquierdo — reduce el peso o sustituye por elevaciones laterales.', type:'danger' };
     if (ci.piel === 'Tirante' || ci.piel === 'Sensible')
