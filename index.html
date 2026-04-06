@@ -1651,7 +1651,7 @@ function editTodayWorkout() {
   S.workout = {
     date, editing: true,
     exercises: EXERCISES.map(ex => ({
-      name: ex.name, sets: ex.sets, targetReps: ex.reps,
+      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
       series: Array.from({length: ex.sets}, (_, i) => {
         const row = saved.find(s => s.ejercicio === ex.name && s.serie === i + 1);
         return { weight: row ? row.peso_kg : 0, reps: row ? row.reps : ex.reps, done: row ? row.completada : false };
@@ -1687,7 +1687,7 @@ function startWorkout() {
     date: todayStr(),
     editing: false,
     exercises: EXERCISES.map(ex => ({
-      name: ex.name, sets: ex.sets, targetReps: ex.reps,
+      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
       series: Array.from({length:ex.sets},(_,i) => ({
         weight: lw[ex.name]?.[i+1] ?? 0,
         reps: ex.reps, done: false,
