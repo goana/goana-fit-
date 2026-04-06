@@ -20,4 +20,5 @@ const VIDEO_URLS = {
   'Curl de Bíceps':        'https://www.youtube.com/watch?v=HU2lghjU29Y',
   'Extensión de Tríceps':  'https://youtube.com/shorts/FpSPAppMbds?si=gDb8ZfO-WOfXdlzS',
   'Bird-Dog':              'https://youtu.be/O1HWwhYmQGE?si=INuIIJ71pUzbhEC5',
+  'Plancha Frontal':       'https://youtube.com/shorts/WRS7srxj0QM?si=4TnvU9R5NnWlRNjN',
 };
