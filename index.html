@@ -753,6 +753,9 @@
       <button class="btn-primary" id="save-btn" onclick="handleSave()" disabled>
         GUARDAR SESIÓN
       </button>
+      <button class="btn-secondary" id="share-btn" onclick="downloadWorkoutPNG()" style="margin-top:10px;display:none">
+        Descargar PNG
+      </button>
     </div>
   </div>
 
@@ -1898,7 +1901,106 @@ async function handleSave() {
 
   S.workout.editing = true; // próximo guardado también borrará las filas anteriores
   btn.disabled = false; btn.textContent = 'GUARDAR';
+  document.getElementById('share-btn').style.display = '';
   toast('Sesión guardada', 'success');
+}
+
+function downloadWorkoutPNG() {
+  const W = 640, PAD = 32, ROW = 28, HEADER = 72, CARD_PAD = 16;
+  const BG = '#0f0f0f', SURFACE = '#1a1a1a', BORDER = '#2a2a2a';
+  const ACCENT = '#a3e635', TEXT = '#f0f0f0', MUTED = '#777';
+
+  // Build exercise lines (only done series)
+  const exLines = S.workout.exercises.map(ex => {
+    const doneSeries = ex.series
+      .map((s, i) => s.done ? `S${i+1}: ${s.weight}kg × ${s.reps}` : null)
+      .filter(Boolean);
+    return { name: ex.name, series: doneSeries, allDone: doneSeries.length === ex.sets };
+  }).filter(ex => ex.series.length > 0);
+
+  // Calculate canvas height
+  let height = HEADER + PAD;
+  exLines.forEach(ex => { height += CARD_PAD*2 + ROW + ex.series.length * ROW + 12; });
+  height += PAD + 36; // footer
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W * 2; canvas.height = height * 2;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  // Background
+  ctx.fillStyle = BG;
+  ctx.fillRect(0, 0, W, height);
+
+  // Header
+  const d = parseDate(S.workout.date);
+  const dn = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const mn = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const dateStr = `${dn[d.getDay()]} ${d.getDate()} de ${mn[d.getMonth()]}`;
+
+  ctx.fillStyle = ACCENT;
+  ctx.font = 'bold 22px system-ui, sans-serif';
+  ctx.fillText('goana·fit', PAD, 38);
+
+  ctx.fillStyle = MUTED;
+  ctx.font = '13px system-ui, sans-serif';
+  ctx.fillText(dateStr, PAD, 58);
+
+  // Separator
+  ctx.strokeStyle = BORDER;
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD, HEADER - 8); ctx.lineTo(W - PAD, HEADER - 8); ctx.stroke();
+
+  // Exercise cards
+  let y = HEADER + PAD * 0.5;
+  exLines.forEach(ex => {
+    const cardH = CARD_PAD * 2 + ROW + ex.series.length * ROW;
+
+    // Card background
+    ctx.fillStyle = SURFACE;
+    roundRect(ctx, PAD, y, W - PAD * 2, cardH, 8);
+    ctx.fill();
+
+    // Exercise name
+    ctx.fillStyle = ex.allDone ? ACCENT : TEXT;
+    ctx.font = 'bold 14px system-ui, sans-serif';
+    ctx.fillText(ex.name + (ex.allDone ? ' ✓' : ''), PAD + CARD_PAD, y + CARD_PAD + 16);
+
+    // Series
+    ctx.font = '13px system-ui, sans-serif';
+    ex.series.forEach((s, i) => {
+      ctx.fillStyle = MUTED;
+      ctx.fillText(s, PAD + CARD_PAD + 14, y + CARD_PAD + 16 + ROW * (i + 1));
+    });
+
+    y += cardH + 10;
+  });
+
+  // Footer branding
+  ctx.fillStyle = '#333';
+  ctx.font = '11px system-ui, sans-serif';
+  const foot = 'goana.fit';
+  ctx.fillText(foot, W / 2 - ctx.measureText(foot).width / 2, height - 14);
+
+  // Download
+  const link = document.createElement('a');
+  link.download = `entrenamiento-${S.workout.date}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 // ═══════════════════════════════════════════════════════════
