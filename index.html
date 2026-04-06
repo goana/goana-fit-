@@ -73,6 +73,78 @@
     }
     .ghost-btn:hover { color: var(--text); }
 
+    /* ── Hamburger drawer ──────────────────────────────────── */
+    .hamburger-btn {
+      background: none; border: none; cursor: pointer; padding: 4px 6px;
+      display: flex; flex-direction: column; gap: 5px; align-items: flex-end;
+    }
+    .hamburger-btn span {
+      display: block; height: 2px; background: var(--muted);
+      border-radius: 2px; transition: background var(--t);
+    }
+    .hamburger-btn span:nth-child(1) { width: 20px; }
+    .hamburger-btn span:nth-child(2) { width: 14px; }
+    .hamburger-btn span:nth-child(3) { width: 20px; }
+    .hamburger-btn:hover span { background: var(--text); }
+
+    #drawer-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.55);
+      z-index: 80; opacity: 0; pointer-events: none;
+      transition: opacity .25s;
+    }
+    #drawer-overlay.open { opacity: 1; pointer-events: all; }
+
+    #drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 240px;
+      background: #141414; border-left: 1px solid var(--border);
+      z-index: 81; transform: translateX(100%);
+      transition: transform .25s cubic-bezier(.4,0,.2,1);
+      display: flex; flex-direction: column; padding: 24px 0 32px;
+    }
+    #drawer.open { transform: translateX(0); }
+
+    .drawer-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: var(--muted); padding: 0 22px 14px;
+    }
+    .drawer-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 13px 22px; font-size: 15px; font-weight: 500;
+      color: var(--text); background: none; border: none;
+      cursor: pointer; width: 100%; text-align: left;
+      transition: background var(--t), color var(--t);
+    }
+    .drawer-item:hover { background: var(--border); }
+    .drawer-item .di-icon { font-size: 18px; width: 24px; text-align: center; }
+    .drawer-sep { height: 1px; background: var(--border); margin: 8px 22px; }
+    .drawer-item.danger { color: var(--muted); font-size: 13px; margin-top: auto; }
+    .drawer-item.danger:hover { color: #f87171; background: rgba(239,68,68,.06); }
+
+    /* ── Mi Guía screen ────────────────────────────────────── */
+    .guia-pad { padding: 0 18px 80px; }
+    .guia-section { margin-top: 22px; }
+    .guia-section-title {
+      font-size: 13px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .6px; color: var(--accent); margin-bottom: 10px;
+    }
+    .guia-card {
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--rs); padding: 14px 16px; margin-bottom: 8px;
+    }
+    .guia-card-title {
+      font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px;
+    }
+    .guia-card p, .guia-card li {
+      font-size: 13px; color: var(--muted); line-height: 1.6;
+    }
+    .guia-card ul { padding-left: 16px; }
+    .guia-card li { margin-bottom: 3px; }
+    .guia-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .guia-potencia { border-color: rgba(163,230,53,.25); }
+    .guia-limita   { border-color: rgba(239,68,68,.2); }
+    .guia-potencia .guia-card-title { color: var(--accent); }
+    .guia-limita   .guia-card-title { color: #f87171; }
+
     /* ── Loading ───────────────────────────────────────────── */
     #screen-loading.active {
       display: flex; align-items: center; justify-content: center;
@@ -675,18 +747,33 @@
   </div>
 
   <!-- ═══ DASHBOARD ═════════════════════════════════════════ -->
+  <!-- ═══ DRAWER ══════════════════════════════════════════════ -->
+  <div id="drawer-overlay" onclick="closeDrawer()"></div>
+  <nav id="drawer">
+    <div class="drawer-title">Navegación</div>
+    <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon">📈</span>Progreso</button>
+    <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon">📏</span>Cuerpo</button>
+    <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon">🥗</span>Menú semanal</button>
+    <button class="drawer-item" onclick="closeDrawer();showScreen('guia')"><span class="di-icon">📋</span>Mi Guía</button>
+    <div class="drawer-sep"></div>
+    <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon">↩</span>Cerrar sesión</button>
+  </nav>
+
   <div id="screen-dashboard" class="screen">
     <div class="app-header">
       <h1>goana<em>Fit</em></h1>
-      <button class="ghost-btn" onclick="logout()">Salir</button>
+      <button class="hamburger-btn" onclick="openDrawer()" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
     </div>
     <div class="dash-pad">
 
       <!-- Nav rápida -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
-        <button onclick="openHistory()"    style="padding:9px 6px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">Progreso</button>
-        <button onclick="openBodyScreen()" style="padding:9px 6px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">Cuerpo</button>
-        <button onclick="openMenuScreen()" style="padding:9px 6px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;">Menú</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px">
+        <button onclick="openHistory()"    style="padding:9px 4px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;">Progreso</button>
+        <button onclick="openBodyScreen()" style="padding:9px 4px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;">Cuerpo</button>
+        <button onclick="openMenuScreen()" style="padding:9px 4px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;">Menú</button>
+        <button onclick="showScreen('guia')" style="padding:9px 4px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;">Guía</button>
       </div>
 
       <!-- Stats + rec en una sola fila -->
@@ -925,6 +1012,99 @@
       <!-- Historial -->
       <div class="section-lbl">Historial</div>
       <div class="tbl-wrap" id="body-hist-tbl"></div>
+
+    </div>
+  </div>
+
+  <!-- ═══ MI GUÍA ══════════════════════════════════════════════ -->
+  <div id="screen-guia" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>Mi <em>Guía</em></h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="guia-pad">
+
+      <div class="guia-section">
+        <div class="guia-section-title">Suplementación</div>
+        <div class="guia-card">
+          <div class="guia-card-title">Vitamina D + K2</div>
+          <p>4.000 UI/día. Guardar en nevera. 1 cápsula al día acompañando alguna comida.<br>
+          <span style="color:var(--accent);font-size:12px">Nutrimarket (código "JOTA") · farmacia · herbolario</span></p>
+        </div>
+        <div class="guia-card">
+          <div class="guia-card-title">Proteína en polvo de suero de leche</div>
+          <p>Ayuda al aporte proteico y al cuidado muscular durante los tratamientos. Recomendada neutra.<br>
+          <span style="color:var(--accent);font-size:12px">Nutrimarket neutra · Bioprox neutra (código "JOTA")</span></p>
+        </div>
+      </div>
+
+      <div class="guia-section">
+        <div class="guia-section-title">Objetivos de consumo</div>
+        <div class="guia-2col">
+          <div class="guia-card guia-potencia">
+            <div class="guia-card-title">Potenciar</div>
+            <ul>
+              <li>Proteína en 3-4 comidas: carne, pescado, huevos, legumbres, cottage, proteína en polvo, yogur natural</li>
+              <li>2-3 piezas de fruta/día</li>
+              <li>Mariscos/moluscos 1-2 veces/semana</li>
+              <li>2-2,5 L de agua al día</li>
+            </ul>
+          </div>
+          <div class="guia-card guia-limita">
+            <div class="guia-card-title">Limitar</div>
+            <ul>
+              <li>Azúcares añadidos (bollería, dulces...)</li>
+              <li>Bebidas alcohólicas</li>
+              <li>Carnes procesadas (chorizo, jamón, embutidos...)</li>
+              <li>Máximo ≤3 veces/semana si apetece</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="guia-section">
+        <div class="guia-section-title">Raciones orientativas</div>
+        <div class="guia-card">
+          <div class="guia-card-title">Desayuno</div>
+          <ul>
+            <li><b>Proteína:</b> queso fresco/cottage, conserva (atún, caballa), yogur griego, huevo, proteína en polvo</li>
+            <li><b>Grasas:</b> aceite oliva, aguacate, frutos secos (pipas, nueces, almendras, pistachos)</li>
+            <li><b>Hidratos:</b> avena, pan integral (si no hay malestar digestivo), cereales sin azúcar</li>
+            <li><b>Opcional:</b> fruta, café, infusión, espinacas, rúcula</li>
+          </ul>
+        </div>
+        <div class="guia-card">
+          <div class="guia-card-title">Comida y Cena</div>
+          <ul>
+            <li><b>Verduras (1/3):</b> ensaladas, brócoli, setas, cremas, salteados...</li>
+            <li><b>Proteína (1/3):</b> carne blanca 120 g / roja 100 g (≤1/sem), pescado 120-140 g, huevos (1+3 claras), legumbres 200 g cocidas</li>
+            <li><b>Hidratos (1/3):</b> patata/boniato 1 ud grande, arroz/pasta/pan/quinoa 60 g (cena: 40-60 g opcional)</li>
+            <li><b>Grasas:</b> aceite oliva 2 cdas, aguacate 100 g, frutos secos 20 g</li>
+            <li><b>Postre opcional:</b> 1 pieza fruta</li>
+          </ul>
+        </div>
+        <div class="guia-card">
+          <div class="guia-card-title">Merienda / Media mañana</div>
+          <p>Elegir 2 de: pieza de fruta · puñado frutos secos · yogur natural o kéfir</p>
+        </div>
+      </div>
+
+      <div class="guia-section">
+        <div class="guia-section-title">Actividad física</div>
+        <div class="guia-card">
+          <ul>
+            <li>Actividad diaria 40-60 min: caminar, bailar, bici, escaleras...</li>
+            <li>Ejercicio de fuerza 2-3 veces/semana</li>
+            <li>Fisioterapeuta especializada en rehabilitación post-cáncer de mama: <b>Laura Cheli</b> (Granada)</li>
+          </ul>
+        </div>
+      </div>
+
+      <p style="font-size:11px;color:var(--muted);margin-top:20px;text-align:center">
+        * El peso de los alimentos se expresa en crudo salvo indicación contraria.<br>
+        * Leche con cacao: calentar la leche, añadir 1 cdita cacao puro y opcional 1/3 cdita estevia.
+      </p>
 
     </div>
   </div>
@@ -1299,6 +1479,15 @@ function isConfigOk() {
 // ═══════════════════════════════════════════════════════════
 // ROUTER
 // ═══════════════════════════════════════════════════════════
+
+function openDrawer() {
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+}
 
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s => {
