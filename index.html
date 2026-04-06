@@ -1961,9 +1961,12 @@ function downloadWorkoutPNG() {
 
   // Build exercise lines (only done series)
   const exLines = S.workout.exercises.map(ex => {
-    const doneSeries = ex.series
-      .map((s, i) => s.done ? `S${i+1}: ${s.weight}kg × ${s.reps}` : null)
-      .filter(Boolean);
+    const doneSeries = ex.series.map((s, i) => {
+      if (!s.done) return null;
+      if (ex.unit === 'seg') return `S${i+1}: ${s.reps} seg`;
+      if (ex.unit)           return `S${i+1}: ${s.reps} ${ex.unit}`;
+      return `S${i+1}: ${s.weight}kg × ${s.reps} rep`;
+    }).filter(Boolean);
     return { name: ex.name, series: doneSeries, allDone: doneSeries.length === ex.sets };
   }).filter(ex => ex.series.length > 0);
 
