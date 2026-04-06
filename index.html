@@ -1859,15 +1859,26 @@ function checkSave() {
   if (!S.workout) return;
   const anyDone = S.workout.exercises.some(ex => ex.series.some(s => s.done));
   document.getElementById('save-btn').disabled = !anyDone;
+  if (anyDone) scheduleAutoSave();
+}
+
+let _autoSaveTimer = null;
+function scheduleAutoSave() {
+  clearTimeout(_autoSaveTimer);
+  _autoSaveTimer = setTimeout(async () => {
+    if (!S.workout) return;
+    if (!S.workout.exercises.some(ex => ex.series.some(s => s.done))) return;
+    await handleSave(true); // silent=true
+  }, 2000);
 }
 
 function confirmExit() {
   if (confirm('¿Salir? Los datos no guardados se perderán.')) { skipTimer(); showScreen('dashboard'); }
 }
 
-async function handleSave() {
+async function handleSave(silent = false) {
   const btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.textContent = 'GUARDANDO...';
+  if (!silent) { btn.disabled = true; btn.textContent = 'GUARDANDO...'; }
 
   // Sync all inputs from DOM
   S.workout.exercises.forEach((ex,ei) => {
@@ -1921,9 +1932,13 @@ async function handleSave() {
   localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
 
   S.workout.editing = true; // próximo guardado también borrará las filas anteriores
-  btn.disabled = false; btn.textContent = 'GUARDAR';
-  document.getElementById('share-btn').style.display = '';
-  toast('Sesión guardada', 'success');
+  if (!silent) {
+    btn.disabled = false; btn.textContent = 'GUARDAR';
+    document.getElementById('share-btn').style.display = '';
+    toast('Sesión guardada', 'success');
+  } else {
+    document.getElementById('share-btn').style.display = '';
+  }
 }
 
 function downloadWorkoutPNG() {
