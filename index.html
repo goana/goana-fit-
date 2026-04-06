@@ -1869,12 +1869,22 @@ async function handleSave() {
       ex.series[2]?.done ? (ex.series[2].weight ?? 0) : '',
     ]);
 
-  // If editing, remove old rows from local cache first
-  if (S.workout.editing) {
-    S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
+  try {
+    // Borrar filas antiguas de la hoja (también limpia S.sessions internamente)
+    if (S.workout.editing && !S.offline) await deleteSessionsByDate(S.workout.date);
+    else if (S.workout.editing) S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
+
+    await appendRows(rows);
+    const {cur,rec} = calcStreak();
+    await setCfg('streak_actual', cur);
+    await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
+    await setCfg('ultimo_entrenamiento', S.workout.date);
+  } catch(e) {
+    if (e.code !== 'offline') toast('Error al guardar: '+e.message, 'error');
   }
 
-  // Optimistic local update (expand to internal format)
+  // Actualizar caché local DESPUÉS del borrado para no pisarlo
+  S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
   rows.forEach(r => {
     [0,1,2].forEach(i => {
       if (r[2+i] === '') return; // skip undone series
@@ -1885,17 +1895,6 @@ async function handleSave() {
     });
   });
   localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
-
-  try {
-    if (S.workout.editing && !S.offline) await deleteSessionsByDate(S.workout.date);
-    await appendRows(rows);
-    const {cur,rec} = calcStreak();
-    await setCfg('streak_actual', cur);
-    await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
-    await setCfg('ultimo_entrenamiento', S.workout.date);
-  } catch(e) {
-    if (e.code !== 'offline') toast('Error al guardar: '+e.message, 'error');
-  }
 
   S.workout.editing = true; // próximo guardado también borrará las filas anteriores
   btn.disabled = false; btn.textContent = 'GUARDAR';
