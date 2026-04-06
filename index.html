@@ -857,12 +857,11 @@
       <div class="bio-grid">
         <div class="bio-stat"><div class="bval" id="bio-peso">—</div><div class="blbl">Peso</div></div>
         <div class="bio-stat"><div class="bval" id="bio-imc">—</div><div class="blbl">IMC</div></div>
-        <div class="bio-stat"><div class="bval" id="bio-muslo">—</div><div class="blbl">Muslo</div></div>
+        <div class="bio-stat"><div class="bval" id="bio-cintura">—</div><div class="blbl">Cintura</div></div>
       </div>
       <div class="bio-grid" style="margin-top:-4px;margin-bottom:14px">
-        <div class="bio-stat"><div class="bval" id="bio-brazo">—</div><div class="blbl">Brazo</div></div>
-        <div class="bio-stat"><div class="bval" id="bio-cintura">—</div><div class="blbl">Cintura</div></div>
-        <div class="bio-stat"><div class="bval" id="bio-espalda">—</div><div class="blbl">Espalda</div></div>
+        <div class="bio-stat"><div class="bval" id="bio-cadera">—</div><div class="blbl">Cadera</div></div>
+        <div class="bio-stat"><div class="bval" id="bio-pantorrilla">—</div><div class="blbl">Pantorrilla</div></div>
       </div>
 
       <!-- Formulario peso -->
@@ -887,20 +886,6 @@
         <div class="body-form-title">Medidas bisemanales</div>
         <div class="meas-grid">
           <div class="meas-field">
-            <label>Muslo</label>
-            <div class="meas-unit">
-              <input type="number" id="inp-muslo" step="0.5" placeholder="55" inputmode="decimal">
-              <span>cm</span>
-            </div>
-          </div>
-          <div class="meas-field">
-            <label>Brazo</label>
-            <div class="meas-unit">
-              <input type="number" id="inp-brazo" step="0.5" placeholder="28" inputmode="decimal">
-              <span>cm</span>
-            </div>
-          </div>
-          <div class="meas-field">
             <label>Cintura</label>
             <div class="meas-unit">
               <input type="number" id="inp-cintura" step="0.5" placeholder="70" inputmode="decimal">
@@ -908,25 +893,31 @@
             </div>
           </div>
           <div class="meas-field">
-            <label>Espalda</label>
+            <label>Cadera</label>
             <div class="meas-unit">
-              <input type="number" id="inp-espalda" step="0.5" placeholder="88" inputmode="decimal">
+              <input type="number" id="inp-cadera" step="0.5" placeholder="95" inputmode="decimal">
+              <span>cm</span>
+            </div>
+          </div>
+          <div class="meas-field">
+            <label>Pantorrilla</label>
+            <div class="meas-unit">
+              <input type="number" id="inp-pantorrilla" step="0.5" placeholder="36" inputmode="decimal">
               <span>cm</span>
             </div>
           </div>
         </div>
-        <div class="meas-hint">Muslo: punto medio · Brazo: relajado · Cintura: a nivel del ombligo · Espalda: bajo las axilas</div>
+        <div class="meas-hint">Cintura: a nivel del ombligo · Cadera: punto más ancho · Pantorrilla: punto más grueso</div>
         <button class="btn-primary" onclick="saveBodyEntry('medidas')" style="margin-top:12px">GUARDAR MEDIDAS</button>
       </div>
 
       <!-- Gráfica con tabs -->
       <div class="chart-card">
         <div class="chart-tabs" id="body-chart-tabs">
-          <button class="chart-tab active" data-metric="peso"    onclick="renderBodyChart('peso')">Peso</button>
-          <button class="chart-tab"        data-metric="muslo"   onclick="renderBodyChart('muslo')">Muslo</button>
-          <button class="chart-tab"        data-metric="brazo"   onclick="renderBodyChart('brazo')">Brazo</button>
-          <button class="chart-tab"        data-metric="cintura" onclick="renderBodyChart('cintura')">Cintura</button>
-          <button class="chart-tab"        data-metric="espalda" onclick="renderBodyChart('espalda')">Espalda</button>
+          <button class="chart-tab active"  data-metric="peso"        onclick="renderBodyChart('peso')">Peso</button>
+          <button class="chart-tab"         data-metric="cintura"     onclick="renderBodyChart('cintura')">Cintura</button>
+          <button class="chart-tab"         data-metric="cadera"      onclick="renderBodyChart('cadera')">Cadera</button>
+          <button class="chart-tab"         data-metric="pantorrilla" onclick="renderBodyChart('pantorrilla')">Pantorrilla</button>
         </div>
         <canvas id="body-chart" style="max-height:190px"></canvas>
       </div>
@@ -1443,8 +1434,8 @@ async function ensureSheets() {
       await api('PUT', '/values/checkins!A1:E1',
         { values:[['fecha','radio_hoy','nivel_energia','estado_piel','molestia_izq']] }, 'valueInputOption=RAW');
     if (!exist.includes('medidas'))
-      await api('PUT', '/values/medidas!A1:F1',
-        { values:[['fecha','peso_kg','muslo_cm','brazo_cm','cintura_cm','espalda_cm']] }, 'valueInputOption=RAW');
+      await api('PUT', '/values/medidas!A1:E1',
+        { values:[['fecha','peso_kg','cintura_cm','cadera_cm','pantorrilla_cm']] }, 'valueInputOption=RAW');
   }
   // Always update sesiones header (handles migration from old 6-col format)
   await api('PUT', '/values/sesiones!A1:H1',
@@ -2407,14 +2398,13 @@ function toggleMealCheck(meal) {
 // ═══════════════════════════════════════════════════════════
 
 async function loadMedidas() {
-  const d = await api('GET', '/values/medidas!A2:F');
+  const d = await api('GET', '/values/medidas!A2:E');
   S.medidas = (d.values||[]).filter(r=>r[0]).map(r => ({
-    fecha:   r[0],
-    peso:    r[1] ? parseFloat(r[1]) : null,
-    muslo:   r[2] ? parseFloat(r[2]) : null,
-    brazo:   r[3] ? parseFloat(r[3]) : null,
-    cintura: r[4] ? parseFloat(r[4]) : null,
-    espalda: r[5] ? parseFloat(r[5]) : null,
+    fecha:       r[0],
+    peso:        r[1] ? parseFloat(r[1]) : null,
+    cintura:     r[2] ? parseFloat(r[2]) : null,
+    cadera:      r[3] ? parseFloat(r[3]) : null,
+    pantorrilla: r[4] ? parseFloat(r[4]) : null,
   }));
 }
 
@@ -2439,25 +2429,24 @@ async function saveBodyEntry(type) {
   if (type === 'peso') {
     const p = parseFloat(document.getElementById('inp-peso').value);
     if (!p || isNaN(p)) { toast('Introduce un peso válido', 'error'); return; }
-    row = [date, p, '', '', '', ''];
-    S.medidas.push({ fecha:date, peso:p, muslo:null, brazo:null, cintura:null, espalda:null });
+    row = [date, p, '', '', ''];
+    S.medidas.push({ fecha:date, peso:p, cintura:null, cadera:null, pantorrilla:null });
   } else {
-    const muslo   = parseFloat(document.getElementById('inp-muslo').value)   || null;
-    const brazo   = parseFloat(document.getElementById('inp-brazo').value)   || null;
-    const cintura = parseFloat(document.getElementById('inp-cintura').value) || null;
-    const espalda = parseFloat(document.getElementById('inp-espalda').value) || null;
-    if (!muslo && !brazo && !cintura && !espalda) { toast('Introduce al menos una medida', 'error'); return; }
-    row = [date, '', muslo||'', brazo||'', cintura||'', espalda||''];
-    S.medidas.push({ fecha:date, peso:null, muslo, brazo, cintura, espalda });
+    const cintura     = parseFloat(document.getElementById('inp-cintura').value)     || null;
+    const cadera      = parseFloat(document.getElementById('inp-cadera').value)      || null;
+    const pantorrilla = parseFloat(document.getElementById('inp-pantorrilla').value) || null;
+    if (!cintura && !cadera && !pantorrilla) { toast('Introduce al menos una medida', 'error'); return; }
+    row = [date, '', cintura||'', cadera||'', pantorrilla||''];
+    S.medidas.push({ fecha:date, peso:null, cintura, cadera, pantorrilla });
   }
   try {
-    await api('POST', '/values/medidas!A:F:append', { values:[row] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    await api('POST', '/values/medidas!A:E:append', { values:[row] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
     toast('Guardado ✓', 'success');
     // Clear inputs
     if (type === 'peso') {
       document.getElementById('inp-peso').value = '';
     } else {
-      ['muslo','brazo','cintura','espalda'].forEach(id => document.getElementById('inp-'+id).value = '');
+      ['cintura','cadera','pantorrilla'].forEach(id => document.getElementById('inp-'+id).value = '');
     }
   } catch(e) {
     toast('Error al guardar: ' + e.message, 'error');
@@ -2472,7 +2461,7 @@ function renderBodyScreen() {
   document.getElementById('body-form-date').textContent = todayStr();
 
   const withPeso    = S.medidas.filter(m => m.peso).sort((a,b) => b.fecha.localeCompare(a.fecha));
-  const withMedidas = S.medidas.filter(m => m.muslo||m.brazo||m.cintura||m.espalda).sort((a,b) => b.fecha.localeCompare(a.fecha));
+  const withMedidas = S.medidas.filter(m => m.cintura||m.cadera||m.pantorrilla).sort((a,b) => b.fecha.localeCompare(a.fecha));
   const latestPeso  = withPeso[0]?.peso ?? null;
   const latest      = withMedidas[0] ?? {};
 
@@ -2486,12 +2475,11 @@ function renderBodyScreen() {
   }
 
   const fmt = (v, unit) => v ? `${v}<br><span style="font-size:10px;color:var(--muted)">${unit}</span>` : '—';
-  document.getElementById('bio-peso').innerHTML    = fmt(latestPeso, 'kg');
-  document.getElementById('bio-imc').innerHTML     = imcHtml;
-  document.getElementById('bio-muslo').innerHTML   = fmt(latest.muslo,   'cm');
-  document.getElementById('bio-brazo').innerHTML   = fmt(latest.brazo,   'cm');
-  document.getElementById('bio-cintura').innerHTML = fmt(latest.cintura, 'cm');
-  document.getElementById('bio-espalda').innerHTML = fmt(latest.espalda, 'cm');
+  document.getElementById('bio-peso').innerHTML        = fmt(latestPeso, 'kg');
+  document.getElementById('bio-imc').innerHTML         = imcHtml;
+  document.getElementById('bio-cintura').innerHTML     = fmt(latest.cintura,     'cm');
+  document.getElementById('bio-cadera').innerHTML      = fmt(latest.cadera,      'cm');
+  document.getElementById('bio-pantorrilla').innerHTML = fmt(latest.pantorrilla, 'cm');
 
   renderBodyChart('peso');
   renderBodyTable();
@@ -2540,16 +2528,15 @@ function renderBodyTable() {
   const val = v => v !== null ? v : '—';
   tbl.innerHTML = `
     <div class="body-hist-row header">
-      <div>Fecha</div><div>Peso</div><div>Muslo</div><div>Brazo</div><div>Cintura</div><div>Esp.</div>
+      <div>Fecha</div><div>Peso</div><div>Cintura</div><div>Cadera</div><div>Pantorr.</div>
     </div>
     ${sorted.map(m => `
       <div class="body-hist-row">
         <div>${m.fecha.slice(5)}</div>
         <div>${m.peso !== null ? m.peso+'kg' : '—'}</div>
-        <div>${val(m.muslo)}</div>
-        <div>${val(m.brazo)}</div>
         <div>${val(m.cintura)}</div>
-        <div>${val(m.espalda)}</div>
+        <div>${val(m.cadera)}</div>
+        <div>${val(m.pantorrilla)}</div>
       </div>`).join('')}`;
 }
 
