@@ -1780,7 +1780,7 @@ function getRec() {
   if (!dates.length) return { icon:'💪', title:'¡Empieza hoy!', sub:'No tienes sesiones aún', train:true };
   const since = diffDays(dates[dates.length-1], todayStr());
   if (since===0) return { icon:'✅', title:'Ya entrenaste hoy', sub:'Descansa bien — ¡gran trabajo!', train:false };
-  if (since===1) return { icon:'😴', title:'Día de descanso',  sub:'Entrenaste ayer — recupérate', train:false };
+  if (since===1) return { icon:'😴', title:'Día de descanso',  sub:'Entrenaste ayer — recupérate', train:true };
   if (since===2) return { icon:'🔥', title:'¡Toca entrenar!',  sub:'Llevas 2 días de descanso', train:true };
   return { icon:'⚡', title:'¡Vuelve a la rutina!', sub:`Última sesión hace ${since} días`, train:true };
 }
