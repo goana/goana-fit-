@@ -609,6 +609,15 @@
       position: absolute; right: 10px; font-size: 11px; color: var(--dim); pointer-events: none;
     }
     .meas-hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .meas-date-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .meas-date-row label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); white-space: nowrap; }
+    .meas-date-row input[type="date"] {
+      flex: 1; background: var(--bg); border: 1px solid var(--border2);
+      border-radius: var(--rx); color: var(--text); font-size: 14px;
+      font-family: inherit; padding: 8px 10px;
+      color-scheme: dark;
+    }
+    .meas-date-row input[type="date"]:focus { outline: none; border-color: var(--accent); }
 
     .collapse-toggle {
       background: none; border: none; color: var(--muted); cursor: pointer;
@@ -953,9 +962,10 @@
 
       <!-- Formulario peso -->
       <div class="body-form-card">
-        <div class="body-form-title">
-          Peso semanal
-          <span class="body-form-date" id="body-form-date"></span>
+        <div class="body-form-title">Peso semanal</div>
+        <div class="meas-date-row">
+          <label>Fecha</label>
+          <input type="date" id="inp-fecha-peso">
         </div>
         <div class="meas-field">
           <label>Peso</label>
@@ -971,6 +981,10 @@
       <!-- Formulario medidas -->
       <div class="body-form-card">
         <div class="body-form-title">Medidas bisemanales</div>
+        <div class="meas-date-row">
+          <label>Fecha</label>
+          <input type="date" id="inp-fecha-medidas">
+        </div>
         <div class="meas-grid">
           <div class="meas-field">
             <label>Cintura</label>
@@ -2619,7 +2633,8 @@ function saveAltura() {
 }
 
 async function saveBodyEntry(type) {
-  const date = todayStr();
+  const dateEl = document.getElementById(type === 'peso' ? 'inp-fecha-peso' : 'inp-fecha-medidas');
+  const date = dateEl?.value || todayStr();
   let row;
   if (type === 'peso') {
     const p = parseFloat(document.getElementById('inp-peso').value);
@@ -2653,7 +2668,9 @@ async function saveBodyEntry(type) {
 
 function renderBodyScreen() {
   if (S.altura) document.getElementById('altura-input').value = S.altura;
-  document.getElementById('body-form-date').textContent = todayStr();
+  const today = todayStr();
+  document.getElementById('inp-fecha-peso').value    = today;
+  document.getElementById('inp-fecha-medidas').value = today;
 
   const withPeso    = S.medidas.filter(m => m.peso).sort((a,b) => b.fecha.localeCompare(a.fecha));
   const withMedidas = S.medidas.filter(m => m.cintura||m.cadera||m.pantorrilla).sort((a,b) => b.fecha.localeCompare(a.fecha));
