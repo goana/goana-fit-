@@ -609,6 +609,15 @@
       position: absolute; right: 10px; font-size: 11px; color: var(--dim); pointer-events: none;
     }
     .meas-hint { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .info-tip { position: relative; display: flex; align-items: center; color: var(--muted); cursor: pointer; outline: none; }
+    .info-tip:hover .info-tip-pop, .info-tip:focus .info-tip-pop { opacity: 1; pointer-events: auto; }
+    .info-tip-pop {
+      position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
+      background: var(--card2); border: 1px solid var(--border2); border-radius: var(--rx);
+      padding: 8px 10px; font-size: 11px; color: var(--text); white-space: nowrap;
+      opacity: 0; pointer-events: none; transition: opacity var(--t);
+      box-shadow: 0 4px 12px rgba(0,0,0,.4); z-index: 10;
+    }
     .meas-date-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
     .meas-date-row label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); white-space: nowrap; }
     .meas-date-row input[type="date"] {
@@ -1037,7 +1046,13 @@
 
       <!-- Formulario medidas -->
       <div class="body-form-card">
-        <div class="body-form-title">Medidas bisemanales</div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px">
+          <div class="body-form-title" style="margin-bottom:0">Medidas bisemanales</div>
+          <div class="info-tip" tabindex="0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <div class="info-tip-pop">Cintura: a nivel del ombligo · Cadera: punto más ancho · Pantorrilla: punto más grueso</div>
+          </div>
+        </div>
         <div class="meas-date-row">
           <label>Fecha</label>
           <input type="date" id="inp-fecha-medidas">
@@ -1065,7 +1080,6 @@
             </div>
           </div>
         </div>
-        <div class="meas-hint">Cintura: a nivel del ombligo · Cadera: punto más ancho · Pantorrilla: punto más grueso</div>
         <button class="btn-primary" onclick="saveBodyEntry('medidas')" style="margin-top:12px">GUARDAR MEDIDAS</button>
       </div>
 
