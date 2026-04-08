@@ -7,6 +7,10 @@
 //    Formato: 123456789-xxxx.apps.googleusercontent.com
 const CLIENT_ID = '612809897673-ajl5njc448c70e3t7vvh52jdkptt5blc.apps.googleusercontent.com';
 
+// 3. API Key de Anthropic (para importar datos desde foto de báscula)
+//    Obtén la tuya en: platform.anthropic.com/api-keys
+const ANTHROPIC_API_KEY = '';
+
 // 2. ID de tu Google Spreadsheet
 //    Lo encuentras en la URL: docs.google.com/spreadsheets/d/AQUI/edit
 const SPREADSHEET_ID = '1ydSag5qwNyg32PWrsZFFNMI6oRs1HwH_rMOFCZ4U2Mc';

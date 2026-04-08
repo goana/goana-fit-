@@ -619,6 +619,20 @@
     }
     .meas-date-row input[type="date"]:focus { outline: none; border-color: var(--accent); }
 
+    .comp-divider {
+      font-size: 10px; text-transform: uppercase; letter-spacing: .7px; color: var(--muted);
+      border-top: 1px solid var(--border); padding-top: 10px; margin: 10px 0 10px;
+    }
+    .btn-scale-import {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--card2); border: 1px solid var(--border2);
+      border-radius: var(--rx); color: var(--muted); font-size: 11px;
+      font-family: inherit; font-weight: 500; padding: 5px 10px; cursor: pointer;
+      transition: border-color var(--t), color var(--t);
+    }
+    .btn-scale-import:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-scale-import.loading { opacity: .6; pointer-events: none; }
+
     .collapse-toggle {
       background: none; border: none; color: var(--muted); cursor: pointer;
       font-size: 12px; padding: 4px 0; font-family: inherit; text-align: left;
@@ -955,14 +969,26 @@
         <div class="bio-stat"><div class="bval" id="bio-imc">—</div><div class="blbl">IMC</div></div>
         <div class="bio-stat"><div class="bval" id="bio-cintura">—</div><div class="blbl">Cintura</div></div>
       </div>
-      <div class="bio-grid" style="margin-top:-4px;margin-bottom:14px">
+      <div class="bio-grid" style="margin-top:-4px;margin-bottom:4px">
         <div class="bio-stat"><div class="bval" id="bio-cadera">—</div><div class="blbl">Cadera</div></div>
         <div class="bio-stat"><div class="bval" id="bio-pantorrilla">—</div><div class="blbl">Pantorrilla</div></div>
+      </div>
+      <div class="bio-grid" style="margin-top:-4px;margin-bottom:14px" id="bio-comp-row">
+        <div class="bio-stat"><div class="bval" id="bio-grasa-pct">—</div><div class="blbl">% Grasa</div></div>
+        <div class="bio-stat"><div class="bval" id="bio-musculo">—</div><div class="blbl">Músculo</div></div>
+        <div class="bio-stat"><div class="bval" id="bio-grasa-visc">—</div><div class="blbl">Grasa visc.</div></div>
       </div>
 
       <!-- Formulario peso -->
       <div class="body-form-card">
-        <div class="body-form-title">Peso semanal</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div class="body-form-title" style="margin-bottom:0">Peso semanal</div>
+          <button class="btn-scale-import" onclick="importFromScale()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <span id="scale-btn-lbl">Importar báscula</span>
+          </button>
+        </div>
+        <input type="file" id="scale-img-input" accept="image/*" style="display:none" onchange="handleScaleFile(event)">
         <div class="meas-date-row">
           <label>Fecha</label>
           <input type="date" id="inp-fecha-peso">
@@ -972,6 +998,37 @@
           <div class="meas-unit">
             <input type="number" id="inp-peso" step="0.1" placeholder="62.0" inputmode="decimal">
             <span>kg</span>
+          </div>
+        </div>
+        <div class="comp-divider">Composición corporal</div>
+        <div class="meas-grid">
+          <div class="meas-field">
+            <label>% Grasa</label>
+            <div class="meas-unit">
+              <input type="number" id="inp-grasa-pct" step="0.1" placeholder="28.0" inputmode="decimal">
+              <span>%</span>
+            </div>
+          </div>
+          <div class="meas-field">
+            <label>Músculo</label>
+            <div class="meas-unit">
+              <input type="number" id="inp-musculo-kg" step="0.1" placeholder="24.0" inputmode="decimal">
+              <span>kg</span>
+            </div>
+          </div>
+          <div class="meas-field">
+            <label>Grasa visc.</label>
+            <div class="meas-unit">
+              <input type="number" id="inp-grasa-visc" step="1" placeholder="7" inputmode="decimal">
+              <span>niv</span>
+            </div>
+          </div>
+          <div class="meas-field">
+            <label>Metabolismo</label>
+            <div class="meas-unit">
+              <input type="number" id="inp-metab" step="1" placeholder="1350" inputmode="decimal">
+              <span>kcal</span>
+            </div>
           </div>
         </div>
         <div class="meas-hint">Pésate en ayunas los sábados</div>
@@ -1640,8 +1697,8 @@ async function ensureSheets() {
       await api('PUT', '/values/checkins!A1:E1',
         { values:[['fecha','radio_hoy','nivel_energia','estado_piel','molestia_izq']] }, 'valueInputOption=RAW');
     if (!exist.includes('medidas'))
-      await api('PUT', '/values/medidas!A1:E1',
-        { values:[['fecha','peso_kg','cintura_cm','cadera_cm','pantorrilla_cm']] }, 'valueInputOption=RAW');
+      await api('PUT', '/values/medidas!A1:I1',
+        { values:[['fecha','peso_kg','cintura_cm','cadera_cm','pantorrilla_cm','grasa_pct','musculo_kg','grasa_visc','metabolismo_kcal']] }, 'valueInputOption=RAW');
   }
   // Always update sesiones header (handles migration from old 6-col format)
   await api('PUT', '/values/sesiones!A1:H1',
@@ -2607,13 +2664,17 @@ function toggleMealCheck(meal) {
 // ═══════════════════════════════════════════════════════════
 
 async function loadMedidas() {
-  const d = await api('GET', '/values/medidas!A2:E');
+  const d = await api('GET', '/values/medidas!A2:I');
   S.medidas = (d.values||[]).filter(r=>r[0]).map(r => ({
     fecha:       r[0],
     peso:        r[1] ? parseFloat(r[1]) : null,
     cintura:     r[2] ? parseFloat(r[2]) : null,
     cadera:      r[3] ? parseFloat(r[3]) : null,
     pantorrilla: r[4] ? parseFloat(r[4]) : null,
+    grasa_pct:   r[5] ? parseFloat(r[5]) : null,
+    musculo_kg:  r[6] ? parseFloat(r[6]) : null,
+    grasa_visc:  r[7] ? parseFloat(r[7]) : null,
+    metab:       r[8] ? parseFloat(r[8]) : null,
   }));
 }
 
@@ -2632,15 +2693,106 @@ function saveAltura() {
   renderBodyScreen();
 }
 
+function importFromScale() {
+  if (!ANTHROPIC_API_KEY) {
+    toast('Añade tu ANTHROPIC_API_KEY en config.js', 'error');
+    return;
+  }
+  document.getElementById('scale-img-input').click();
+}
+
+async function handleScaleFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  const btn = document.querySelector('.btn-scale-import');
+  btn.classList.add('loading');
+  document.getElementById('scale-btn-lbl').textContent = 'Analizando…';
+
+  try {
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image',
+              source: { type: 'base64', media_type: file.type || 'image/jpeg', data: base64 }
+            },
+            {
+              type: 'text',
+              text: 'Extrae los datos de composición corporal de esta imagen de báscula inteligente. Responde SOLO con un objeto JSON válido con estas claves (usa null si no aparece el dato): { "fecha": "YYYY-MM-DD o null", "peso_kg": número, "grasa_pct": número, "musculo_kg": número, "grasa_visc": número, "metabolismo_kcal": número }. No añadas texto adicional.'
+            }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `HTTP ${resp.status}`);
+    }
+
+    const data = await resp.json();
+    const text = data.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('No se encontraron datos');
+
+    const parsed = JSON.parse(jsonMatch[0]);
+
+    // Fill date
+    if (parsed.fecha && parsed.fecha !== 'null') {
+      document.getElementById('inp-fecha-peso').value = parsed.fecha;
+    }
+    // Fill fields
+    const fill = (id, val) => { if (val !== null && val !== undefined) document.getElementById(id).value = val; };
+    fill('inp-peso',       parsed.peso_kg);
+    fill('inp-grasa-pct',  parsed.grasa_pct);
+    fill('inp-musculo-kg', parsed.musculo_kg);
+    fill('inp-grasa-visc', parsed.grasa_visc);
+    fill('inp-metab',      parsed.metabolismo_kcal);
+
+    toast('Datos importados — revisa y guarda', 'success');
+  } catch(e) {
+    console.error('importFromScale:', e);
+    toast('Error al importar: ' + e.message, 'error');
+  } finally {
+    btn.classList.remove('loading');
+    document.getElementById('scale-btn-lbl').textContent = 'Importar báscula';
+  }
+}
+
 async function saveBodyEntry(type) {
   const dateEl = document.getElementById(type === 'peso' ? 'inp-fecha-peso' : 'inp-fecha-medidas');
   const date = dateEl?.value || todayStr();
   let row;
   if (type === 'peso') {
-    const p = parseFloat(document.getElementById('inp-peso').value);
+    const p          = parseFloat(document.getElementById('inp-peso').value);
     if (!p || isNaN(p)) { toast('Introduce un peso válido', 'error'); return; }
-    row = [date, p, '', '', ''];
-    S.medidas.push({ fecha:date, peso:p, cintura:null, cadera:null, pantorrilla:null });
+    const grasaPct   = parseFloat(document.getElementById('inp-grasa-pct').value)  || null;
+    const musculoKg  = parseFloat(document.getElementById('inp-musculo-kg').value) || null;
+    const grasaVisc  = parseFloat(document.getElementById('inp-grasa-visc').value) || null;
+    const metab      = parseFloat(document.getElementById('inp-metab').value)       || null;
+    row = [date, p, '', '', '', grasaPct||'', musculoKg||'', grasaVisc||'', metab||''];
+    S.medidas.push({ fecha:date, peso:p, cintura:null, cadera:null, pantorrilla:null,
+                     grasa_pct:grasaPct, musculo_kg:musculoKg, grasa_visc:grasaVisc, metab });
   } else {
     const cintura     = parseFloat(document.getElementById('inp-cintura').value)     || null;
     const cadera      = parseFloat(document.getElementById('inp-cadera').value)      || null;
@@ -2650,11 +2802,12 @@ async function saveBodyEntry(type) {
     S.medidas.push({ fecha:date, peso:null, cintura, cadera, pantorrilla });
   }
   try {
-    await api('POST', '/values/medidas!A:E:append', { values:[row] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    await api('POST', '/values/medidas!A:I:append', { values:[row] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
     toast('Guardado ✓', 'success');
     // Clear inputs
     if (type === 'peso') {
       document.getElementById('inp-peso').value = '';
+      ['grasa-pct','musculo-kg','grasa-visc','metab'].forEach(id => document.getElementById('inp-'+id).value = '');
     } else {
       ['cintura','cadera','pantorrilla'].forEach(id => document.getElementById('inp-'+id).value = '');
     }
@@ -2674,8 +2827,10 @@ function renderBodyScreen() {
 
   const withPeso    = S.medidas.filter(m => m.peso).sort((a,b) => b.fecha.localeCompare(a.fecha));
   const withMedidas = S.medidas.filter(m => m.cintura||m.cadera||m.pantorrilla).sort((a,b) => b.fecha.localeCompare(a.fecha));
+  const withComp    = S.medidas.filter(m => m.grasa_pct||m.musculo_kg).sort((a,b) => b.fecha.localeCompare(a.fecha));
   const latestPeso  = withPeso[0]?.peso ?? null;
   const latest      = withMedidas[0] ?? {};
+  const latestComp  = withComp[0] ?? {};
 
   // IMC
   let imcHtml = '—';
@@ -2689,9 +2844,12 @@ function renderBodyScreen() {
   const fmt = (v, unit) => v ? `${v}<br><span style="font-size:10px;color:var(--muted)">${unit}</span>` : '—';
   document.getElementById('bio-peso').innerHTML        = fmt(latestPeso, 'kg');
   document.getElementById('bio-imc').innerHTML         = imcHtml;
-  document.getElementById('bio-cintura').innerHTML     = fmt(latest.cintura,     'cm');
-  document.getElementById('bio-cadera').innerHTML      = fmt(latest.cadera,      'cm');
-  document.getElementById('bio-pantorrilla').innerHTML = fmt(latest.pantorrilla, 'cm');
+  document.getElementById('bio-cintura').innerHTML     = fmt(latest.cintura,           'cm');
+  document.getElementById('bio-cadera').innerHTML      = fmt(latest.cadera,            'cm');
+  document.getElementById('bio-pantorrilla').innerHTML = fmt(latest.pantorrilla,       'cm');
+  document.getElementById('bio-grasa-pct').innerHTML   = fmt(latestComp.grasa_pct,     '%');
+  document.getElementById('bio-musculo').innerHTML     = fmt(latestComp.musculo_kg,    'kg');
+  document.getElementById('bio-grasa-visc').innerHTML  = fmt(latestComp.grasa_visc,   'niv');
 
   renderBodyChart('peso');
   renderBodyTable();
