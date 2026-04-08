@@ -991,7 +991,13 @@
       <!-- Formulario peso -->
       <div class="body-form-card">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-          <div class="body-form-title" style="margin-bottom:0">Peso semanal</div>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div class="body-form-title" style="margin-bottom:0">Peso semanal</div>
+            <div class="info-tip" tabindex="0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <div class="info-tip-pop">Pésate en ayunas los sábados</div>
+            </div>
+          </div>
           <button class="btn-scale-import" onclick="importFromScale()">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
             <span id="scale-btn-lbl">Importar báscula</span>
@@ -1040,7 +1046,6 @@
             </div>
           </div>
         </div>
-        <div class="meas-hint">Pésate en ayunas los sábados</div>
         <button class="btn-primary" onclick="saveBodyEntry('peso')" style="margin-top:12px">GUARDAR PESO</button>
       </div>
 
