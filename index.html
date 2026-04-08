@@ -1491,9 +1491,23 @@ const todayStr = () => fmtDate(new Date());
 function fmtDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+// "2026-04-08" → "8.4.26"
+function fmtDateES(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${parseInt(d)}.${parseInt(m)}.${y.slice(2)}`;
+}
+// "8.4.26" → "2026-04-08"  (para normalizar lo que viene del sheet)
+function fromDateES(es) {
+  if (!es || !es.includes('.')) return es;
+  const [d, m, y] = es.split('.');
+  const full = y.length === 2 ? '20' + y : y;
+  return `${full}-${m.padStart(2,'0')}-${d.padStart(2,'0')}`;
+}
 function parseDate(s) {
   if (!s) return null;
-  const [y,m,d] = s.split('-').map(Number);
+  const norm = s.includes('.') ? fromDateES(s) : s;
+  const [y,m,d] = norm.split('-').map(Number);
   return new Date(y, m-1, d);
 }
 function diffDays(a, b) {
@@ -2666,7 +2680,7 @@ function toggleMealCheck(meal) {
 async function loadMedidas() {
   const d = await api('GET', '/values/medidas!A2:I');
   S.medidas = (d.values||[]).filter(r=>r[0]).map(r => ({
-    fecha:       r[0],
+    fecha:       r[0].includes('.') ? fromDateES(r[0]) : r[0],
     peso:        r[1] ? parseFloat(r[1]) : null,
     cintura:     r[2] ? parseFloat(r[2]) : null,
     cadera:      r[3] ? parseFloat(r[3]) : null,
@@ -2782,6 +2796,7 @@ async function handleScaleFile(event) {
 async function saveBodyEntry(type) {
   const dateEl = document.getElementById(type === 'peso' ? 'inp-fecha-peso' : 'inp-fecha-medidas');
   const date = dateEl?.value || todayStr();
+  const dateES = fmtDateES(date);   // "8.4.26" — formato para el sheet
   let row;
   if (type === 'peso') {
     const p          = parseFloat(document.getElementById('inp-peso').value);
@@ -2790,7 +2805,7 @@ async function saveBodyEntry(type) {
     const musculoKg  = parseFloat(document.getElementById('inp-musculo-kg').value) || null;
     const grasaVisc  = parseFloat(document.getElementById('inp-grasa-visc').value) || null;
     const metab      = parseFloat(document.getElementById('inp-metab').value)       || null;
-    row = [date, p, '', '', '', grasaPct||'', musculoKg||'', grasaVisc||'', metab||''];
+    row = [dateES, p, '', '', '', grasaPct||'', musculoKg||'', grasaVisc||'', metab||''];
     S.medidas.push({ fecha:date, peso:p, cintura:null, cadera:null, pantorrilla:null,
                      grasa_pct:grasaPct, musculo_kg:musculoKg, grasa_visc:grasaVisc, metab });
   } else {
@@ -2798,19 +2813,12 @@ async function saveBodyEntry(type) {
     const cadera      = parseFloat(document.getElementById('inp-cadera').value)      || null;
     const pantorrilla = parseFloat(document.getElementById('inp-pantorrilla').value) || null;
     if (!cintura && !cadera && !pantorrilla) { toast('Introduce al menos una medida', 'error'); return; }
-    row = [date, '', cintura||'', cadera||'', pantorrilla||''];
+    row = [dateES, '', cintura||'', cadera||'', pantorrilla||''];
     S.medidas.push({ fecha:date, peso:null, cintura, cadera, pantorrilla });
   }
   try {
     await api('POST', '/values/medidas!A:I:append', { values:[row] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
     toast('Guardado ✓', 'success');
-    // Clear inputs
-    if (type === 'peso') {
-      document.getElementById('inp-peso').value = '';
-      ['grasa-pct','musculo-kg','grasa-visc','metab'].forEach(id => document.getElementById('inp-'+id).value = '');
-    } else {
-      ['cintura','cadera','pantorrilla'].forEach(id => document.getElementById('inp-'+id).value = '');
-    }
   } catch(e) {
     toast('Error al guardar: ' + e.message, 'error');
     S.medidas.pop();
@@ -2832,6 +2840,17 @@ function renderBodyScreen() {
   const latest      = withMedidas[0] ?? {};
   const latestComp  = withComp[0] ?? {};
 
+  // Pre-rellena campos con últimos valores guardados (como referencia)
+  const setVal = (id, v) => { if (v) document.getElementById(id).value = v; };
+  setVal('inp-peso',       withPeso[0]?.peso);
+  setVal('inp-grasa-pct',  latestComp.grasa_pct);
+  setVal('inp-musculo-kg', latestComp.musculo_kg);
+  setVal('inp-grasa-visc', latestComp.grasa_visc);
+  setVal('inp-metab',      latestComp.metab);
+  setVal('inp-cintura',    latest.cintura);
+  setVal('inp-cadera',     latest.cadera);
+  setVal('inp-pantorrilla',latest.pantorrilla);
+
   // IMC
   let imcHtml = '—';
   if (latestPeso && S.altura) {
@@ -2841,15 +2860,18 @@ function renderBodyScreen() {
     imcHtml = `${imc.toFixed(1)}<br><span class="imc-badge ${cat}">${lbl}</span>`;
   }
 
-  const fmt = (v, unit) => v ? `${v}<br><span style="font-size:10px;color:var(--muted)">${unit}</span>` : '—';
-  document.getElementById('bio-peso').innerHTML        = fmt(latestPeso, 'kg');
+  const fmt  = (v, unit) => v ? `${v}<br><span style="font-size:10px;color:var(--muted)">${unit}</span>` : '—';
+  const fmtD = (v, unit, fecha) => v
+    ? `${v}<br><span style="font-size:10px;color:var(--muted)">${unit} · ${fmtDateES(fecha)}</span>`
+    : '—';
+  document.getElementById('bio-peso').innerHTML        = fmtD(latestPeso,           'kg', withPeso[0]?.fecha);
   document.getElementById('bio-imc').innerHTML         = imcHtml;
-  document.getElementById('bio-cintura').innerHTML     = fmt(latest.cintura,           'cm');
-  document.getElementById('bio-cadera').innerHTML      = fmt(latest.cadera,            'cm');
-  document.getElementById('bio-pantorrilla').innerHTML = fmt(latest.pantorrilla,       'cm');
-  document.getElementById('bio-grasa-pct').innerHTML   = fmt(latestComp.grasa_pct,     '%');
-  document.getElementById('bio-musculo').innerHTML     = fmt(latestComp.musculo_kg,    'kg');
-  document.getElementById('bio-grasa-visc').innerHTML  = fmt(latestComp.grasa_visc,   'niv');
+  document.getElementById('bio-cintura').innerHTML     = fmtD(latest.cintura,       'cm', latest.fecha);
+  document.getElementById('bio-cadera').innerHTML      = fmtD(latest.cadera,        'cm', latest.fecha);
+  document.getElementById('bio-pantorrilla').innerHTML = fmtD(latest.pantorrilla,   'cm', latest.fecha);
+  document.getElementById('bio-grasa-pct').innerHTML   = fmtD(latestComp.grasa_pct,  '%', latestComp.fecha);
+  document.getElementById('bio-musculo').innerHTML     = fmtD(latestComp.musculo_kg, 'kg', latestComp.fecha);
+  document.getElementById('bio-grasa-visc').innerHTML  = fmtD(latestComp.grasa_visc,'niv', latestComp.fecha);
 
   renderBodyChart('peso');
   renderBodyTable();
@@ -2860,7 +2882,7 @@ function renderBodyChart(metric) {
     t.classList.toggle('active', t.dataset.metric === metric);
   });
   const data = S.medidas.filter(m => m[metric] !== null).sort((a,b) => a.fecha.localeCompare(b.fecha));
-  const labels = data.map(m => m.fecha.slice(5));
+  const labels = data.map(m => fmtDateES(m.fecha));
   const values = data.map(m => m[metric]);
 
   if (S.bodyChart) { S.bodyChart.destroy(); S.bodyChart = null; }
@@ -2902,7 +2924,7 @@ function renderBodyTable() {
     </div>
     ${sorted.map(m => `
       <div class="body-hist-row">
-        <div>${m.fecha.slice(5)}</div>
+        <div>${fmtDateES(m.fecha)}</div>
         <div>${m.peso !== null ? m.peso+'kg' : '—'}</div>
         <div>${val(m.cintura)}</div>
         <div>${val(m.cadera)}</div>
