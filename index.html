@@ -2912,17 +2912,29 @@ function renderBodyChart(metric) {
 
 function renderBodyTable() {
   const tbl = document.getElementById('body-hist-tbl');
-  const sorted = [...S.medidas].sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0, 30);
-  if (!sorted.length) {
+  if (!S.medidas.length) {
     tbl.innerHTML = `<div class="empty-st"><div class="e-icon">📏</div><p>Sin registros aún</p></div>`;
     return;
   }
+  // Agrupa por fecha, fusiona campos
+  const byDate = {};
+  for (const m of S.medidas) {
+    if (!byDate[m.fecha]) byDate[m.fecha] = { fecha: m.fecha, peso:null, cintura:null, cadera:null, pantorrilla:null, grasa_pct:null, musculo_kg:null };
+    const r = byDate[m.fecha];
+    if (m.peso        !== null) r.peso        = m.peso;
+    if (m.cintura     !== null) r.cintura     = m.cintura;
+    if (m.cadera      !== null) r.cadera      = m.cadera;
+    if (m.pantorrilla !== null) r.pantorrilla = m.pantorrilla;
+    if (m.grasa_pct   !== null) r.grasa_pct   = m.grasa_pct;
+    if (m.musculo_kg  !== null) r.musculo_kg  = m.musculo_kg;
+  }
+  const merged = Object.values(byDate).sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0, 30);
   const val = v => v !== null ? v : '—';
   tbl.innerHTML = `
     <div class="body-hist-row header">
       <div>Fecha</div><div>Peso</div><div>Cintura</div><div>Cadera</div><div>Pantorr.</div>
     </div>
-    ${sorted.map(m => `
+    ${merged.map(m => `
       <div class="body-hist-row">
         <div>${fmtDateES(m.fecha)}</div>
         <div>${m.peso !== null ? m.peso+'kg' : '—'}</div>
