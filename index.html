@@ -2053,7 +2053,7 @@ function editTodayWorkout() {
   };
   renderWorkout();
   showScreen('workout');
-  if (!STMR.iv) startSessionTimer(); // retoma si no hay timer activo
+  if (!resumeSessionTimerIfToday()) startSessionTimer();
 }
 
 async function deleteTodayWorkout() {
@@ -2090,26 +2090,44 @@ function startWorkout() {
   };
   renderWorkout();
   showScreen('workout');
-  startSessionTimer();
+  if (!resumeSessionTimerIfToday()) startSessionTimer();
 }
 
-function startSessionTimer() {
+function startSessionTimer(resumeTs) {
   stopSessionTimer();
-  STMR.start = Date.now();
+  STMR.start = resumeTs || Date.now();
+  localStorage.setItem('gfit_tmr', JSON.stringify({ start: STMR.start, date: todayStr() }));
+  tickSessionTimer();
+  STMR.iv = setInterval(tickSessionTimer, 1000);
+}
+
+function tickSessionTimer() {
   const el = document.getElementById('session-timer');
-  if (el) { el.textContent = '00:00'; el.classList.remove('done'); }
-  STMR.iv = setInterval(() => {
-    const el = document.getElementById('session-timer');
-    if (!el) return;
-    const secs = Math.floor((Date.now() - STMR.start) / 1000);
-    const m = String(Math.floor(secs / 60)).padStart(2, '0');
-    const s = String(secs % 60).padStart(2, '0');
-    el.textContent = `${m}:${s}`;
-  }, 1000);
+  if (!el || !STMR.start) return;
+  el.classList.remove('done');
+  const secs = Math.floor((Date.now() - STMR.start) / 1000);
+  const m = String(Math.floor(secs / 60)).padStart(2, '0');
+  const s = String(secs % 60).padStart(2, '0');
+  el.textContent = `${m}:${s}`;
 }
 
 function stopSessionTimer() {
   if (STMR.iv) { clearInterval(STMR.iv); STMR.iv = null; }
+}
+
+function clearSessionTimer() {
+  stopSessionTimer();
+  STMR.start = null;
+  localStorage.removeItem('gfit_tmr');
+}
+
+function resumeSessionTimerIfToday() {
+  const saved = JSON.parse(localStorage.getItem('gfit_tmr') || 'null');
+  if (saved?.date === todayStr()) {
+    startSessionTimer(saved.start);
+    return true;
+  }
+  return false;
 }
 
 function sessionElapsedMin() {
@@ -2285,7 +2303,7 @@ function scheduleAutoSave() {
 }
 
 function confirmExit() {
-  if (confirm('¿Salir? Los datos no guardados se perderán.')) { skipTimer(); stopSessionTimer(); showScreen('dashboard'); }
+  if (confirm('¿Salir? Los datos no guardados se perderán.')) { skipTimer(); clearSessionTimer(); showScreen('dashboard'); }
 }
 
 async function handleSave(silent = false) {
@@ -2294,7 +2312,7 @@ async function handleSave(silent = false) {
 
   // Capture duration before stopping timer
   const durMin = sessionElapsedMin();
-  if (!silent) stopSessionTimer();
+  if (!silent) clearSessionTimer();
 
   // Sync all inputs from DOM
   S.workout.exercises.forEach((ex,ei) => {
