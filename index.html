@@ -1208,8 +1208,8 @@
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
       <h1>Menú</h1>
       <div class="menu-ab-toggle">
-        <button class="mab-btn active" id="mab-a" onclick="setMenuSemana('A')">Menú A</button>
-        <button class="mab-btn"        id="mab-b" onclick="setMenuSemana('B')">Menú B</button>
+        <button class="mab-btn active" id="mab-a" onclick="setMenuSemana('1')">Menú 1</button>
+        <button class="mab-btn"        id="mab-b" onclick="setMenuSemana('2')">Menú 2</button>
       </div>
     </div>
 
@@ -1308,7 +1308,7 @@ const S = {
   medidas:      [],
   bodyChart:    null,
   altura:       parseFloat(localStorage.getItem('gfit_altura') || '0'),
-  menuSemana:   localStorage.getItem('gfit_menu_sem') || 'A',
+  menuSemana:   (() => { const v = localStorage.getItem('gfit_menu_sem'); return (v==='A'||v==='1') ? '1' : (v==='B'||v==='2') ? '2' : '1'; })(),
   menuView:     'hoy',
 };
 
@@ -2535,26 +2535,26 @@ function renderChart(labels, data) {
 
 // Desayuno y merienda son iguales en ambos menús
 const _DE = [
+  'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con huevo y espinacas, y 2 cdas aceite/100 g aguacate\n1 pieza fruta',
+  'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con 50 g queso, y 2 cdas aceite/100 g aguacate\n1 pieza fruta',
+  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y 20 g frutos secos',
   'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con huevo y espinacas, y 1 cda aceite/50 g aguacate\n1 pieza fruta',
+  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y 20 g frutos secos',
   'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con 50 g queso, y 1 cda aceite/50 g aguacate\n1 pieza fruta',
-  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y ½ puñado frutos secos',
-  'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con huevo y espinacas, y 1 cda aceite/50 g aguacate\n1 pieza fruta',
-  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y ½ puñado frutos secos',
-  'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con 50 g queso, y 1 cda aceite/50 g aguacate\n1 pieza fruta',
-  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y ½ puñado frutos secos',
+  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y 20 g frutos secos',
 ];
 const _ME = [
-  'Leche con cacao*\n1 puñado (20 g) frutos secos',
-  'Galletas de avena y chocolate (3 u)\n1 puñado (20 g) frutos secos',
-  'Leche con cacao*\n1 puñado (20 g) frutos secos',
-  'Galletas de avena y chocolate (3 u)\n1 puñado (20 g) frutos secos',
-  'Yogur natural con 20 g frutos secos y 1 pieza fruta',
-  'Leche con cacao*\n1 puñado (20 g) frutos secos',
+  'Leche con cacao*\n40 g frutos secos y pipas calabaza',
+  'Yogur natural con 1 pieza fruta + 40 g frutos secos',
+  'Leche con cacao*\n40 g frutos secos y pipas calabaza',
+  'Galletas de avena y chocolate (3 u)\n40 g frutos secos',
+  'Yogur natural con 1 pieza fruta + 40 g frutos secos',
+  'Leche con cacao*\n40 g frutos secos y pipas calabaza',
   'Brownie casero',
 ];
 
 const MENUS = {
-  A: {
+  '1': {
     de: _DE,
     al: [
       'Tomate aliñado con sardinas\nGarbanzos con espinacas\n1 fruta cítrica (mandarina, naranja)',
@@ -2567,20 +2567,20 @@ const MENUS = {
     ],
     me: _ME,
     ce: [
-      'Brócoli salteado al ajillo\nSalmón a la plancha\n1 pieza fruta',
+      'Brócoli salteado al ajillo\nSalmón a la plancha\nPatatas prebióticas\n1 pieza fruta',
       'Zanahoria en bastoncitos con hummus\nTostada integral con aguacate, huevo duro y semillas\n1 pieza fruta',
-      'Verduras asadas al gusto\nMuslo de pollo al horno con patata\n1 pieza fruta',
-      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 20 g anacardos/almendras y 10 g pipas calabaza',
+      'Fajita de pollo con verdura\n1 pieza fruta',
+      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 30 g anacardos/almendras y 10 g pipas calabaza',
       'Coliflor con cúrcuma\nTosta con pechuga y parmesano\n1 pieza fruta',
-      'Ensalada con atún, huevo cocido, pimiento rojo, aceitunas, espinacas y canónigo, tomate y aceite\n1 pieza fruta',
-      'Huevos revueltos con calabacín\nMayonesa de aguacate y cilantro\n1 pieza fruta',
+      'Ensalada de canónigos con atún, huevo cocido, aceitunas, patata, tomate y aceite\n1 pieza fruta',
+      'Huevos revueltos con calabacín\nMayonesa de aguacate y cilantro\nPan\n1 pieza fruta',
     ],
   },
-  B: {
+  '2': {
     de: _DE,
     al: [
       'Potaje de lentejas con calabaza, cebolla, zanahoria y espinacas\n1 fruta cítrica (mandarina, naranja)',
-      'Ensalada de espinacas, tomate y cebolla\nPollo al chilindrón\nPatatas prebióticas\n1 pieza fruta',
+      'Ensalada de espinacas, tomate y cebolla\nPollo al chilindrón\nGuarnición de arroz\n1 pieza fruta',
       'Potaje de lentejas con calabaza, cebolla, zanahoria y espinacas\n1 fruta cítrica (mandarina, naranja)',
       'Zanahoria en bastoncitos con hummus\nSardinas a la plancha\nPatatas prebióticas\n1 pieza fruta',
       'Sopa de pollo con garbanzos, jengibre y cúrcuma\n1 fruta cítrica (mandarina, naranja)',
@@ -2589,13 +2589,13 @@ const MENUS = {
     ],
     me: _ME,
     ce: [
-      'Ensalada de brotes tiernos, zanahoria, cebolla y aceitunas\nDorada a la plancha\n1 pieza fruta',
-      'Tomate con aguacate\nHuevos revueltos con setas\n1 pieza fruta',
-      'Alcachofas con gambas al limón\nPechuga a la plancha\n1 pieza fruta',
-      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 20 g pistachos y 10 g pipas calabaza',
+      'Ensalada de brotes tiernos, zanahoria, cebolla y aceitunas\nDorada a la plancha\nGuarnición de patata/boniato\n1 pieza fruta',
+      'Tomate con aguacate\nTostada de huevos revueltos\n1 pieza fruta',
+      'Alcachofas con gambas al limón\nTosta con pechuga y parmesano\n1 pieza fruta',
+      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 30 g anacardos/almendras y 10 g pipas calabaza',
       'Pizza fajita de barbacoa\n1 pieza fruta',
-      'Espárragos salteados\nPescado blanco a la plancha\nMayonesa de aguacate y cilantro\n1 pieza fruta',
-      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 20 g pistachos y 10 g pipas calabaza',
+      'Pescado blanco a la plancha\nPuré de patata\nMayonesa de aguacate y cilantro\n1 pieza fruta',
+      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 30 g anacardos/almendras y 10 g pipas calabaza',
     ],
   },
 };
@@ -2627,8 +2627,8 @@ function setMenuView(view) {
 
 function renderMenuScreen() {
   // A/B toggle
-  document.getElementById('mab-a').className = 'mab-btn' + (S.menuSemana === 'A' ? ' active' : '');
-  document.getElementById('mab-b').className = 'mab-btn' + (S.menuSemana === 'B' ? ' active' : '');
+  document.getElementById('mab-a').className = 'mab-btn' + (S.menuSemana === '1' ? ' active' : '');
+  document.getElementById('mab-b').className = 'mab-btn' + (S.menuSemana === '2' ? ' active' : '');
   // View tabs
   document.getElementById('view-hoy').classList.toggle('active', S.menuView === 'hoy');
   document.getElementById('view-semana').classList.toggle('active', S.menuView === 'semana');
