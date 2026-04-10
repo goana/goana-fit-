@@ -332,6 +332,14 @@
     }
     .series-col-headers .col-chk { width: 30px; flex-shrink: 0; }
 
+    .prev-ref {
+      display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+      padding: 4px 14px 6px; font-size: 11px;
+      background: rgba(163,230,53,.04); border-top: 1px dashed rgba(163,230,53,.15);
+    }
+    .prev-lbl { color: var(--accent); font-weight: 600; white-space: nowrap; }
+    .prev-vals { color: var(--muted); letter-spacing: .2px; }
+
     /* series rows */
     .series-row {
       display: flex; align-items: center; gap: 8px;
@@ -1978,6 +1986,21 @@ function getLastWeights() {
   return w;
 }
 
+function getLastSession() {
+  const today = todayStr();
+  const result = {};
+  EXERCISES.forEach(ex => {
+    const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha !== today && s.completada);
+    if (!rows.length) { result[ex.name] = null; return; }
+    const lastDate = rows.map(r => r.fecha).sort().reverse()[0];
+    result[ex.name] = {
+      date: lastDate,
+      series: rows.filter(r => r.fecha === lastDate).sort((a,b) => a.serie - b.serie),
+    };
+  });
+  return result;
+}
+
 // ═══════════════════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════
@@ -2159,12 +2182,26 @@ function renderWorkout() {
 
   const list = document.getElementById('ex-list');
   list.innerHTML = '';
+  const lastSess = getLastSession();
 
   S.workout.exercises.forEach((ex, ei) => {
     const def = EXERCISES[ei];
     const vUrl = (typeof VIDEO_URLS!=='undefined' && VIDEO_URLS[ex.name]) ? VIDEO_URLS[ex.name] : null;
     const doneCnt = ex.series.filter(s=>s.done).length;
     const allDone = doneCnt===ex.sets;
+    const prev = lastSess[ex.name];
+
+    // Build previous session reference string
+    let prevHtml = '';
+    if (prev) {
+      const dateLabel = fmtDateES(prev.date);
+      const seriesTxt = prev.series.map(s => {
+        if (ex.unit === 'seg') return `S${s.serie}:${s.reps}s`;
+        if (ex.unit)           return `S${s.serie}:${s.reps}×lado`;
+        return `S${s.serie}:${s.peso_kg > 0 ? s.peso_kg+'kg·' : ''}${s.reps}r`;
+      }).join('  ');
+      prevHtml = `<div class="prev-ref"><span class="prev-lbl">Anterior ${dateLabel}</span><span class="prev-vals">${seriesTxt}</span></div>`;
+    }
 
     const card = document.createElement('div');
     card.className = 'ex-card' + (allDone?' done':'');
@@ -2189,6 +2226,7 @@ function renderWorkout() {
         <span class="col-lbl">${ex.unit || 'Reps'}</span>
         <span class="col-chk"></span>
       </div>
+      ${prevHtml}
       ${ex.series.map((s,si) => `
         <div class="series-row${s.done?' s-done':''}" id="sr-${ei}-${si}">
           <span class="s-lbl">S${si+1}</span>
