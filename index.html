@@ -2544,19 +2544,9 @@ function selectFatigue(v) {
 async function submitPostWorkout() {
   document.getElementById('pw-overlay').style.display = 'none';
   document.getElementById('pw-modal').style.display = 'none';
-  const note = document.getElementById('pw-note').value.trim();
-  // Patch first row of today's session with fatigue + note
-  if (_pwFatigue || note) {
-    try {
-      const data = await api('GET', '/values/sesiones!A:A');
-      const rows = data.values || [];
-      const today = S.workout?.date || todayStr();
-      const firstIdx = rows.findIndex((r, i) => i > 0 && r[0] === today);
-      if (firstIdx > 0) {
-        await api('PUT', `/values/sesiones!J${firstIdx+1}:K${firstIdx+1}`,
-          { values: [[_pwFatigue ?? '', note]] }, 'valueInputOption=RAW');
-      }
-    } catch(_) {}
+  if (S.workout) {
+    S.workout._pwFatigue = _pwFatigue ?? '';
+    S.workout._pwNote    = (document.getElementById('pw-note').value || '').trim();
   }
   await handleSave();
 }
@@ -2607,7 +2597,9 @@ async function handleSave(silent = false) {
       ex.series[0]?.done ? (ex.series[0].weight ?? 0) : '',
       ex.series[1]?.done ? (ex.series[1].weight ?? 0) : '',
       ex.series[2]?.done ? (ex.series[2].weight ?? 0) : '',
-      idx === 0 ? durMin : '',   // duración solo en la primera fila
+      idx === 0 ? durMin : '',              // duración solo en la primera fila
+      idx === 0 ? (S.workout._pwFatigue ?? '') : '',  // cansancio
+      idx === 0 ? (S.workout._pwNote    ?? '') : '',  // nota
     ]);
 
   try {
