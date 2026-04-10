@@ -1490,7 +1490,7 @@ const S = {
 };
 
 const TMR = { running: false, paused: false, secs: 90, iv: null, label: '' };
-const STMR = { start: null, iv: null }; // session timer
+const STMR = { start: null, offset: 0, iv: null }; // session timer
 
 // ═══════════════════════════════════════════════════════════
 // PHASE LOGIC
@@ -2256,10 +2256,14 @@ function startWorkout() {
   updateSessionTimerBtn();
 }
 
+function _saveTmrState() {
+  localStorage.setItem('gfit_tmr', JSON.stringify({ start: STMR.start, offset: STMR.offset, date: todayStr() }));
+}
+
 function startSessionTimer(resumeTs) {
   stopSessionTimer();
   STMR.start = resumeTs || Date.now();
-  localStorage.setItem('gfit_tmr', JSON.stringify({ start: STMR.start, date: todayStr() }));
+  _saveTmrState();
   tickSessionTimer();
   STMR.iv = setInterval(tickSessionTimer, 1000);
   updateSessionTimerBtn();
@@ -2275,9 +2279,11 @@ async function saveFromTimer() {
 
 function toggleSessionTimer() {
   if (STMR.start) {
-    clearSessionTimer();
-    const el = document.getElementById('session-timer');
-    if (el) { el.classList.remove('done'); el.textContent = '00:00'; }
+    // Pause: accumulate elapsed into offset, keep display
+    STMR.offset += Math.floor((Date.now() - STMR.start) / 1000);
+    stopSessionTimer();
+    STMR.start = null;
+    _saveTmrState();
   } else {
     startSessionTimer();
   }
@@ -2298,7 +2304,7 @@ function tickSessionTimer() {
   const el = document.getElementById('session-timer');
   if (!el || !STMR.start) return;
   el.classList.remove('done');
-  const secs = Math.floor((Date.now() - STMR.start) / 1000);
+  const secs = STMR.offset + Math.floor((Date.now() - STMR.start) / 1000);
   const m = String(Math.floor(secs / 60)).padStart(2, '0');
   const s = String(secs % 60).padStart(2, '0');
   el.textContent = `${m}:${s}`;
@@ -2310,22 +2316,34 @@ function stopSessionTimer() {
 
 function clearSessionTimer() {
   stopSessionTimer();
-  STMR.start = null;
+  STMR.start = null; STMR.offset = 0;
   localStorage.removeItem('gfit_tmr');
 }
 
 function resumeSessionTimerIfToday() {
   const saved = JSON.parse(localStorage.getItem('gfit_tmr') || 'null');
   if (saved?.date === todayStr()) {
-    startSessionTimer(saved.start);
+    STMR.offset = saved.offset || 0;
+    if (saved.start) {
+      startSessionTimer(saved.start);
+    } else {
+      // Was paused — show accumulated time without ticking
+      updateSessionTimerBtn();
+      const el = document.getElementById('session-timer');
+      if (el) {
+        const m = String(Math.floor(STMR.offset / 60)).padStart(2, '0');
+        const s = String(STMR.offset % 60).padStart(2, '0');
+        el.textContent = `${m}:${s}`;
+      }
+    }
     return true;
   }
   return false;
 }
 
 function sessionElapsedMin() {
-  if (!STMR.start) return 0;
-  return Math.round((Date.now() - STMR.start) / 60000);
+  const secs = STMR.offset + (STMR.start ? Math.floor((Date.now() - STMR.start) / 1000) : 0);
+  return Math.round(secs / 60);
 }
 
 function renderWorkout() {
@@ -2492,7 +2510,7 @@ function toggleSerie(ei, si) {
   prog.textContent = all ? '✅ Completado' : `Serie ${done} de ${ex.sets}`;
   prog.className   = 'ex-prog' + (all?' all-done':'');
 
-  if (s.done) startTimer(`${ex.name} · S${si+1}`);
+  if (s.done) try { startTimer(`${ex.name} · S${si+1}`); } catch(_) {}
   checkSave();
 }
 
