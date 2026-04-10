@@ -2699,7 +2699,6 @@ function startTimer(label) {
   const ft = document.getElementById('floating-timer');
   ft.classList.remove('hidden');
   document.getElementById('tmr-lbl').textContent = label;
-  document.getElementById('tmr-pause-btn').textContent = '⏸';
   updTimerUI();
   TMR.iv = setInterval(timerTick, 1000);
 }
@@ -2733,14 +2732,12 @@ function updTimerUI() {
 
 function togglePause() {
   TMR.paused = !TMR.paused;
-  document.getElementById('tmr-pause-btn').textContent = TMR.paused ? '▶' : '⏸';
   updTimerUI();
 }
 
 function resetTimer() {
   clearInterval(TMR.iv);
   Object.assign(TMR, { secs:90, paused:false, running:true });
-  document.getElementById('tmr-pause-btn').textContent = '⏸';
   updTimerUI();
   TMR.iv = setInterval(timerTick, 1000);
 }
