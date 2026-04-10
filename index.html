@@ -268,6 +268,11 @@
     .workout-meta { padding: 12px 18px 6px; }
     .workout-date-lbl { font-size: 15px; font-weight: 600; text-transform: capitalize; }
     .workout-hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .session-timer {
+      font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums;
+      color: var(--accent); letter-spacing: .5px; margin-top: 2px;
+    }
+    .session-timer.done { color: var(--muted); }
 
     .ex-list { padding: 0 14px; }
 
@@ -897,7 +902,10 @@
     </div>
     <div class="workout-meta">
       <div class="workout-date-lbl" id="workout-date-lbl"></div>
-      <div class="workout-hint">9 ejercicios · 3 series · descansa 90 s entre series</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div class="workout-hint">9 ejercicios · 3 series · descansa 90 s entre series</div>
+        <div class="session-timer" id="session-timer">00:00</div>
+      </div>
     </div>
     <div class="ex-list" id="ex-list"></div>
     <div class="workout-footer">
@@ -1381,6 +1389,7 @@ const S = {
 };
 
 const TMR = { running: false, paused: false, secs: 90, iv: null, label: '' };
+const STMR = { start: null, iv: null }; // session timer
 
 // ═══════════════════════════════════════════════════════════
 // PHASE LOGIC
@@ -1802,8 +1811,8 @@ async function ensureSheets() {
         { values:[['fecha','peso_kg','cintura_cm','cadera_cm','pantorrilla_cm','grasa_pct','musculo_kg','grasa_visc','metabolismo_kcal']] }, 'valueInputOption=RAW');
   }
   // Always update sesiones header (handles migration from old 6-col format)
-  await api('PUT', '/values/sesiones!A1:H1',
-    { values:[['fecha','ejercicio','reps_1','reps_2','reps_3','peso_1','peso_2','peso_3']] }, 'valueInputOption=RAW');
+  await api('PUT', '/values/sesiones!A1:I1',
+    { values:[['fecha','ejercicio','reps_1','reps_2','reps_3','peso_1','peso_2','peso_3','duracion_min']] }, 'valueInputOption=RAW');
 }
 
 // Delete all rows for a given date from "sesiones" sheet
@@ -1876,7 +1885,7 @@ async function loadConfig() {
 
 async function appendRows(rows) {
   if (S.offline) { queueAction({ type:'append', rows }); return; }
-  await api('POST', '/values/sesiones!A:H:append', { values: rows },
+  await api('POST', '/values/sesiones!A:I:append', { values: rows },
     'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
   // Local cache is already updated optimistically in handleSave()
 }
@@ -2080,6 +2089,31 @@ function startWorkout() {
   };
   renderWorkout();
   showScreen('workout');
+  startSessionTimer();
+}
+
+function startSessionTimer() {
+  stopSessionTimer();
+  STMR.start = Date.now();
+  const el = document.getElementById('session-timer');
+  if (el) { el.textContent = '00:00'; el.classList.remove('done'); }
+  STMR.iv = setInterval(() => {
+    const el = document.getElementById('session-timer');
+    if (!el) return;
+    const secs = Math.floor((Date.now() - STMR.start) / 1000);
+    const m = String(Math.floor(secs / 60)).padStart(2, '0');
+    const s = String(secs % 60).padStart(2, '0');
+    el.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+function stopSessionTimer() {
+  if (STMR.iv) { clearInterval(STMR.iv); STMR.iv = null; }
+}
+
+function sessionElapsedMin() {
+  if (!STMR.start) return 0;
+  return Math.round((Date.now() - STMR.start) / 60000);
 }
 
 function renderWorkout() {
@@ -2250,12 +2284,16 @@ function scheduleAutoSave() {
 }
 
 function confirmExit() {
-  if (confirm('¿Salir? Los datos no guardados se perderán.')) { skipTimer(); showScreen('dashboard'); }
+  if (confirm('¿Salir? Los datos no guardados se perderán.')) { skipTimer(); stopSessionTimer(); showScreen('dashboard'); }
 }
 
 async function handleSave(silent = false) {
   const btn = document.getElementById('save-btn');
   if (!silent) { btn.disabled = true; btn.textContent = 'GUARDANDO...'; }
+
+  // Capture duration before stopping timer
+  const durMin = sessionElapsedMin();
+  if (!silent) stopSessionTimer();
 
   // Sync all inputs from DOM
   S.workout.exercises.forEach((ex,ei) => {
@@ -2267,11 +2305,11 @@ async function handleSave(silent = false) {
     });
   });
 
-  // NEW FORMAT: 1 row per exercise — fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3
+  // NEW FORMAT: 1 row per exercise — fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3|duracion_min
   // Only include exercises with at least one completed series; undone series saved as ''
   const rows = S.workout.exercises
     .filter(ex => ex.series.some(s => s.done))
-    .map(ex => [
+    .map((ex, idx) => [
       S.workout.date, ex.name,
       ex.series[0]?.done ? (ex.series[0].reps ?? ex.targetReps) : '',
       ex.series[1]?.done ? (ex.series[1].reps ?? ex.targetReps) : '',
@@ -2279,6 +2317,7 @@ async function handleSave(silent = false) {
       ex.series[0]?.done ? (ex.series[0].weight ?? 0) : '',
       ex.series[1]?.done ? (ex.series[1].weight ?? 0) : '',
       ex.series[2]?.done ? (ex.series[2].weight ?? 0) : '',
+      idx === 0 ? durMin : '',   // duración solo en la primera fila
     ]);
 
   try {
@@ -2312,7 +2351,11 @@ async function handleSave(silent = false) {
   if (!silent) {
     btn.disabled = false; btn.textContent = 'GUARDAR';
     document.getElementById('share-btn').style.display = '';
-    toast('Sesión guardada', 'success');
+    // Mostrar duración en el timer y en el toast
+    const timerEl = document.getElementById('session-timer');
+    if (timerEl) timerEl.classList.add('done');
+    const durMsg = durMin > 0 ? ` · ${durMin} min` : '';
+    toast('Sesión guardada' + durMsg, 'success');
   } else {
     document.getElementById('share-btn').style.display = '';
   }
