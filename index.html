@@ -261,7 +261,8 @@
     }
     .cal-day.empty { visibility: hidden; }
     .cal-day.today { border: 1.5px solid var(--accent); color: var(--accent); font-weight: 600; }
-    .cal-day.trained { background: var(--accent); color: #0f0f0f; font-weight: 700; }
+    .cal-day.trained { background: var(--accent); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.trained:active { opacity: .75; }
     .cal-day.trained.today { background: var(--accent); border-color: transparent; }
 
     /* ── Workout Screen ────────────────────────────────────── */
@@ -1385,6 +1386,16 @@
 
 </div><!-- #app -->
 
+<!-- SESSION SHEET -->
+<div id="session-sheet-overlay" onclick="closeSessionSheet()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200"></div>
+<div id="session-sheet" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:201;background:var(--card2);border-radius:16px 16px 0 0;max-height:80vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:16px 16px 8px">
+    <div id="session-sheet-title" style="font-size:16px;font-weight:700"></div>
+    <button onclick="closeSessionSheet()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px">×</button>
+  </div>
+  <div id="session-sheet-body" style="padding:0 0 8px"></div>
+</div>
+
 <!-- FLOATING TIMER -->
 <div id="floating-timer" class="hidden">
   <div class="tmr-svg-wrap">
@@ -2119,6 +2130,7 @@ function renderCal() {
     const e  = document.createElement('div');
     e.className = 'cal-day' + (trained.has(ds)?' trained':'') + (ds===todayS?' today':'');
     e.textContent = d;
+    if (trained.has(ds)) e.onclick = () => openSessionSheet(ds);
     grid.appendChild(e);
   }
 }
@@ -2791,6 +2803,22 @@ function renderSessionList() {
 function toggleSessionItem(date) {
   const item = document.getElementById(`sitem-${date}`);
   item.classList.toggle('open');
+}
+
+function openSessionSheet(date) {
+  const rows = S.sessions.filter(s => s.fecha === date);
+  if (!rows.length) return;
+  const dur = rows.find(r => r.duracion_min > 0);
+  const durTxt = dur ? ` · ${dur.duracion_min} min` : '';
+  document.getElementById('session-sheet-title').textContent = fmtDateES(date) + durTxt;
+  document.getElementById('session-sheet-body').innerHTML = renderSessionDetail(date, rows);
+  document.getElementById('session-sheet-overlay').style.display = '';
+  document.getElementById('session-sheet').style.display = '';
+}
+
+function closeSessionSheet() {
+  document.getElementById('session-sheet-overlay').style.display = 'none';
+  document.getElementById('session-sheet').style.display = 'none';
 }
 
 function renderSessionDetail(date, rows) {
