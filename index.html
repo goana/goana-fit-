@@ -2132,13 +2132,20 @@ function navCal(dir) { S.calDate.setMonth(S.calDate.getMonth()+dir); renderCal()
 function editTodayWorkout() {
   const date = todayStr();
   const saved = S.sessions.filter(s => s.fecha === date);
+  const lw = getLastWeights(); // fallback: previous session weights
   S.workout = {
     date, editing: true, dirty: false,
     exercises: EXERCISES.map(ex => ({
       name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
       series: Array.from({length: ex.sets}, (_, i) => {
         const row = saved.find(s => s.ejercicio === ex.name && s.serie === i + 1);
-        return { weight: row ? row.peso_kg : 0, reps: row ? row.reps : ex.reps, done: row ? row.completada : false };
+        const prevPeso = lw[ex.name]?.[i+1]?.peso || 0;
+        const prevReps = lw[ex.name]?.[i+1]?.reps || ex.reps;
+        return {
+          weight: row ? (row.peso_kg || prevPeso) : prevPeso,
+          reps:   row ? row.reps : prevReps,
+          done:   row ? row.completada : false,
+        };
       }),
     })),
   };
