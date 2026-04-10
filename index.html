@@ -728,6 +728,12 @@
       padding: 11px 14px;
       font-size: 14px; line-height: 1.65; color: var(--text);
     }
+    a.recipe-link {
+      color: inherit; text-decoration: none;
+      border-bottom: 1px dashed rgba(163,230,53,.5);
+      transition: color var(--t), border-color var(--t);
+    }
+    a.recipe-link:hover { color: var(--accent); border-color: var(--accent); }
 
     .week-day-block {
       background: var(--card); border: 1px solid var(--border);
@@ -2603,6 +2609,40 @@ const MENUS = {
 const MEAL_LABELS = { de:'Desayuno', al:'Almuerzo', me:'Merienda', ce:'Cena' };
 const DAY_NAMES   = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 
+const RECIPE_LINKS = {
+  'Gachas de avena y proteína':                          'https://drive.google.com/file/d/1sap4097x_z_y0XWD3e5kVk4nDkijfhJ7/view?usp=sharing',
+  'Champiñones al ajillo':                               'https://www.directoalpaladar.com/recetas-de-legumbres-y-verduras/champinones-al-ajillo-receta',
+  'Ensalada de pasta de lenteja roja':                   'https://drive.google.com/file/d/1qW7zPE-Xr6vKGQP4FnSbakV5WFa2vWzR/view?usp=sharing',
+  'Ensalada de lentejas con pimientos, cottage y mostaza con miel': 'https://drive.google.com/file/d/10X99vR2-3F7P__uGa9wNTDoJ1jjDqBmb/view?usp=sharing',
+  'Salteado de ternera con pimientos y arroz integral':  'https://drive.google.com/file/d/1bdC7j8WFlmY5nsf4IjiIOuREClyP-P5R/view?usp=sharing',
+  'Espaguetis integrales con gambas':                    'https://drive.google.com/file/d/1GXIBZa3VNYdkbUbS0uZIh_-Fh4u67_sM/view?usp=sharing',
+  'Garbanzos con espinacas':                             'https://drive.google.com/file/d/1XvZs_rP0oVbbAKsMlGHZSofBavC2IOl5/view?usp=sharing',
+  'Dorada al horno con patata, cebolla y tomate':        'https://drive.google.com/file/d/1nS9Db4oN7Nyp7JKEBLtgVaXrmGRWfq-H/view?usp=sharing',
+  'Galletas de avena y chocolate (3 u)':                 'https://drive.google.com/file/d/1J-C_-3cXcZwPUJooLHvWXu6fE_UyxMh7/view?usp=sharing',
+  'Brownie casero':                                      'https://drive.google.com/file/d/1_ErO8x9z9OhOvMsD_d1Psczm0Cjz4y9i/view?usp=sharing',
+  'Brócoli salteado al ajillo':                          'https://drive.google.com/file/d/1o47EMgZgWS8vjvnLAPhJQ0kOOZBwWSoz/view?usp=sharing',
+  'Fajita de pollo con verdura':                         'https://drive.google.com/file/d/1TJ_EDxJTVN5YYHx0X92bAZvF_q1ngwaU/view?usp=sharing',
+  'Coliflor con cúrcuma':                                'https://drive.google.com/file/d/1dva8Hw9FGkx70poYi-aSCGe_OoVkO9fx/view?usp=sharing',
+  'Tosta con pechuga y parmesano':                       'https://drive.google.com/file/d/1misBpNLXh_j4rAz17oIM5H3dhKuJnoS5/view?usp=sharing',
+  'Mayonesa de aguacate y cilantro':                     'https://drive.google.com/file/d/1yMQ-a1lHw5pDs4zFwreurwnRGXGD1aiu/view?usp=sharing',
+  'Patatas prebióticas':                                 'https://drive.google.com/file/d/1o3kbppINtEOgYrpcwC23432WkIi2rzt5/view?usp=sharing',
+  'Tostada integral con aguacate, huevo duro y semillas':'https://drive.google.com/file/d/1mAFYgG8MlDGHsxJpzGFtVyIEilMDKVvj/view?usp=sharing',
+  'Sopa de pollo con garbanzos, jengibre y cúrcuma':     'https://drive.google.com/file/d/1bNKqvmTVZxcdBDqGOqanoAT6XAyDLEUz/view?usp=sharing',
+  'Pasta con huevo cocido y verduras':                   'https://drive.google.com/file/d/1suZR5lgSEBm4HkBKfmDxvcPeHECHgxwG/view?usp=sharing',
+  'Pollo al chilindrón':                                 'https://drive.google.com/file/d/1D67hBBTQ0x6b-80fxLkugZQ4LKHpXblu/view?usp=sharing',
+  'Sardinas a la plancha':                               'https://drive.google.com/file/d/1nKGWh7foeyzHJycI1H3vHkCmAtJZANaP/view?usp=sharing',
+  'Guiso de ternera y patata':                           'https://drive.google.com/file/d/12ymN6Sb9rW_MY7az0KBELnlQpVQldFrc/view?usp=sharing',
+  'Alcachofas con gambas al limón':                      'https://drive.google.com/file/d/1OrZvyBsGjV1w7FhOLLks4qewTJZFyWq7/view?usp=sharing',
+  'Pizza fajita de barbacoa':                            'https://drive.google.com/file/d/1xDZ9uX9QacxJ7Nvnd3rgAimy6X_UrHU0/view?usp=sharing',
+  'Guarnición de patata/boniato':                        'https://drive.google.com/file/d/1ioktdP_sP973S7X6scgXFi3KefL5sA9f/view?usp=sharing',
+};
+
+function linkifyLine(line) {
+  const url = RECIPE_LINKS[line.trim()];
+  if (!url) return `<span>${line}</span>`;
+  return `<a href="${url}" target="_blank" rel="noopener" class="recipe-link">${line}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left:4px;opacity:.7;vertical-align:middle"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>`;
+}
+
 function weekDayIdx() {
   const d = new Date().getDay();
   return d === 0 ? 6 : d - 1; // 0=Lun … 6=Dom
@@ -2656,7 +2696,7 @@ function renderMenuHoy(menu) {
   document.getElementById('menu-meal-cards').innerHTML =
     ['de','al','me','ce'].map(key => {
       const done  = !!checks[key];
-      const lines = menu[key][dayIdx].split('\n').map(l => `<div>${l}</div>`).join('');
+      const lines = menu[key][dayIdx].split('\n').map(l => `<div>${linkifyLine(l)}</div>`).join('');
       return `
         <div class="meal-card${done ? ' checked' : ''}">
           <div class="meal-hd">
@@ -2676,7 +2716,7 @@ function renderMenuSemana(menu) {
       ${['de','al','me','ce'].map(key => `
         <div class="week-meal-row">
           <span class="week-meal-lbl">${MEAL_LABELS[key]}</span>
-          <span class="week-meal-txt">${menu[key][i].split('\n')[0]}</span>
+          <span class="week-meal-txt">${linkifyLine(menu[key][i].split('\n')[0])}</span>
         </div>`).join('')}
     </div>`).join('');
 }
