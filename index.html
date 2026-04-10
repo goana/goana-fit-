@@ -270,9 +270,18 @@
     .workout-hint { font-size: 12px; color: var(--muted); margin-top: 2px; }
     .session-timer {
       font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums;
-      color: var(--accent); letter-spacing: .5px; margin-top: 2px;
+      color: var(--accent); letter-spacing: .5px;
     }
     .session-timer.done { color: var(--muted); }
+    .stmr-ctrl-btn {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid var(--accent); background: none;
+      color: var(--accent); font-size: 11px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: background var(--t), color var(--t);
+    }
+    .stmr-ctrl-btn.running { background: var(--accent); color: #000; }
+    .stmr-ctrl-btn.running::before { content: '⏹'; font-size: 10px; }
 
     .ex-list { padding: 0 14px; }
 
@@ -432,6 +441,12 @@
       font-size: 13px; transition: background var(--t);
     }
     .tmr-btn:hover { background: var(--border2); }
+    .tmr-save-btn {
+      width: auto; padding: 0 12px;
+      background: var(--accent); color: #000;
+      font-weight: 700; font-size: 12px; border-color: var(--accent);
+    }
+    .tmr-save-btn:hover { background: #bef264; }
 
     /* ── History ───────────────────────────────────────────── */
     .hist-pad { padding: 16px; }
@@ -946,7 +961,10 @@
       <div class="workout-date-lbl" id="workout-date-lbl"></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div class="workout-hint">9 ejercicios · 3 series · descansa 90 s entre series</div>
-        <div class="session-timer" id="session-timer">00:00</div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <button class="stmr-ctrl-btn" id="stmr-ctrl-btn" onclick="toggleSessionTimer()">▶</button>
+          <div class="session-timer" id="session-timer">00:00</div>
+        </div>
       </div>
     </div>
     <div class="ex-list" id="ex-list"></div>
@@ -1381,9 +1399,7 @@
     <div class="tmr-status running" id="tmr-status">En curso</div>
   </div>
   <div class="tmr-btns">
-    <button class="tmr-btn" id="tmr-pause-btn" onclick="togglePause()" title="Pausar/Reanudar">⏸</button>
-    <button class="tmr-btn" onclick="resetTimer()" title="Reiniciar">↺</button>
-    <button class="tmr-btn" onclick="skipTimer()"  title="Saltar">⏭</button>
+    <button class="tmr-btn tmr-save-btn" id="tmr-save-btn" onclick="handleSave()" title="Guardar sesión">Guardar</button>
   </div>
 </div>
 
@@ -2024,13 +2040,16 @@ function getRec() {
 }
 
 function getLastWeights() {
+  const today = todayStr();
   const w = {};
   EXERCISES.forEach(ex => {
-    const rows = S.sessions.filter(s=>s.ejercicio===ex.name);
-    if (!rows.length) { w[ex.name]={}; return; }
-    const lastDate = rows.map(r=>r.fecha).sort().reverse()[0];
+    const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha !== today);
+    if (!rows.length) { w[ex.name] = {}; return; }
+    const lastDate = rows.map(r => r.fecha).sort().reverse()[0];
     w[ex.name] = {};
-    rows.filter(r=>r.fecha===lastDate).forEach(r => { w[ex.name][r.serie] = r.peso_kg; });
+    rows.filter(r => r.fecha === lastDate).forEach(r => {
+      w[ex.name][r.serie] = { peso: r.peso_kg, reps: r.reps };
+    });
   });
   return w;
 }
@@ -2125,7 +2144,8 @@ function editTodayWorkout() {
   };
   renderWorkout();
   showScreen('workout');
-  if (!resumeSessionTimerIfToday()) startSessionTimer();
+  resumeSessionTimerIfToday();
+  updateSessionTimerBtn();
 }
 
 async function deleteTodayWorkout() {
@@ -2155,14 +2175,16 @@ function startWorkout() {
     exercises: EXERCISES.map(ex => ({
       name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
       series: Array.from({length:ex.sets},(_,i) => ({
-        weight: lw[ex.name]?.[i+1] ?? 0,
-        reps: ex.reps, done: false,
+        weight: lw[ex.name]?.[i+1]?.peso ?? 0,
+        reps:   lw[ex.name]?.[i+1]?.reps ?? ex.reps,
+        done: false,
       })),
     })),
   };
   renderWorkout();
   showScreen('workout');
-  if (!resumeSessionTimerIfToday()) startSessionTimer();
+  resumeSessionTimerIfToday();
+  updateSessionTimerBtn();
 }
 
 function startSessionTimer(resumeTs) {
@@ -2171,6 +2193,30 @@ function startSessionTimer(resumeTs) {
   localStorage.setItem('gfit_tmr', JSON.stringify({ start: STMR.start, date: todayStr() }));
   tickSessionTimer();
   STMR.iv = setInterval(tickSessionTimer, 1000);
+  updateSessionTimerBtn();
+}
+
+function toggleSessionTimer() {
+  if (STMR.start) {
+    clearSessionTimer();
+    const el = document.getElementById('session-timer');
+    if (el) { el.classList.remove('done'); el.textContent = '00:00'; }
+  } else {
+    startSessionTimer();
+  }
+  updateSessionTimerBtn();
+}
+
+function updateSessionTimerBtn() {
+  const btn = document.getElementById('stmr-ctrl-btn');
+  if (!btn) return;
+  if (STMR.start) {
+    btn.classList.add('running');
+    btn.textContent = '⏹';
+  } else {
+    btn.classList.remove('running');
+    btn.textContent = '▶';
+  }
 }
 
 function tickSessionTimer() {
@@ -2212,6 +2258,7 @@ function renderWorkout() {
   const dn = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   document.getElementById('workout-date-lbl').textContent =
     `${dn[d.getDay()]} ${d.getDate()} de ${MONTHS[d.getMonth()].toLowerCase()}`;
+  updateSessionTimerBtn();
 
   // Header title: editing vs new
   document.querySelector('#screen-workout .app-header h1').textContent =
@@ -2395,7 +2442,7 @@ function confirmExit() {
   if (S.workout?.dirty) {
     if (!confirm('¿Salir? Los cambios no guardados se perderán.')) return;
   }
-  skipTimer(); clearSessionTimer(); showScreen('dashboard');
+  skipTimer(); showScreen('dashboard');
 }
 
 async function handleSave(silent = false) {
@@ -2404,7 +2451,7 @@ async function handleSave(silent = false) {
 
   // Capture duration before stopping timer
   const durMin = sessionElapsedMin();
-  if (!silent) clearSessionTimer();
+  if (!silent) { clearSessionTimer(); updateSessionTimerBtn(); }
 
   // Sync all inputs from DOM
   S.workout.exercises.forEach((ex,ei) => {
