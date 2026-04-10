@@ -2053,6 +2053,7 @@ function editTodayWorkout() {
   };
   renderWorkout();
   showScreen('workout');
+  if (!STMR.iv) startSessionTimer(); // retoma si no hay timer activo
 }
 
 async function deleteTodayWorkout() {
