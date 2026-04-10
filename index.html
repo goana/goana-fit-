@@ -1385,6 +1385,26 @@
 
 </div><!-- #app -->
 
+<!-- POST-WORKOUT MODAL -->
+<div id="pw-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:210"></div>
+<div id="pw-modal" style="display:none;position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:480px;z-index:211;background:var(--card2);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom))">
+  <div style="font-size:17px;font-weight:700;margin-bottom:4px">¡Sesión completada! 🎉</div>
+  <div style="font-size:13px;color:var(--muted);margin-bottom:20px">¿Cómo ha ido?</div>
+
+  <div style="font-size:13px;font-weight:600;margin-bottom:10px">Nivel de cansancio</div>
+  <div id="pw-fatigue-btns" style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:20px">
+    <!-- filled by JS -->
+  </div>
+
+  <div style="font-size:13px;font-weight:600;margin-bottom:8px">Nota (opcional)</div>
+  <textarea id="pw-note" rows="3" placeholder="¿Algo que destacar? Dolor, mejora, sensaciones..."
+    style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);
+           color:var(--text);font-family:inherit;font-size:13px;padding:10px;
+           resize:none;box-sizing:border-box;margin-bottom:16px"></textarea>
+
+  <button class="btn-primary" onclick="submitPostWorkout()">Guardar y cerrar</button>
+</div>
+
 <!-- SESSION SHEET -->
 <div id="session-sheet-overlay" onclick="closeSessionSheet()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200"></div>
 <div id="session-sheet" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:201;background:var(--card2);border-radius:16px 16px 0 0;max-height:80vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom)">
@@ -1916,8 +1936,8 @@ async function ensureSheets() {
         { values:[['fecha','peso_kg','cintura_cm','cadera_cm','pantorrilla_cm','grasa_pct','musculo_kg','grasa_visc','metabolismo_kcal']] }, 'valueInputOption=RAW');
   }
   // Always update sesiones header (handles migration from old 6-col format)
-  await api('PUT', '/values/sesiones!A1:I1',
-    { values:[['fecha','ejercicio','reps_1','reps_2','reps_3','peso_1','peso_2','peso_3','duracion_min']] }, 'valueInputOption=RAW');
+  await api('PUT', '/values/sesiones!A1:K1',
+    { values:[['fecha','ejercicio','reps_1','reps_2','reps_3','peso_1','peso_2','peso_3','duracion_min','cansancio','nota']] }, 'valueInputOption=RAW');
 }
 
 // Delete all rows for a given date from "sesiones" sheet
@@ -2474,6 +2494,71 @@ function checkSave() {
   const anyDone = S.workout.exercises.some(ex => ex.series.some(s => s.done));
   document.getElementById('save-btn').disabled = !anyDone;
   if (anyDone) scheduleAutoSave();
+
+  // Show post-workout modal when every series of every exercise is done
+  const allComplete = S.workout.exercises.every(ex => ex.series.every(s => s.done));
+  if (allComplete && !S.workout._pwShown) {
+    S.workout._pwShown = true;
+    setTimeout(openPostWorkoutModal, 600); // small delay so last checkmark animation settles
+  }
+}
+
+let _pwFatigue = null;
+
+function openPostWorkoutModal() {
+  _pwFatigue = null;
+  // Build fatigue buttons 1–10
+  const wrap = document.getElementById('pw-fatigue-btns');
+  wrap.innerHTML = Array.from({length:10}, (_,i) => {
+    const v = i + 1;
+    const color = v <= 3 ? '#4ade80' : v <= 6 ? '#facc15' : v <= 8 ? '#fb923c' : '#f87171';
+    return `<button id="pwf-${v}" onclick="selectFatigue(${v})"
+      style="flex:1;min-width:calc(20% - 5px);padding:8px 4px;border-radius:var(--r);
+             border:2px solid var(--border2);background:var(--bg);
+             color:var(--text);font-size:14px;font-weight:700;cursor:pointer;
+             transition:background .15s,border-color .15s"
+      data-color="${color}">${v}</button>`;
+  }).join('');
+  document.getElementById('pw-note').value = '';
+  document.getElementById('pw-overlay').style.display = '';
+  document.getElementById('pw-modal').style.display = '';
+}
+
+function selectFatigue(v) {
+  _pwFatigue = v;
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.getElementById(`pwf-${i}`);
+    if (!btn) continue;
+    if (i === v) {
+      btn.style.background = btn.dataset.color;
+      btn.style.borderColor = btn.dataset.color;
+      btn.style.color = '#000';
+    } else {
+      btn.style.background = 'var(--bg)';
+      btn.style.borderColor = 'var(--border2)';
+      btn.style.color = 'var(--text)';
+    }
+  }
+}
+
+async function submitPostWorkout() {
+  document.getElementById('pw-overlay').style.display = 'none';
+  document.getElementById('pw-modal').style.display = 'none';
+  const note = document.getElementById('pw-note').value.trim();
+  // Patch first row of today's session with fatigue + note
+  if (_pwFatigue || note) {
+    try {
+      const data = await api('GET', '/values/sesiones!A:A');
+      const rows = data.values || [];
+      const today = S.workout?.date || todayStr();
+      const firstIdx = rows.findIndex((r, i) => i > 0 && r[0] === today);
+      if (firstIdx > 0) {
+        await api('PUT', `/values/sesiones!J${firstIdx+1}:K${firstIdx+1}`,
+          { values: [[_pwFatigue ?? '', note]] }, 'valueInputOption=RAW');
+      }
+    } catch(_) {}
+  }
+  await handleSave();
 }
 
 let _autoSaveTimer = null;
