@@ -436,6 +436,40 @@
     /* ── History ───────────────────────────────────────────── */
     .hist-pad { padding: 16px; }
 
+    .hist-tabs { display: flex; gap: 0; margin-bottom: 16px; border: 1px solid var(--border2); border-radius: var(--r); overflow: hidden; }
+    .hist-tab {
+      flex: 1; padding: 10px; text-align: center; font-size: 13px; font-weight: 600;
+      cursor: pointer; background: transparent; color: var(--muted); border: none;
+      transition: background .15s, color .15s;
+    }
+    .hist-tab.active { background: var(--accent); color: #000; }
+
+    .sess-list { display: flex; flex-direction: column; gap: 8px; }
+    .sess-item {
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--r); overflow: hidden;
+    }
+    .sess-item-hdr {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 13px 14px; cursor: pointer;
+    }
+    .sess-item-hdr:hover { background: rgba(255,255,255,.03); }
+    .sess-date { font-weight: 700; font-size: 14px; }
+    .sess-meta { font-size: 12px; color: var(--muted); }
+    .sess-chev { color: var(--muted); font-size: 12px; transition: transform .2s; }
+    .sess-item.open .sess-chev { transform: rotate(180deg); }
+    .sess-body { display: none; border-top: 1px solid var(--border); }
+    .sess-item.open .sess-body { display: block; }
+    .sess-ex { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+    .sess-ex:last-child { border-bottom: none; }
+    .sess-ex-name { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+    .sess-series { display: flex; flex-wrap: wrap; gap: 5px; }
+    .sess-serie-chip {
+      background: var(--bg); border: 1px solid var(--border2);
+      border-radius: 4px; padding: 3px 7px; font-size: 11px; color: var(--muted);
+    }
+    .sess-serie-chip .chip-kg { color: var(--accent); font-weight: 700; }
+
     .sel-wrap { position: relative; margin-bottom: 18px; }
     .sel-wrap select {
       width: 100%; padding: 12px 36px 12px 14px;
@@ -981,14 +1015,27 @@
       <div style="width:40px"></div>
     </div>
     <div class="hist-pad">
-      <div class="sel-wrap">
-        <select id="ex-sel" onchange="renderHistExercise(this.value)"></select>
+      <div class="hist-tabs">
+        <button class="hist-tab active" id="htab-ex" onclick="switchHistTab('ex')">Por ejercicio</button>
+        <button class="hist-tab" id="htab-sess" onclick="switchHistTab('sess')">Por sesión</button>
       </div>
-      <div class="chart-card">
-        <div class="chart-lbl">Peso máximo por sesión (kg)</div>
-        <canvas id="progress-chart"></canvas>
+
+      <!-- Tab: Por ejercicio -->
+      <div id="hview-ex">
+        <div class="sel-wrap">
+          <select id="ex-sel" onchange="renderHistExercise(this.value)"></select>
+        </div>
+        <div class="chart-card">
+          <div class="chart-lbl">Peso máximo por sesión (kg)</div>
+          <canvas id="progress-chart"></canvas>
+        </div>
+        <div id="hist-tbl" class="tbl-wrap"></div>
       </div>
-      <div id="hist-tbl" class="tbl-wrap"></div>
+
+      <!-- Tab: Por sesión -->
+      <div id="hview-sess" style="display:none">
+        <div id="sess-list-wrap"></div>
+      </div>
     </div>
   </div>
 
@@ -1849,7 +1896,7 @@ async function deleteSessionsByDate(date) {
 
 async function loadSessions() {
   try {
-    const d = await api('GET', '/values/sesiones!A2:H');
+    const d = await api('GET', '/values/sesiones!A2:I');
     S.sessions = [];
     (d.values||[]).forEach(r => {
       if (!r[0]) return;
@@ -1858,12 +1905,14 @@ async function loadSessions() {
         // OLD format: fecha|ejercicio|serie|peso_kg|reps|completada
         S.sessions.push({ fecha:r[0], ejercicio:r[1], serie:+r[2]||0, peso_kg:+r[3]||0, reps:+r[4]||0, completada:r[5]==='true' });
       } else {
-        // NEW format: fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3
+        // NEW format: fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3|duracion_min
+        const durMin = r[8] ? +r[8] : 0;
         [0,1,2].forEach(i => {
           if (r[2+i] === '' || r[2+i] === undefined) return; // serie no completada
           S.sessions.push({
             fecha:r[0], ejercicio:r[1], serie:i+1,
             reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
+            duracion_min: i === 0 ? durMin : 0,
           });
         });
       }
@@ -2399,6 +2448,7 @@ async function handleSave(silent = false) {
       S.sessions.push({
         fecha:r[0], ejercicio:r[1], serie:i+1,
         reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
+        duracion_min: i === 0 ? (+r[8]||0) : 0,
       });
     });
   });
@@ -2632,7 +2682,80 @@ function openHistory() {
   const sel = document.getElementById('ex-sel');
   sel.innerHTML = EXERCISES.map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
   renderHistExercise(EXERCISES[0].name);
+  switchHistTab('ex');
   showScreen('history');
+}
+
+function switchHistTab(tab) {
+  document.getElementById('htab-ex').classList.toggle('active', tab === 'ex');
+  document.getElementById('htab-sess').classList.toggle('active', tab === 'sess');
+  document.getElementById('hview-ex').style.display = tab === 'ex' ? '' : 'none';
+  document.getElementById('hview-sess').style.display = tab === 'sess' ? '' : 'none';
+  if (tab === 'sess') renderSessionList();
+}
+
+function renderSessionList() {
+  const wrap = document.getElementById('sess-list-wrap');
+  // Group sessions by date
+  const byDate = {};
+  S.sessions.forEach(s => {
+    if (!byDate[s.fecha]) byDate[s.fecha] = [];
+    byDate[s.fecha].push(s);
+  });
+  const dates = Object.keys(byDate).sort().reverse();
+  if (!dates.length) {
+    wrap.innerHTML = `<div class="empty-st"><div class="e-icon">🏋️</div><p>Sin sesiones registradas aún</p></div>`;
+    return;
+  }
+  wrap.innerHTML = `<div class="sess-list">${dates.map(date => {
+    const rows = byDate[date];
+    const exNames = [...new Set(rows.map(r => r.ejercicio))];
+    const dur = rows.find(r => r.duracion_min > 0);
+    const durTxt = dur ? ` · ${dur.duracion_min} min` : '';
+    return `
+      <div class="sess-item" id="sitem-${date}">
+        <div class="sess-item-hdr" onclick="toggleSessionItem('${date}')">
+          <div>
+            <div class="sess-date">${fmtDateES(date)}</div>
+            <div class="sess-meta">${exNames.length} ejercicios${durTxt}</div>
+          </div>
+          <span class="sess-chev">▾</span>
+        </div>
+        <div class="sess-body" id="sbody-${date}">
+          ${renderSessionDetail(date, byDate[date])}
+        </div>
+      </div>`;
+  }).join('')}</div>`;
+}
+
+function toggleSessionItem(date) {
+  const item = document.getElementById(`sitem-${date}`);
+  item.classList.toggle('open');
+}
+
+function renderSessionDetail(date, rows) {
+  const byEx = {};
+  rows.forEach(r => {
+    if (!byEx[r.ejercicio]) byEx[r.ejercicio] = [];
+    byEx[r.ejercicio].push(r);
+  });
+  return Object.entries(byEx).map(([exName, series]) => {
+    const ex = EXERCISES.find(e => e.name === exName) || {};
+    const sorted = series.sort((a,b) => a.serie - b.serie);
+    const chips = sorted.map(s => {
+      let inner;
+      if (ex.unit === 'seg')  inner = `${s.reps}s`;
+      else if (ex.unit)       inner = `${s.reps}×lado`;
+      else if (s.peso_kg > 0) inner = `<span class="chip-kg">${s.peso_kg}kg</span>·${s.reps}r`;
+      else                    inner = `${s.reps}r`;
+      return `<span class="sess-serie-chip">S${s.serie}: ${inner}</span>`;
+    }).join('');
+    return `
+      <div class="sess-ex">
+        <div class="sess-ex-name">${exName}</div>
+        <div class="sess-series">${chips}</div>
+      </div>`;
+  }).join('');
 }
 
 function renderHistExercise(name) {
