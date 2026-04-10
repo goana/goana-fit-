@@ -2188,8 +2188,10 @@ function editTodayWorkout() {
   const date = todayStr();
   const saved = S.sessions.filter(s => s.fecha === date);
   const lw = getLastWeights(); // fallback: previous session weights
+  const pwDone = localStorage.getItem('gfit_pw_done') === date;
   S.workout = {
     date, editing: true, dirty: false,
+    _pwShown: pwDone, // don't re-show modal if already submitted today
     exercises: EXERCISES.map(ex => ({
       name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
       series: Array.from({length: ex.sets}, (_, i) => {
@@ -2234,6 +2236,7 @@ function startWorkout() {
   if (!S.workout?.editing) S.workout = {
     date: todayStr(),
     editing: false, dirty: false,
+    _pwShown: localStorage.getItem('gfit_pw_done') === todayStr(),
     exercises: EXERCISES.map(ex => ({
       name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
       series: Array.from({length:ex.sets},(_,i) => ({
@@ -2548,6 +2551,7 @@ async function submitPostWorkout() {
     S.workout._pwFatigue = _pwFatigue ?? '';
     S.workout._pwNote    = (document.getElementById('pw-note').value || '').trim();
   }
+  localStorage.setItem('gfit_pw_done', todayStr());
   await handleSave();
 }
 
