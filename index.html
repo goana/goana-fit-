@@ -1702,23 +1702,34 @@ function toast(msg, type='info', ms=3000) {
   setTimeout(() => el.remove(), ms + 300);
 }
 
+let _audioCtx = null;
+function getAudioCtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+// Unlock audio on first user tap (required by iOS)
+document.addEventListener('touchstart', () => getAudioCtx(), { once: true, passive: true });
+document.addEventListener('click',      () => getAudioCtx(), { once: true, passive: true });
+
 function playBeep() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = getAudioCtx();
     [0, .18, .36].forEach(off => {
       const o = ctx.createOscillator(), g = ctx.createGain();
       o.connect(g); g.connect(ctx.destination);
+      o.type = 'sine';
       o.frequency.value = 880;
-      g.gain.setValueAtTime(.35, ctx.currentTime + off);
-      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + off + .14);
-      o.start(ctx.currentTime + off); o.stop(ctx.currentTime + off + .14);
+      g.gain.setValueAtTime(.3, ctx.currentTime + off);
+      g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + off + .15);
+      o.start(ctx.currentTime + off); o.stop(ctx.currentTime + off + .15);
     });
   } catch(_) {}
 }
 
 function playPlankDone() {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = getAudioCtx();
     // Dos tonos suaves descendentes
     [[523, 0], [440, .35]].forEach(([freq, off]) => {
       const o = ctx.createOscillator(), g = ctx.createGain();
