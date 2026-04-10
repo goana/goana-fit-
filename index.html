@@ -2473,9 +2473,8 @@ async function handleSave(silent = false) {
   const btn = document.getElementById('save-btn');
   if (!silent) { btn.disabled = true; btn.textContent = 'GUARDANDO...'; }
 
-  // Capture duration before stopping timer
+  // Capture duration — timer keeps running, only stops when user presses ⏸
   const durMin = sessionElapsedMin();
-  if (!silent) { clearSessionTimer(); updateSessionTimerBtn(); }
 
   // Sync all inputs from DOM
   S.workout.exercises.forEach((ex,ei) => {
