@@ -876,7 +876,7 @@
 
   <div id="screen-dashboard" class="screen">
     <div class="app-header">
-      <h1>goana<em>Fit</em></h1>
+      <h1>goana<em>Fit</em> <span style="font-size:10px;opacity:.4;font-weight:400">v10apr</span></h1>
       <button class="hamburger-btn" onclick="openDrawer()" aria-label="Menú">
         <span></span><span></span><span></span>
       </button>
@@ -1868,8 +1868,13 @@ async function refreshToken() {
   if (S.token && S.tokenExpiry && Date.now() < S.tokenExpiry - 60000) return true;
   if (!tokenClient) return false;
   return new Promise(ok => {
+    let done = false;
+    const timer = setTimeout(() => { if (!done) { done = true; ok(false); } }, 10000);
     const prev = tokenClient.callback;
     tokenClient.callback = r => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
       tokenClient.callback = prev;
       if (!r.error) {
         S.token = r.access_token;
