@@ -2645,7 +2645,9 @@ async function handleSave(silent = false) {
     // ── ONLINE path: API calls ──
     try {
       if (S.workout.editing) await deleteSessionsByDate(S.workout.date);
-      await appendRows(rows);
+      const appendResp = await api('POST', '/values/sesiones!A:K:append', { values: rows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+      window._lastSaveDebug = { rows, appendResp, date: S.workout.date, ts: new Date().toISOString() };
+      localStorage.setItem('gfit_dbg', JSON.stringify({ rows: rows.length, updated: appendResp?.updates?.updatedRows ?? '?', date: S.workout.date }));
       const {cur,rec} = calcStreak();
       await setCfg('streak_actual', cur);
       await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
@@ -2679,8 +2681,10 @@ async function handleSave(silent = false) {
     btn.disabled = false; btn.textContent = 'GUARDAR';
     document.getElementById('share-btn').style.display = '';
     const durMsg = durMin > 0 ? ` · ${durMin} min` : '';
-    const offlineMsg = S.offline ? ' (sin conexión — se enviará al reconectar)' : '';
-    toast('Sesión guardada' + durMsg + offlineMsg, S.offline ? 'warning' : 'success');
+    const offlineMsg = S.offline ? ' (sin conexión)' : '';
+    const dbg = JSON.parse(localStorage.getItem('gfit_dbg') || '{}');
+    const rowsMsg = dbg.rows !== undefined ? ` [${dbg.rows}ej→${dbg.updated}]` : '';
+    toast('Sesión guardada' + durMsg + rowsMsg + offlineMsg, S.offline ? 'warning' : 'success');
   } else {
     document.getElementById('share-btn').style.display = '';
   }
