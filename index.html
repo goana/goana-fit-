@@ -2016,7 +2016,7 @@ async function loadConfig() {
 
 async function appendRows(rows) {
   if (S.offline) { queueAction({ type:'append', rows }); return; }
-  await api('POST', '/values/sesiones!A:I:append', { values: rows },
+  await api('POST', '/values/sesiones!A:K:append', { values: rows },
     'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
   // Local cache is already updated optimistically in handleSave()
 }
