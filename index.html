@@ -2628,6 +2628,7 @@ async function handleSave(silent = false) {
       idx === 0 ? (S.workout._pwNote    ?? '') : '',  // nota
     ]);
 
+  let apiOk = false;
   try {
     // Borrar filas antiguas de la hoja (también limpia S.sessions internamente)
     if (S.workout.editing && !S.offline) await deleteSessionsByDate(S.workout.date);
@@ -2638,11 +2639,18 @@ async function handleSave(silent = false) {
     await setCfg('streak_actual', cur);
     await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
     await setCfg('ultimo_entrenamiento', S.workout.date);
+    apiOk = true;
   } catch(e) {
-    if (e.code !== 'offline') toast('Error al guardar: '+e.message, 'error');
+    if (e.code === 'offline') {
+      apiOk = true; // queued for later
+    } else {
+      if (!silent) toast('Error al guardar en la hoja: ' + e.message, 'error');
+      if (!silent) { btn.disabled = false; btn.textContent = 'GUARDAR'; }
+      return; // don't proceed — sheet data may be inconsistent
+    }
   }
 
-  // Actualizar caché local DESPUÉS del borrado para no pisarlo
+  // Actualizar caché local solo si el API respondió bien
   S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
   rows.forEach(r => {
     [0,1,2].forEach(i => {
@@ -2663,9 +2671,6 @@ async function handleSave(silent = false) {
   if (!silent) {
     btn.disabled = false; btn.textContent = 'GUARDAR';
     document.getElementById('share-btn').style.display = '';
-    // Mostrar duración en el timer y en el toast
-    const timerEl = document.getElementById('session-timer');
-    if (timerEl) timerEl.classList.add('done');
     const durMsg = durMin > 0 ? ` · ${durMin} min` : '';
     toast('Sesión guardada' + durMsg, 'success');
   } else {
