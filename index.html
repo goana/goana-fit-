@@ -2114,7 +2114,7 @@ function editTodayWorkout() {
   const date = todayStr();
   const saved = S.sessions.filter(s => s.fecha === date);
   S.workout = {
-    date, editing: true,
+    date, editing: true, dirty: false,
     exercises: EXERCISES.map(ex => ({
       name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
       series: Array.from({length: ex.sets}, (_, i) => {
@@ -2151,7 +2151,7 @@ function startWorkout() {
   const lw = getLastWeights();
   if (!S.workout?.editing) S.workout = {
     date: todayStr(),
-    editing: false,
+    editing: false, dirty: false,
     exercises: EXERCISES.map(ex => ({
       name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
       series: Array.from({length:ex.sets},(_,i) => ({
@@ -2320,6 +2320,7 @@ function updWD(ei, si, field, val) {
   const s = S.workout.exercises[ei].series[si];
   if (field==='w') s.weight = val==='' ? '' : parseFloat(val);
   if (field==='r') s.reps   = parseInt(val)||0;
+  S.workout.dirty = true;
 }
 
 function toggleSerie(ei, si) {
@@ -2328,6 +2329,7 @@ function toggleSerie(ei, si) {
   if (!ex) return;
   const s = ex.series[si];
   if (!s) return;
+  S.workout.dirty = true;
 
   // Sync from DOM first
   const wEl = document.getElementById(`w-${ei}-${si}`);
@@ -2390,7 +2392,10 @@ function scheduleAutoSave() {
 }
 
 function confirmExit() {
-  if (confirm('¿Salir? Los datos no guardados se perderán.')) { skipTimer(); clearSessionTimer(); showScreen('dashboard'); }
+  if (S.workout?.dirty) {
+    if (!confirm('¿Salir? Los cambios no guardados se perderán.')) return;
+  }
+  skipTimer(); clearSessionTimer(); showScreen('dashboard');
 }
 
 async function handleSave(silent = false) {
@@ -2455,6 +2460,7 @@ async function handleSave(silent = false) {
   localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
 
   S.workout.editing = true; // próximo guardado también borrará las filas anteriores
+  S.workout.dirty = false;
   if (!silent) {
     btn.disabled = false; btn.textContent = 'GUARDAR';
     document.getElementById('share-btn').style.display = '';
