@@ -134,6 +134,19 @@
     .guia-card-title {
       font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px;
     }
+    a.video-card {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--rs); padding: 12px 14px; margin-bottom: 8px;
+      text-decoration: none; color: inherit;
+      transition: border-color var(--t), background var(--t);
+    }
+    a.video-card:hover { border-color: var(--accent); background: var(--accent-bg); }
+    .video-thumb { color: var(--accent); flex-shrink: 0; display: flex; }
+    .video-info { flex: 1; min-width: 0; }
+    .video-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .video-sub   { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .video-ext   { color: var(--muted); flex-shrink: 0; }
     .guia-card p, .guia-card li {
       font-size: 13px; color: var(--muted); line-height: 1.6;
     }
@@ -1198,6 +1211,20 @@
             <li>Fisioterapeuta especializada en rehabilitación post-cáncer de mama: <b>Laura Cheli</b> (Granada)</li>
           </ul>
         </div>
+      </div>
+
+      <div class="guia-section">
+        <div class="guia-section-title">Vídeos de Arancha</div>
+        <a href="https://www.youtube.com/watch?v=DAzCkAcpFfA" target="_blank" rel="noopener" class="video-card">
+          <div class="video-thumb">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M10 16.5l6-4.5-6-4.5v9z"/><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+          </div>
+          <div class="video-info">
+            <div class="video-title">Pirámide de prioridades</div>
+            <div class="video-sub">Semilla de Salud</div>
+          </div>
+          <svg class="video-ext" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+        </a>
       </div>
 
       <p style="font-size:11px;color:var(--muted);margin-top:20px;text-align:center">
