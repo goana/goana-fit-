@@ -1712,6 +1712,19 @@ function getAudioCtx() {
 document.addEventListener('touchstart', () => getAudioCtx(), { once: true, passive: true });
 document.addEventListener('click',      () => getAudioCtx(), { once: true, passive: true });
 
+function playTick() {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine';
+    o.frequency.value = 660;
+    g.gain.setValueAtTime(.25, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, ctx.currentTime + .12);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime + .12);
+  } catch(_) {}
+}
+
 function playBeep() {
   try {
     const ctx = getAudioCtx();
@@ -2719,12 +2732,10 @@ function timerTick() {
   if (TMR.secs <= 0) {
     TMR.secs = 0; clearInterval(TMR.iv); TMR.running = false;
     updTimerUI();
-    playBeep();
-    const st = document.getElementById('tmr-status');
-    st.textContent = '¡Listo! 🎉'; st.className = 'tmr-status done';
-    setTimeout(() => document.getElementById('floating-timer').classList.add('hidden'), 3500);
+    document.getElementById('floating-timer').classList.add('hidden');
     return;
   }
+  if (TMR.secs <= 3) playTick();
   updTimerUI();
 }
 
