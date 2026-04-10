@@ -2054,7 +2054,7 @@ async function syncQueue() {
   const q = [...S.pending]; S.pending = []; localStorage.removeItem('gfit_q');
   for (const a of q) {
     try {
-      if (a.type === 'append') await api('POST', '/values/sesiones!A:F:append', { values:a.rows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+      if (a.type === 'append') await api('POST', '/values/sesiones!A:K:append', { values:a.rows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
       else if (a.type === 'cfg') await setCfg(a.key, a.value);
     } catch(_) { S.pending.push(a); }
   }
@@ -2633,25 +2633,27 @@ async function handleSave(silent = false) {
       idx === 0 ? (S.workout._pwNote    ?? '') : '',  // nota
     ]);
 
-  let apiOk = false;
-  try {
-    // Borrar filas antiguas de la hoja (también limpia S.sessions internamente)
-    if (S.workout.editing && !S.offline) await deleteSessionsByDate(S.workout.date);
-    else if (S.workout.editing) S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
-
-    await appendRows(rows);
+  if (S.offline) {
+    // ── OFFLINE path: queue everything and update local cache ──
+    if (S.workout.editing) S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
+    queueAction({ type:'append', rows });
     const {cur,rec} = calcStreak();
-    await setCfg('streak_actual', cur);
-    await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
-    await setCfg('ultimo_entrenamiento', S.workout.date);
-    apiOk = true;
-  } catch(e) {
-    if (e.code === 'offline') {
-      apiOk = true; // queued for later
-    } else {
-      if (!silent) toast('Error al guardar en la hoja: ' + e.message, 'error');
+    queueAction({ type:'cfg', key:'streak_actual', value: String(cur) });
+    queueAction({ type:'cfg', key:'streak_record', value: String(Math.max(rec, +(S.config.streak_record||0))) });
+    queueAction({ type:'cfg', key:'ultimo_entrenamiento', value: S.workout.date });
+  } else {
+    // ── ONLINE path: API calls ──
+    try {
+      if (S.workout.editing) await deleteSessionsByDate(S.workout.date);
+      await appendRows(rows);
+      const {cur,rec} = calcStreak();
+      await setCfg('streak_actual', cur);
+      await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
+      await setCfg('ultimo_entrenamiento', S.workout.date);
+    } catch(e) {
+      if (!silent) toast('Error al guardar: ' + e.message, 'error');
       if (!silent) { btn.disabled = false; btn.textContent = 'GUARDAR'; }
-      return; // don't proceed — sheet data may be inconsistent
+      return;
     }
   }
 
@@ -2677,7 +2679,8 @@ async function handleSave(silent = false) {
     btn.disabled = false; btn.textContent = 'GUARDAR';
     document.getElementById('share-btn').style.display = '';
     const durMsg = durMin > 0 ? ` · ${durMin} min` : '';
-    toast('Sesión guardada' + durMsg, 'success');
+    const offlineMsg = S.offline ? ' (sin conexión — se enviará al reconectar)' : '';
+    toast('Sesión guardada' + durMsg + offlineMsg, S.offline ? 'warning' : 'success');
   } else {
     document.getElementById('share-btn').style.display = '';
   }
