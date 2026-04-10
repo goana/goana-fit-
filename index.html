@@ -1966,7 +1966,7 @@ async function deleteSessionsByDate(date) {
 
 async function loadSessions() {
   try {
-    const d = await api('GET', '/values/sesiones!A2:I');
+    const d = await api('GET', '/values/sesiones!A2:K');
     S.sessions = [];
     (d.values||[]).forEach(r => {
       if (!r[0]) return;
@@ -1975,14 +1975,18 @@ async function loadSessions() {
         // OLD format: fecha|ejercicio|serie|peso_kg|reps|completada
         S.sessions.push({ fecha:r[0], ejercicio:r[1], serie:+r[2]||0, peso_kg:+r[3]||0, reps:+r[4]||0, completada:r[5]==='true' });
       } else {
-        // NEW format: fecha|ejercicio|reps_1|reps_2|reps_3|peso_1|peso_2|peso_3|duracion_min
-        const durMin = r[8] ? +r[8] : 0;
+        // NEW format: fecha|ejercicio|reps_1..3|peso_1..3|duracion_min|cansancio|nota
+        const durMin    = r[8] ? +r[8] : 0;
+        const cansancio = r[9] ? +r[9] : null;
+        const nota      = r[10] || '';
         [0,1,2].forEach(i => {
-          if (r[2+i] === '' || r[2+i] === undefined) return; // serie no completada
+          if (r[2+i] === '' || r[2+i] === undefined) return;
           S.sessions.push({
             fecha:r[0], ejercicio:r[1], serie:i+1,
             reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
-            duracion_min: i === 0 ? durMin : 0,
+            duracion_min: i === 0 ? durMin    : 0,
+            cansancio:    i === 0 ? cansancio : null,
+            nota:         i === 0 ? nota      : '',
           });
         });
       }
@@ -2628,7 +2632,9 @@ async function handleSave(silent = false) {
       S.sessions.push({
         fecha:r[0], ejercicio:r[1], serie:i+1,
         reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
-        duracion_min: i === 0 ? (+r[8]||0) : 0,
+        duracion_min: i === 0 ? (+r[8]||0)  : 0,
+        cansancio:    i === 0 ? (r[9]||null) : null,
+        nota:         i === 0 ? (r[10]||'')  : '',
       });
     });
   });
@@ -2912,10 +2918,28 @@ function toggleSessionItem(date) {
 function openSessionSheet(date) {
   const rows = S.sessions.filter(s => s.fecha === date);
   if (!rows.length) return;
-  const dur = rows.find(r => r.duracion_min > 0);
-  const durTxt = dur ? ` · ${dur.duracion_min} min` : '';
+  const dur        = rows.find(r => r.duracion_min > 0);
+  const meta       = rows.find(r => r.cansancio || r.nota);
+  const durTxt     = dur ? ` · ${dur.duracion_min} min` : '';
   document.getElementById('session-sheet-title').textContent = fmtDateES(date) + durTxt;
-  document.getElementById('session-sheet-body').innerHTML = renderSessionDetail(date, rows);
+
+  let metaHtml = '';
+  if (meta?.cansancio) {
+    const c = meta.cansancio;
+    const color = c <= 3 ? '#4ade80' : c <= 6 ? '#facc15' : c <= 8 ? '#fb923c' : '#f87171';
+    metaHtml += `<div style="display:flex;align-items:center;gap:8px;padding:10px 16px 4px">
+      <span style="font-size:12px;color:var(--muted)">Cansancio</span>
+      <span style="background:${color};color:#000;font-weight:700;font-size:13px;
+                   border-radius:6px;padding:2px 9px">${c}/10</span>
+    </div>`;
+  }
+  if (meta?.nota) {
+    metaHtml += `<div style="padding:6px 16px 10px;font-size:13px;color:var(--muted);
+                              border-bottom:1px solid var(--border);font-style:italic">
+      "${meta.nota}"</div>`;
+  }
+
+  document.getElementById('session-sheet-body').innerHTML = metaHtml + renderSessionDetail(date, rows);
   document.getElementById('session-sheet-overlay').style.display = '';
   document.getElementById('session-sheet').style.display = '';
 }
