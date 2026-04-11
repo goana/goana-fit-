@@ -120,6 +120,66 @@
     .drawer-item.danger { color: var(--muted); font-size: 13px; margin-top: auto; }
     .drawer-item.danger:hover { color: #f87171; background: rgba(239,68,68,.06); }
 
+    /* ── Recetas screen ────────────────────────────────────── */
+    .recetas-pad { padding: 0 18px 80px; }
+    .recetas-cat-title {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .8px; color: var(--accent); margin: 20px 0 8px;
+    }
+    .receta-card {
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--rs); padding: 12px 14px; margin-bottom: 7px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .receta-card a {
+      flex: 1; text-decoration: none; color: var(--text);
+      font-size: 14px; font-weight: 500; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .receta-card a:hover { color: var(--accent); }
+    .receta-link-icon { font-size: 16px; flex-shrink: 0; }
+    .receta-del {
+      background: none; border: none; color: var(--muted);
+      font-size: 17px; cursor: pointer; padding: 2px 4px; line-height: 1;
+      flex-shrink: 0;
+    }
+    .receta-del:hover { color: var(--danger); }
+    .receta-empty {
+      font-size: 13px; color: var(--muted); padding: 8px 0;
+    }
+    /* Modal de nueva receta */
+    #receta-modal-overlay {
+      display: none; position: fixed; inset: 0; background: rgba(0,0,0,.65);
+      z-index: 210;
+    }
+    #receta-modal {
+      display: none; position: fixed; left: 50%; bottom: 0;
+      transform: translateX(-50%); width: 100%; max-width: 480px;
+      z-index: 211; background: var(--card2);
+      border-radius: 16px 16px 0 0;
+      padding: 24px 20px calc(28px + env(safe-area-inset-bottom));
+    }
+    .receta-modal-title { font-size: 17px; font-weight: 700; margin-bottom: 18px; }
+    .receta-field-lbl { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .5px; }
+    .receta-input {
+      width: 100%; background: var(--bg); border: 1px solid var(--border2);
+      border-radius: var(--rs); color: var(--text); font-family: inherit;
+      font-size: 14px; padding: 10px 12px; box-sizing: border-box; margin-bottom: 14px;
+    }
+    .receta-input:focus { outline: none; border-color: var(--accent); }
+    .receta-cat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 18px;
+    }
+    .receta-cat-btn {
+      padding: 10px; background: var(--bg); border: 1px solid var(--border2);
+      border-radius: var(--rs); color: var(--muted); font-family: inherit;
+      font-size: 13px; font-weight: 500; cursor: pointer;
+      transition: border-color var(--t), color var(--t), background var(--t);
+    }
+    .receta-cat-btn.sel {
+      border-color: var(--accent); color: var(--accent); background: var(--accent-bg);
+    }
+
     /* ── Mi Guía screen ────────────────────────────────────── */
     .guia-pad { padding: 0 18px 80px; }
     .guia-section { margin-top: 22px; }
@@ -869,6 +929,7 @@
     <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon">📈</span>Progreso</button>
     <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon">📏</span>Cuerpo</button>
     <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon">🥗</span>Menú semanal</button>
+    <button class="drawer-item" onclick="closeDrawer();openRecetasScreen()"><span class="di-icon">📌</span>Ideas de recetas</button>
     <button class="drawer-item" onclick="closeDrawer();showScreen('guia')"><span class="di-icon">📋</span>Mi Guía</button>
     <a class="drawer-item" href="https://docs.google.com/spreadsheets/d/1ydSag5qwNyg32PWrsZFFNMI6oRs1HwH_rMOFCZ4U2Mc/edit?usp=sharing" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="di-icon">📊</span>Ver hoja de datos</a>
     <div class="drawer-sep"></div>
@@ -1385,7 +1446,37 @@
     </div>
   </div>
 
+  <!-- ═══ RECETAS ═════════════════════════════════════════ -->
+  <div id="screen-recetas" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>Ideas de <em>recetas</em></h1>
+      <button class="ghost-btn" onclick="openRecetaModal()" style="font-size:22px;color:var(--accent);font-weight:300" title="Añadir receta">+</button>
+    </div>
+    <div class="recetas-pad" id="recetas-list">
+      <!-- filled by JS -->
+    </div>
+  </div>
+
 </div><!-- #app -->
+
+<!-- MODAL NUEVA RECETA -->
+<div id="receta-modal-overlay" onclick="closeRecetaModal()"></div>
+<div id="receta-modal">
+  <div class="receta-modal-title">Nueva receta</div>
+  <div class="receta-field-lbl">Nombre</div>
+  <input id="receta-nombre" class="receta-input" type="text" placeholder="Ej: Tostadas de aguacate con huevo">
+  <div class="receta-field-lbl">Categoría</div>
+  <div class="receta-cat-grid">
+    <button class="receta-cat-btn" data-cat="desayuno" onclick="selectRecetaCat('desayuno')">🌅 Desayuno</button>
+    <button class="receta-cat-btn" data-cat="comida"   onclick="selectRecetaCat('comida')">🍽️ Comida</button>
+    <button class="receta-cat-btn" data-cat="merienda" onclick="selectRecetaCat('merienda')">🍎 Merienda</button>
+    <button class="receta-cat-btn" data-cat="cena"     onclick="selectRecetaCat('cena')">🌙 Cena</button>
+  </div>
+  <div class="receta-field-lbl">Link (Instagram u otro)</div>
+  <input id="receta-link" class="receta-input" type="url" placeholder="https://www.instagram.com/reel/...">
+  <button class="btn-primary" onclick="saveReceta()">Guardar receta</button>
+</div>
 
 <!-- POST-WORKOUT MODAL -->
 <div id="pw-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:210"></div>
@@ -3655,6 +3746,107 @@ async function boot() {
       </button>`;
     errEl.classList.remove('hidden');
   }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RECETAS
+// ═══════════════════════════════════════════════════════════
+
+const RECETAS_CATS = [
+  { id: 'desayuno', label: '🌅 Desayuno' },
+  { id: 'comida',   label: '🍽️ Comida'   },
+  { id: 'merienda', label: '🍎 Merienda' },
+  { id: 'cena',     label: '🌙 Cena'     },
+];
+
+let _recetaCatSel = null;
+
+function loadRecetas() {
+  try { return JSON.parse(localStorage.getItem('gfit_recetas') || '[]'); }
+  catch { return []; }
+}
+
+function saveRecetas(arr) {
+  localStorage.setItem('gfit_recetas', JSON.stringify(arr));
+}
+
+function openRecetasScreen() {
+  renderRecetas();
+  showScreen('recetas');
+}
+
+function renderRecetas() {
+  const recetas = loadRecetas();
+  const container = document.getElementById('recetas-list');
+  let html = '';
+  for (const cat of RECETAS_CATS) {
+    const items = recetas.filter(r => r.categoria === cat.id);
+    html += `<div class="recetas-cat-title">${cat.label}</div>`;
+    if (items.length === 0) {
+      html += `<div class="receta-empty">Sin recetas aún — pulsa <strong>+</strong> para añadir</div>`;
+    } else {
+      for (const r of items) {
+        const isInsta = r.link && r.link.includes('instagram.com');
+        const icon = isInsta ? '📸' : (r.link ? '🔗' : '');
+        const nameDisplay = r.nombre || r.link || '(sin nombre)';
+        html += `<div class="receta-card">`;
+        if (icon) html += `<span class="receta-link-icon">${icon}</span>`;
+        if (r.link) {
+          html += `<a href="${escHtml(r.link)}" target="_blank" rel="noopener" title="${escHtml(r.link)}">${escHtml(nameDisplay)}</a>`;
+        } else {
+          html += `<span style="flex:1;font-size:14px;font-weight:500">${escHtml(nameDisplay)}</span>`;
+        }
+        html += `<button class="receta-del" onclick="deleteReceta('${escHtml(r.id)}')" title="Eliminar">×</button>`;
+        html += `</div>`;
+      }
+    }
+  }
+  container.innerHTML = html;
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function openRecetaModal() {
+  _recetaCatSel = null;
+  document.getElementById('receta-nombre').value = '';
+  document.getElementById('receta-link').value = '';
+  document.querySelectorAll('.receta-cat-btn').forEach(b => b.classList.remove('sel'));
+  document.getElementById('receta-modal-overlay').style.display = 'block';
+  document.getElementById('receta-modal').style.display = 'block';
+  setTimeout(() => document.getElementById('receta-nombre').focus(), 100);
+}
+
+function closeRecetaModal() {
+  document.getElementById('receta-modal-overlay').style.display = 'none';
+  document.getElementById('receta-modal').style.display = 'none';
+}
+
+function selectRecetaCat(cat) {
+  _recetaCatSel = cat;
+  document.querySelectorAll('.receta-cat-btn').forEach(b => {
+    b.classList.toggle('sel', b.dataset.cat === cat);
+  });
+}
+
+function saveReceta() {
+  const nombre = document.getElementById('receta-nombre').value.trim();
+  const link   = document.getElementById('receta-link').value.trim();
+  if (!nombre && !link) { toast('Añade al menos un nombre o un link', 'warning'); return; }
+  if (!_recetaCatSel)   { toast('Selecciona una categoría', 'warning'); return; }
+  const recetas = loadRecetas();
+  recetas.push({ id: Date.now().toString(), categoria: _recetaCatSel, nombre, link });
+  saveRecetas(recetas);
+  closeRecetaModal();
+  renderRecetas();
+  toast('Receta añadida', 'success');
+}
+
+function deleteReceta(id) {
+  const recetas = loadRecetas().filter(r => r.id !== id);
+  saveRecetas(recetas);
+  renderRecetas();
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
