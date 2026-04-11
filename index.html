@@ -2018,7 +2018,7 @@ async function api(method, path, body, params) {
 async function ensureSheets() {
   const data  = await api('GET', '');
   const exist = (data.sheets||[]).map(s => s.properties.title);
-  const reqs  = ['sesiones','config','checkins','medidas'].filter(n => !exist.includes(n))
+  const reqs  = ['sesiones','config','checkins','medidas','recetas'].filter(n => !exist.includes(n))
                   .map(title => ({ addSheet: { properties: { title } } }));
   if (reqs.length) {
     await api('POST', ':batchUpdate', { requests: reqs });
@@ -2032,6 +2032,9 @@ async function ensureSheets() {
     if (!exist.includes('medidas'))
       await api('PUT', '/values/medidas!A1:I1',
         { values:[['fecha','peso_kg','cintura_cm','cadera_cm','pantorrilla_cm','grasa_pct','musculo_kg','grasa_visc','metabolismo_kcal']] }, 'valueInputOption=RAW');
+    if (!exist.includes('recetas'))
+      await api('PUT', '/values/recetas!A1:D1',
+        { values:[['id','categoria','nombre','link']] }, 'valueInputOption=RAW');
   }
   // Always update sesiones header (handles migration from old 6-col format)
   await api('PUT', '/values/sesiones!A1:K1',
@@ -3761,22 +3764,66 @@ const RECETAS_CATS = [
 
 let _recetaCatSel = null;
 
-function loadRecetas() {
+function loadRecetasCache() {
   try { return JSON.parse(localStorage.getItem('gfit_recetas') || '[]'); }
   catch { return []; }
 }
 
-function saveRecetas(arr) {
+function saveRecetasCache(arr) {
   localStorage.setItem('gfit_recetas', JSON.stringify(arr));
 }
 
-function openRecetasScreen() {
-  renderRecetas();
-  showScreen('recetas');
+async function loadRecetasFromSheets() {
+  try {
+    const d = await api('GET', '/values/recetas!A2:D');
+    const rows = d.values || [];
+    const recetas = rows.filter(r => r[0]).map(r => ({
+      id:        r[0] || '',
+      categoria: r[1] || '',
+      nombre:    r[2] || '',
+      link:      r[3] || '',
+    }));
+    saveRecetasCache(recetas);
+    return recetas;
+  } catch(e) {
+    if (e.code === 'offline' || e.code === 'no-token') return loadRecetasCache();
+    throw e;
+  }
 }
 
-function renderRecetas() {
-  const recetas = loadRecetas();
+async function appendRecetaToSheets(receta) {
+  await api('POST', '/values/recetas!A:D:append',
+    { values: [[receta.id, receta.categoria, receta.nombre, receta.link]] },
+    'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+}
+
+async function deleteRecetaFromSheets(id) {
+  const d    = await api('GET', '/values/recetas!A:A');
+  const rows = d.values || [];
+  const idx  = rows.findIndex(r => r[0] === id);
+  if (idx < 0) return; // not found (0 = header, so idx>=1 for data)
+
+  const meta    = await api('GET', '');
+  const sheetId = meta.sheets.find(s => s.properties.title === 'recetas')?.properties.sheetId;
+  if (sheetId === undefined) return;
+
+  await api('POST', ':batchUpdate', { requests: [{
+    deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: idx, endIndex: idx + 1 } }
+  }]});
+}
+
+async function openRecetasScreen() {
+  showScreen('recetas');
+  renderRecetas(loadRecetasCache()); // show cache immediately
+  try {
+    const recetas = await loadRecetasFromSheets();
+    renderRecetas(recetas);
+  } catch(e) {
+    toast('Datos cargados desde caché local', 'info');
+  }
+}
+
+function renderRecetas(recetas) {
   const container = document.getElementById('recetas-list');
   let html = '';
   for (const cat of RECETAS_CATS) {
@@ -3830,23 +3877,46 @@ function selectRecetaCat(cat) {
   });
 }
 
-function saveReceta() {
+async function saveReceta() {
   const nombre = document.getElementById('receta-nombre').value.trim();
   const link   = document.getElementById('receta-link').value.trim();
   if (!nombre && !link) { toast('Añade al menos un nombre o un link', 'warning'); return; }
   if (!_recetaCatSel)   { toast('Selecciona una categoría', 'warning'); return; }
-  const recetas = loadRecetas();
-  recetas.push({ id: Date.now().toString(), categoria: _recetaCatSel, nombre, link });
-  saveRecetas(recetas);
+
+  const receta = { id: Date.now().toString(), categoria: _recetaCatSel, nombre, link };
+
+  // Actualizar caché local primero
+  const recetas = loadRecetasCache();
+  recetas.push(receta);
+  saveRecetasCache(recetas);
   closeRecetaModal();
-  renderRecetas();
-  toast('Receta añadida', 'success');
+  renderRecetas(recetas);
+
+  // Guardar en Sheets
+  if (S.offline) {
+    toast('Receta guardada localmente (sin conexión)', 'warning');
+  } else {
+    try {
+      await appendRecetaToSheets(receta);
+      toast('Receta guardada en Sheets ✓', 'success');
+    } catch(e) {
+      toast('Guardada localmente — fallo al sincronizar con Sheets', 'warning');
+    }
+  }
 }
 
-function deleteReceta(id) {
-  const recetas = loadRecetas().filter(r => r.id !== id);
-  saveRecetas(recetas);
-  renderRecetas();
+async function deleteReceta(id) {
+  const recetas = loadRecetasCache().filter(r => r.id !== id);
+  saveRecetasCache(recetas);
+  renderRecetas(recetas);
+
+  if (!S.offline) {
+    try {
+      await deleteRecetaFromSheets(id);
+    } catch(e) {
+      toast('Eliminada localmente — fallo al sincronizar con Sheets', 'warning');
+    }
+  }
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
