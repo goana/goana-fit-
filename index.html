@@ -871,6 +871,7 @@
     <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon">🥗</span>Menú semanal</button>
     <button class="drawer-item" onclick="closeDrawer();showScreen('guia')"><span class="di-icon">📋</span>Mi Guía</button>
     <div class="drawer-sep"></div>
+    <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()" style="display:none"><span class="di-icon">☁</span>Sincronizar datos locales</button>
     <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon">↩</span>Cerrar sesión</button>
   </nav>
 
@@ -2062,6 +2063,59 @@ async function syncQueue() {
     localStorage.setItem('gfit_q', JSON.stringify(S.pending));
     toast(`${S.pending.length} cambios pendientes`, 'warning');
   } else if (q.length) toast('Sincronización completada ✓', 'success');
+}
+
+// Force-sync local session cache to Sheets (recovery tool)
+async function forceSyncCache() {
+  if (S.offline) { toast('Sin conexión — intenta cuando tengas red', 'error'); return; }
+  // Find dates in local cache that aren't in the online sessions
+  const onlineDates = new Set(S.sessions.map(s => s.fecha));
+  const cachedRaw = JSON.parse(localStorage.getItem('gfit_sess') || '[]');
+  const extraDates = [...new Set(cachedRaw.map(s => s.fecha))].filter(d => !onlineDates.has(d));
+  if (!extraDates.length && !S.pending.length) { toast('No hay datos pendientes de sincronizar', 'info'); return; }
+
+  toast('Sincronizando...', 'info');
+  let sent = 0;
+  for (const date of extraDates) {
+    const dayRows = cachedRaw.filter(s => s.fecha === date);
+    // Reconstruct sheet rows from cached session objects
+    const exNames = [...new Set(dayRows.map(r => r.ejercicio))];
+    const sheetRows = exNames.map((ex, idx) => {
+      const s1 = dayRows.find(r => r.ejercicio === ex && r.serie === 1);
+      const s2 = dayRows.find(r => r.ejercicio === ex && r.serie === 2);
+      const s3 = dayRows.find(r => r.ejercicio === ex && r.serie === 3);
+      const dur = idx === 0 ? (dayRows.find(r => r.duracion_min > 0)?.duracion_min || '') : '';
+      const can = idx === 0 ? (dayRows.find(r => r.cansancio)?.cansancio || '') : '';
+      const nota = idx === 0 ? (dayRows.find(r => r.nota)?.nota || '') : '';
+      return [
+        date, ex,
+        s1?.reps ?? '', s2?.reps ?? '', s3?.reps ?? '',
+        s1?.peso_kg ?? '', s2?.peso_kg ?? '', s3?.peso_kg ?? '',
+        dur, can, nota,
+      ];
+    });
+    try {
+      await deleteSessionsByDate(date);
+      await api('POST', '/values/sesiones!A:K:append', { values: sheetRows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+      sent += sheetRows.length;
+    } catch(e) {
+      toast('Error al sincronizar ' + date + ': ' + e.message, 'error');
+      return;
+    }
+  }
+  if (S.pending.length) await syncQueue();
+  await loadSessions();
+  document.getElementById('sync-btn').style.display = 'none';
+  toast(`Sincronización completada — ${sent} filas enviadas`, 'success');
+}
+
+function updateSyncBtn() {
+  const btn = document.getElementById('sync-btn');
+  if (!btn) return;
+  const onlineDates = new Set(S.sessions.map(s => s.fecha));
+  const cachedRaw = JSON.parse(localStorage.getItem('gfit_sess') || '[]');
+  const hasPending = cachedRaw.some(s => !onlineDates.has(s.fecha)) || S.pending.length > 0;
+  btn.style.display = hasPending ? '' : 'none';
 }
 
 window.addEventListener('online', () => {
@@ -3563,6 +3617,7 @@ async function boot() {
     await Promise.all([loadSessions(), loadConfig(), loadMedidas()]);
     if (S.pending.length) await syncQueue();
     renderDash();
+    updateSyncBtn();
     showScreen('dashboard');
   } catch(e) {
     console.error('boot:', e);
