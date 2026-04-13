@@ -1119,9 +1119,14 @@
         <div class="sel-wrap">
           <select id="ex-sel" onchange="renderHistExercise(this.value)"></select>
         </div>
+        <div id="prog-summary" style="display:none;gap:8px;margin-bottom:12px"></div>
         <div class="chart-card">
           <div class="chart-lbl">Peso máximo por sesión (kg)</div>
           <canvas id="progress-chart"></canvas>
+        </div>
+        <div class="chart-card" style="margin-top:10px">
+          <div class="chart-lbl">Reps totales por sesión</div>
+          <canvas id="reps-chart"></canvas>
         </div>
         <div id="hist-tbl" class="tbl-wrap"></div>
       </div>
@@ -1584,6 +1589,7 @@ const S = {
   calDate:      new Date(),
   workout:      null,
   chart:        null,
+  repsChart:    null,
   offline:      !navigator.onLine,
   pending:      [],
   fase:         parseInt(localStorage.getItem('gfit_fase') || '1'),
@@ -3247,21 +3253,52 @@ function renderSessionDetail(date, rows) {
 function renderHistExercise(name) {
   const rows = S.sessions.filter(s => s.ejercicio === name);
 
-  // Max weight per date for chart
-  const byDate = {};
-  rows.forEach(s => {
-    if (!byDate[s.fecha]) byDate[s.fecha] = 0;
-    byDate[s.fecha] = Math.max(byDate[s.fecha], s.peso_kg);
-  });
-  const dates = Object.keys(byDate).sort();
-  renderChart(dates, dates.map(d => byDate[d]));
-
-  // Table
   const tbl = document.getElementById('hist-tbl');
+  const summaryEl = document.getElementById('prog-summary');
   if (!rows.length) {
     tbl.innerHTML = `<div class="empty-st"><div class="e-icon">📊</div><p>Sin datos aún para este ejercicio</p></div>`;
+    summaryEl.style.display = 'none';
+    renderChart([], []);
+    renderRepsChart([], []);
     return;
   }
+
+  // Agrupar por fecha
+  const byDate = {};
+  rows.forEach(s => {
+    if (!byDate[s.fecha]) byDate[s.fecha] = { maxPeso: 0, totalReps: 0 };
+    byDate[s.fecha].maxPeso  = Math.max(byDate[s.fecha].maxPeso, s.peso_kg);
+    byDate[s.fecha].totalReps += s.reps;
+  });
+  const dates = Object.keys(byDate).sort();
+
+  // Gráficos
+  renderChart(dates, dates.map(d => byDate[d].maxPeso));
+  renderRepsChart(dates, dates.map(d => byDate[d].totalReps));
+
+  // Tarjeta resumen de progreso
+  if (dates.length >= 2) {
+    const first = byDate[dates[0]], last = byDate[dates[dates.length-1]];
+    const dPeso = (last.maxPeso - first.maxPeso).toFixed(1);
+    const dReps = last.totalReps - first.totalReps;
+    const pesoColor = dPeso > 0 ? '#4ade80' : dPeso < 0 ? '#f87171' : '#888';
+    const repsColor = dReps > 0 ? '#4ade80' : dReps < 0 ? '#f87171' : '#888';
+    const arrow = v => v > 0 ? '▲' : v < 0 ? '▼' : '→';
+    summaryEl.style.display = 'flex';
+    summaryEl.innerHTML = `
+      <div style="flex:1;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">PESO vs primera sesión</div>
+        <div style="font-size:20px;font-weight:700;color:${pesoColor}">${arrow(+dPeso)} ${dPeso > 0 ? '+' : ''}${dPeso} kg</div>
+      </div>
+      <div style="flex:1;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px;text-align:center">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">REPS vs primera sesión</div>
+        <div style="font-size:20px;font-weight:700;color:${repsColor}">${arrow(dReps)} ${dReps > 0 ? '+' : ''}${dReps} reps</div>
+      </div>`;
+  } else {
+    summaryEl.style.display = 'none';
+  }
+
+  // Tabla detalle
   const sorted = [...rows].sort((a,b) => b.fecha.localeCompare(a.fecha)||a.serie-b.serie);
   tbl.innerHTML = `
     <table class="hist-table">
@@ -3291,6 +3328,35 @@ function renderChart(labels, data) {
         borderColor: '#a3e635',
         backgroundColor: 'rgba(163,230,53,.1)',
         borderWidth: 2, pointBackgroundColor: '#a3e635',
+        pointRadius: 4, pointHoverRadius: 6,
+        fill: true, tension: .35,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true,
+      plugins: { legend: { display:false } },
+      scales: {
+        x: { ticks: { color:'#666', font:{size:10}, maxTicksLimit:6 }, grid:{ color:'#222' } },
+        y: { ticks: { color:'#666', font:{size:11} }, grid:{ color:'#222' }, beginAtZero:false },
+      },
+    },
+  });
+}
+
+function renderRepsChart(labels, data) {
+  if (S.repsChart) { S.repsChart.destroy(); S.repsChart = null; }
+  const ctx = document.getElementById('reps-chart')?.getContext('2d');
+  if (!ctx) return;
+  if (!labels.length) { ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height); return; }
+  S.repsChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'reps', data,
+        borderColor: '#60a5fa',
+        backgroundColor: 'rgba(96,165,250,.1)',
+        borderWidth: 2, pointBackgroundColor: '#60a5fa',
         pointRadius: 4, pointHoverRadius: 6,
         fill: true, tension: .35,
       }],
