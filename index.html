@@ -2818,10 +2818,26 @@ async function handleSave(silent = false) {
   } else {
     // ── ONLINE path: API calls ──
     try {
-      if (S.workout.editing) await deleteSessionsByDate(S.workout.date);
-      const appendResp = await api('POST', '/values/sesiones!A:K:append', { values: rows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
-      window._lastSaveDebug = { rows, appendResp, date: S.workout.date, ts: new Date().toISOString() };
-      localStorage.setItem('gfit_dbg', JSON.stringify({ rows: rows.length, updated: appendResp?.updates?.updatedRows ?? '?', date: S.workout.date }));
+      // Estrategia upsert: actualizar filas existentes de hoy, añadir las nuevas
+      // — nunca borra filas (evita desorganizar tablas nativas de Sheets)
+      const existing = await api('GET', '/values/sesiones!A:B');
+      const sheetData = existing.values || [];
+      const exRowMap = {}; // ejercicio → número de fila (1-based)
+      for (let i = 1; i < sheetData.length; i++) {
+        if (sheetData[i][0] === S.workout.date) exRowMap[sheetData[i][1]] = i + 1;
+      }
+      const toUpdate = []; const toAppend = [];
+      rows.forEach(r => {
+        const rowNum = exRowMap[r[1]];
+        if (rowNum) toUpdate.push({ range: `sesiones!A${rowNum}:K${rowNum}`, values: [r] });
+        else toAppend.push(r);
+      });
+      if (toUpdate.length) await api('POST', '/values:batchUpdate', { data: toUpdate, valueInputOption: 'RAW' });
+      let appendResp = null;
+      if (toAppend.length) appendResp = await api('POST', '/values/sesiones!A:K:append', { values: toAppend }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+      window._lastSaveDebug = { rows, toUpdate: toUpdate.length, toAppend: toAppend.length, appendResp, date: S.workout.date, ts: new Date().toISOString() };
+      const updRows = (toUpdate.length) + (appendResp?.updates?.updatedRows ?? 0);
+      localStorage.setItem('gfit_dbg', JSON.stringify({ rows: rows.length, updated: updRows, range: appendResp?.updates?.updatedRange ?? (toUpdate[0]?.range||'?'), date: S.workout.date }));
       const {cur,rec} = calcStreak();
       await setCfg('streak_actual', cur);
       await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
@@ -2862,7 +2878,7 @@ async function handleSave(silent = false) {
   S.workout.editing = true; // próximo guardado también borrará las filas anteriores
   S.workout.dirty = false;
   const dbg = JSON.parse(localStorage.getItem('gfit_dbg') || '{}');
-  const rowsMsg = dbg.rows !== undefined ? `[${dbg.rows}ej→${dbg.updated}]` : '';
+  const rowsMsg = dbg.rows !== undefined ? `[${dbg.rows}ej→${dbg.updated} ${dbg.range||''}]` : '';
   const statusEl = document.getElementById('save-status');
   if (statusEl) {
     const offlineMsg = S.offline ? ' (sin conexión)' : '';
