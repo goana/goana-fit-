@@ -937,6 +937,7 @@
     <a class="drawer-item" href="https://docs.google.com/spreadsheets/d/1ydSag5qwNyg32PWrsZFFNMI6oRs1HwH_rMOFCZ4U2Mc/edit?usp=sharing" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="di-icon">📊</span>Ver hoja de datos</a>
     <div class="drawer-sep"></div>
     <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()"><span class="di-icon">☁</span>Sincronizar datos locales</button>
+    <button class="drawer-item" onclick="closeDrawer();cleanEmptyRows()"><span class="di-icon">🧹</span>Limpiar filas vacías</button>
     <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon">↩</span>Cerrar sesión</button>
   </nav>
 
@@ -2216,6 +2217,32 @@ async function forceSyncCache() {
 
 function updateSyncBtn() {
   // sync-btn siempre visible — no ocultar condicionalmente
+}
+
+// Elimina filas vacías de la hoja sesiones (las genera el append dentro de tablas nativas de Sheets)
+async function cleanEmptyRows() {
+  if (S.offline) { toast('Sin conexión', 'error'); return; }
+  toast('Limpiando filas vacías...', 'info');
+  try {
+    const data = await api('GET', '/values/sesiones!A:K');
+    const rows = data.values || [];
+    // Separar cabecera de datos, filtrar vacíos
+    const header = rows[0] || [];
+    const dataRows = rows.slice(1).filter(r => r[0]); // solo filas con fecha
+    // Limpiar toda la hoja y reescribir compacta
+    const meta = await api('GET', '');
+    const sheetId = meta.sheets.find(s => s.properties.title === 'sesiones')?.properties.sheetId;
+    if (sheetId === undefined) { toast('Hoja sesiones no encontrada', 'error'); return; }
+    // Borrar todo el contenido
+    await api('POST', '/values/sesiones!A:K:clear', {});
+    // Reescribir cabecera + datos sin vacíos
+    const allRows = [header, ...dataRows];
+    await api('PUT', `/values/sesiones!A1:K${allRows.length}`, { values: allRows }, 'valueInputOption=RAW');
+    await loadSessions();
+    toast(`Limpieza completada — ${dataRows.length} filas de datos`, 'success');
+  } catch(e) {
+    toast('Error al limpiar: ' + e.message, 'error');
+  }
 }
 
 window.addEventListener('online', () => {
