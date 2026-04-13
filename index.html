@@ -936,7 +936,7 @@
     <button class="drawer-item" onclick="closeDrawer();showScreen('guia')"><span class="di-icon">📋</span>Mi Guía</button>
     <a class="drawer-item" href="https://docs.google.com/spreadsheets/d/1ydSag5qwNyg32PWrsZFFNMI6oRs1HwH_rMOFCZ4U2Mc/edit?usp=sharing" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="di-icon">📊</span>Ver hoja de datos</a>
     <div class="drawer-sep"></div>
-    <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()" style="display:none"><span class="di-icon">☁</span>Sincronizar datos locales</button>
+    <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()"><span class="di-icon">☁</span>Sincronizar datos locales</button>
     <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon">↩</span>Cerrar sesión</button>
   </nav>
 
@@ -1046,6 +1046,7 @@
       <button class="btn-primary" id="save-btn" onclick="handleSave()" disabled>
         GUARDAR SESIÓN
       </button>
+      <div id="save-status" style="display:none;margin-top:10px;padding:10px;border-radius:8px;font-size:13px;word-break:break-word;white-space:pre-wrap"></div>
       <button class="btn-secondary" id="share-btn" onclick="downloadWorkoutPNG()" style="margin-top:10px;display:none">
         Descargar PNG
       </button>
@@ -2071,9 +2072,7 @@ async function deleteSessionsByDate(date) {
     deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: idx, endIndex: idx + 1 } }
   }));
   await api('POST', ':batchUpdate', { requests });
-
-  S.sessions = S.sessions.filter(s => s.fecha !== date);
-  localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
+  // No modificamos S.sessions aquí — lo hace handleSave solo tras un append exitoso
 }
 
 async function loadSessions() {
@@ -2211,17 +2210,12 @@ async function forceSyncCache() {
   }
   if (S.pending.length) await syncQueue();
   await loadSessions();
-  document.getElementById('sync-btn').style.display = 'none';
+  // sync-btn siempre visible
   toast(`Sincronización completada — ${sent} filas enviadas`, 'success');
 }
 
 function updateSyncBtn() {
-  const btn = document.getElementById('sync-btn');
-  if (!btn) return;
-  const onlineDates = new Set(S.sessions.map(s => s.fecha));
-  const cachedRaw = JSON.parse(localStorage.getItem('gfit_sess') || '[]');
-  const hasPending = cachedRaw.some(s => !onlineDates.has(s.fecha)) || S.pending.length > 0;
-  btn.style.display = hasPending ? '' : 'none';
+  // sync-btn siempre visible — no ocultar condicionalmente
 }
 
 window.addEventListener('online', () => {
@@ -2401,8 +2395,11 @@ function editTodayWorkout() {
 async function deleteTodayWorkout() {
   if (!confirm('¿Borrar la sesión de hoy? Esta acción no se puede deshacer.')) return;
   try {
-    if (!S.offline) await deleteSessionsByDate(todayStr());
-    else {
+    if (!S.offline) {
+      await deleteSessionsByDate(todayStr());
+      S.sessions = S.sessions.filter(s => s.fecha !== todayStr());
+      localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
+    } else {
       S.sessions = S.sessions.filter(s => s.fecha !== todayStr());
       localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
       queueAction({ type: 'delete_date', date: todayStr() });
@@ -2830,8 +2827,17 @@ async function handleSave(silent = false) {
       await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
       await setCfg('ultimo_entrenamiento', S.workout.date);
     } catch(e) {
-      if (!silent) toast('Error al guardar: ' + e.message, 'error');
-      if (!silent) { btn.disabled = false; btn.textContent = 'GUARDAR'; }
+      const errMsg = `ERROR al guardar (${new Date().toLocaleTimeString()})\n${e.message}\noffline:${S.offline} token:${!!S.token} rows:${rows.length}`;
+      console.error('[handleSave]', errMsg, e);
+      const statusEl = document.getElementById('save-status');
+      if (statusEl) { statusEl.style.display=''; statusEl.style.background='#3b1212'; statusEl.style.color='#f87171'; statusEl.textContent = errMsg; }
+      if (silent) {
+        // Auto-guardado silencioso fallido: encolar para reintento (no perder datos)
+        queueAction({ type:'append', rows });
+      } else {
+        toast('Error al guardar: ' + e.message, 'error');
+        btn.disabled = false; btn.textContent = 'GUARDAR';
+      }
       return;
     }
   }
@@ -2851,17 +2857,26 @@ async function handleSave(silent = false) {
     });
   });
   localStorage.setItem('gfit_sess', JSON.stringify(S.sessions));
+  renderCal(); // actualizar circulito del calendario sin esperar a volver al dashboard
 
   S.workout.editing = true; // próximo guardado también borrará las filas anteriores
   S.workout.dirty = false;
+  const dbg = JSON.parse(localStorage.getItem('gfit_dbg') || '{}');
+  const rowsMsg = dbg.rows !== undefined ? `[${dbg.rows}ej→${dbg.updated}]` : '';
+  const statusEl = document.getElementById('save-status');
+  if (statusEl) {
+    const offlineMsg = S.offline ? ' (sin conexión)' : '';
+    statusEl.style.display = '';
+    statusEl.style.background = S.offline ? '#2a2000' : '#0f2a0f';
+    statusEl.style.color = S.offline ? '#facc15' : '#4ade80';
+    statusEl.textContent = `✓ Guardado ${new Date().toLocaleTimeString()} ${rowsMsg}${offlineMsg}`;
+  }
   if (!silent) {
     btn.disabled = false; btn.textContent = 'GUARDAR';
     document.getElementById('share-btn').style.display = '';
     const durMsg = durMin > 0 ? ` · ${durMin} min` : '';
     const offlineMsg = S.offline ? ' (sin conexión)' : '';
-    const dbg = JSON.parse(localStorage.getItem('gfit_dbg') || '{}');
-    const rowsMsg = dbg.rows !== undefined ? ` [${dbg.rows}ej→${dbg.updated}]` : '';
-    toast('Sesión guardada' + durMsg + rowsMsg + offlineMsg, S.offline ? 'warning' : 'success');
+    toast('Sesión guardada' + (durMsg||'') + ' ' + rowsMsg + offlineMsg, S.offline ? 'warning' : 'success');
   } else {
     document.getElementById('share-btn').style.display = '';
   }
