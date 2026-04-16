@@ -329,6 +329,9 @@
     .cal-day.snack.today { background: var(--warning); border-color: transparent; }
     .cal-day.yoga { background: #a855f7; color: #fff; font-weight: 700; cursor: default; }
     .cal-day.yoga.today { background: #a855f7; border-color: transparent; }
+    .cal-day.yoga-combo { background: conic-gradient(var(--accent) 50%, #a855f7 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.snack.yoga-combo { background: conic-gradient(var(--warning) 50%, #a855f7 50%); }
+    .cal-day.yoga-combo.today { border-color: transparent; }
 
     /* ── Workout Screen ────────────────────────────────────── */
     .workout-meta { padding: 12px 18px 6px; }
@@ -2436,10 +2439,12 @@ function renderCal() {
     const isFull  = fullDays.has(ds);
     const isSnack = snackDays.has(ds);
     const isYoga  = yogaDays.has(ds);
+    const yogaCombo = isYoga && (isFull || isSnack);
     e.className = 'cal-day'
       + (isFull  ? ' trained' : '')
       + (isSnack ? ' snack'   : '')
       + (isYoga && !isFull && !isSnack ? ' yoga' : '')
+      + (yogaCombo ? ' yoga-combo' : '')
       + (ds === todayS ? ' today' : '');
     e.textContent = d;
     if (isFull || isSnack) e.onclick = () => openSessionSheet(ds);
