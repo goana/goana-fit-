@@ -327,6 +327,8 @@
     .cal-day.snack { background: var(--warning); color: #0f0f0f; font-weight: 700; cursor: pointer; }
     .cal-day.snack:active { opacity: .75; }
     .cal-day.snack.today { background: var(--warning); border-color: transparent; }
+    .cal-day.yoga { background: #a855f7; color: #fff; font-weight: 700; cursor: default; }
+    .cal-day.yoga.today { background: #a855f7; border-color: transparent; }
 
     /* ── Workout Screen ────────────────────────────────────── */
     .workout-meta { padding: 12px 18px 6px; }
@@ -930,6 +932,7 @@
   <nav id="drawer">
     <div class="drawer-title">Navegación</div>
     <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon">📈</span>Progreso</button>
+    <button class="drawer-item" onclick="closeDrawer();openYogaScreen()"><span class="di-icon">🧘</span>Yoga</button>
     <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon">📏</span>Cuerpo</button>
     <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon">🥗</span>Menú semanal</button>
     <button class="drawer-item" onclick="closeDrawer();openRecetasScreen()"><span class="di-icon">📌</span>Ideas de recetas</button>
@@ -1464,6 +1467,44 @@
     </div>
   </div>
 
+  <!-- ═══ YOGA ══════════════════════════════════════════ -->
+  <div id="screen-yoga" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>🧘 Yoga</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="ci-pad">
+      <div class="ci-block">
+        <div class="ci-q">Fecha</div>
+        <input type="date" id="yoga-fecha" class="receta-input" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Duración (minutos)</div>
+        <input type="number" id="yoga-duracion" class="receta-input" min="5" max="180" step="5" placeholder="30" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Estilo <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="yoga-estilo-grid">
+          <button class="receta-cat-btn" data-estilo="Yin"         onclick="selectYogaEstilo('Yin')">Yin</button>
+          <button class="receta-cat-btn" data-estilo="Hatha"       onclick="selectYogaEstilo('Hatha')">Hatha</button>
+          <button class="receta-cat-btn" data-estilo="Vinyasa"     onclick="selectYogaEstilo('Vinyasa')">Vinyasa</button>
+          <button class="receta-cat-btn" data-estilo="Restaurativo" onclick="selectYogaEstilo('Restaurativo')">Restaurativo</button>
+          <button class="receta-cat-btn" data-estilo="Otro"        onclick="selectYogaEstilo('Otro')">Otro</button>
+        </div>
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Nota <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
+        <textarea id="yoga-nota" rows="2" placeholder="¿Cómo te has sentido?"
+          style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);
+                 color:var(--text);font-family:inherit;font-size:14px;padding:10px;
+                 resize:none;box-sizing:border-box"></textarea>
+      </div>
+      <div id="yoga-historial" style="margin-top:6px"></div>
+      <button class="btn-primary" onclick="saveYoga()">Guardar sesión de yoga</button>
+    </div>
+  </div>
+
   <!-- ═══ RECETAS ═════════════════════════════════════════ -->
   <div id="screen-recetas" class="screen">
     <div class="app-header">
@@ -1595,6 +1636,7 @@ const S = {
   fase:         parseInt(localStorage.getItem('gfit_fase') || '1'),
   checkin:      { radioHoy: false, energia: 7, piel: 'Normal', molestia: 0 },
   medidas:      [],
+  yoga:         [],
   bodyChart:    null,
   altura:       parseFloat(localStorage.getItem('gfit_altura') || '0'),
   menuSemana:   (() => { const v = localStorage.getItem('gfit_menu_sem'); return (v==='A'||v==='1') ? '1' : (v==='B'||v==='2') ? '2' : '1'; })(),
@@ -2037,7 +2079,7 @@ async function api(method, path, body, params) {
 async function ensureSheets() {
   const data  = await api('GET', '');
   const exist = (data.sheets||[]).map(s => s.properties.title);
-  const reqs  = ['sesiones','config','checkins','medidas','recetas'].filter(n => !exist.includes(n))
+  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga'].filter(n => !exist.includes(n))
                   .map(title => ({ addSheet: { properties: { title } } }));
   if (reqs.length) {
     await api('POST', ':batchUpdate', { requests: reqs });
@@ -2054,6 +2096,9 @@ async function ensureSheets() {
     if (!exist.includes('recetas'))
       await api('PUT', '/values/recetas!A1:D1',
         { values:[['id','categoria','nombre','link']] }, 'valueInputOption=RAW');
+    if (!exist.includes('yoga'))
+      await api('PUT', '/values/yoga!A1:D1',
+        { values:[['fecha','duracion_min','estilo','nota']] }, 'valueInputOption=RAW');
   }
   // Always update sesiones header (handles migration from old 6-col format)
   await api('PUT', '/values/sesiones!A1:K1',
@@ -2366,6 +2411,12 @@ function renderCal() {
     else snackDays.add(date);
   });
 
+  const yogaDays = new Set();
+  S.yoga.forEach(ys => {
+    const d = parseDate(ys.fecha);
+    if (d && d.getFullYear() === y && d.getMonth() === m) yogaDays.add(ys.fecha);
+  });
+
   const grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
 
@@ -2381,9 +2432,11 @@ function renderCal() {
     const e  = document.createElement('div');
     const isFull  = fullDays.has(ds);
     const isSnack = snackDays.has(ds);
+    const isYoga  = yogaDays.has(ds);
     e.className = 'cal-day'
       + (isFull  ? ' trained' : '')
       + (isSnack ? ' snack'   : '')
+      + (isYoga && !isFull && !isSnack ? ' yoga' : '')
       + (ds === todayS ? ' today' : '');
     e.textContent = d;
     if (isFull || isSnack) e.onclick = () => openSessionSheet(ds);
@@ -3588,6 +3641,79 @@ async function loadMedidas() {
   }));
 }
 
+async function loadYoga() {
+  try {
+    const d = await api('GET', '/values/yoga!A2:D');
+    S.yoga = (d.values||[]).filter(r=>r[0]).map(r => ({
+      fecha: r[0], duracion_min: r[1] ? +r[1] : null, estilo: r[2]||'', nota: r[3]||''
+    }));
+    localStorage.setItem('gfit_yoga', JSON.stringify(S.yoga));
+  } catch(e) {
+    if (e.code === 'offline') {
+      const c = localStorage.getItem('gfit_yoga');
+      if (c) S.yoga = JSON.parse(c);
+    } else throw e;
+  }
+}
+
+async function openYogaScreen() {
+  showScreen('yoga');
+  document.getElementById('yoga-fecha').value = todayStr();
+  document.getElementById('yoga-duracion').value = '';
+  document.getElementById('yoga-nota').value = '';
+  document.querySelectorAll('#yoga-estilo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
+  try { await loadYoga(); } catch(e) { console.warn('loadYoga:', e); }
+  renderYogaHistorial();
+}
+
+function selectYogaEstilo(est) {
+  document.querySelectorAll('#yoga-estilo-grid .receta-cat-btn').forEach(b => {
+    b.classList.toggle('sel', b.dataset.estilo === est);
+  });
+}
+
+function renderYogaHistorial() {
+  const wrap = document.getElementById('yoga-historial');
+  const last = [...S.yoga].sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,5);
+  if (!last.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="recetas-cat-title">Últimas sesiones</div>` +
+    last.map(y => {
+      const parts = [y.duracion_min ? `${y.duracion_min} min` : null, y.estilo || null, y.nota || null].filter(Boolean);
+      return `<div class="receta-card" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <div style="font-size:13px;font-weight:600">${fmtDateES(y.fecha)}</div>
+        <div style="font-size:12px;color:var(--muted)">${parts.join(' · ') || '—'}</div>
+      </div>`;
+    }).join('');
+}
+
+async function saveYoga() {
+  const fecha = document.getElementById('yoga-fecha').value;
+  const durRaw = document.getElementById('yoga-duracion').value;
+  const dur = durRaw ? +durRaw : null;
+  const selBtn = document.querySelector('#yoga-estilo-grid .receta-cat-btn.sel');
+  const estilo = selBtn ? selBtn.dataset.estilo : '';
+  const nota = document.getElementById('yoga-nota').value.trim();
+
+  if (!fecha) { toast('Selecciona una fecha', 'error'); return; }
+  if (dur !== null && (isNaN(dur) || dur < 1)) { toast('Introduce una duración válida', 'error'); return; }
+
+  try {
+    await api('POST', '/values/yoga!A:D:append',
+      { values: [[fecha, dur !== null ? dur : '', estilo, nota]] },
+      'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    S.yoga.push({ fecha, duracion_min: dur, estilo, nota });
+    localStorage.setItem('gfit_yoga', JSON.stringify(S.yoga));
+    renderCal();
+    toast('Sesión de yoga guardada ✓', 'success');
+    document.getElementById('yoga-duracion').value = '';
+    document.getElementById('yoga-nota').value = '';
+    document.querySelectorAll('#yoga-estilo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
+    renderYogaHistorial();
+  } catch(e) {
+    toast('Error al guardar: ' + e.message, 'error');
+  }
+}
+
 async function openBodyScreen() {
   showScreen('body');
   try { await loadMedidas(); } catch(e) { console.warn('loadMedidas:', e); }
@@ -3861,7 +3987,7 @@ async function boot() {
 
   try {
     await ensureSheets();
-    await Promise.all([loadSessions(), loadConfig(), loadMedidas()]);
+    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga()]);
     if (S.pending.length) await syncQueue();
     renderDash();
     updateSyncBtn();
