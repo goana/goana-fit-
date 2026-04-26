@@ -2615,7 +2615,7 @@ function editTodayWorkout() {
     date, editing: true, dirty: false,
     _pwShown: pwDone, // don't re-show modal if already submitted today
     exercises: EXERCISES.map(ex => ({
-      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
+      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit, weight: ex.weight,
       series: Array.from({length: ex.sets}, (_, i) => {
         const row = saved.find(s => s.ejercicio === ex.name && s.serie === i + 1);
         const prevPeso = lw[ex.name]?.[i+1]?.peso || 0;
@@ -2663,7 +2663,7 @@ function startWorkout() {
     editing: false, dirty: false,
     _pwShown: localStorage.getItem('gfit_pw_done') === todayStr(),
     exercises: EXERCISES.map(ex => ({
-      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
+      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit, weight: ex.weight,
       series: Array.from({length:ex.sets},(_,i) => ({
         weight: lw[ex.name]?.[i+1]?.peso ?? 0,
         reps:   lw[ex.name]?.[i+1]?.reps ?? ex.reps,
