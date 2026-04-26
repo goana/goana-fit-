@@ -332,6 +332,17 @@
     .cal-day.yoga-combo { background: conic-gradient(var(--accent) 50%, #a855f7 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
     .cal-day.snack.yoga-combo { background: conic-gradient(var(--warning) 50%, #a855f7 50%); }
     .cal-day.yoga-combo.today { border-color: transparent; }
+    .cal-day.pilates { background: #06b6d4; color: #fff; font-weight: 700; cursor: default; }
+    .cal-day.pilates.today { background: #06b6d4; border-color: transparent; }
+    .cal-day.pilates-combo { background: conic-gradient(var(--accent) 50%, #06b6d4 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.snack.pilates-combo { background: conic-gradient(var(--warning) 50%, #06b6d4 50%); }
+    .cal-day.pilates-combo.today { border-color: transparent; }
+    .cal-day.yoga.pilates-combo { background: conic-gradient(#a855f7 50%, #06b6d4 50%); color: #fff; cursor: default; }
+    .pilates-tipo-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 8px; height: auto; }
+    .pilates-tipo-btn .ptb-icon  { font-size: 22px; line-height: 1; }
+    .pilates-tipo-btn .ptb-name  { font-size: 13px; font-weight: 600; }
+    .pilates-tipo-btn .ptb-desc  { font-size: 10px; color: var(--muted); font-weight: 400; text-align: center; line-height: 1.3; }
+    .pilates-tipo-btn.sel .ptb-desc { color: inherit; opacity: .8; }
 
     /* ── Workout Screen ────────────────────────────────────── */
     .workout-meta { padding: 12px 18px 6px; }
@@ -936,6 +947,8 @@
     <div class="drawer-title">Navegación</div>
     <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon">📈</span>Progreso</button>
     <button class="drawer-item" onclick="closeDrawer();openYogaScreen()"><span class="di-icon">🧘</span>Yoga</button>
+    <button class="drawer-item" onclick="closeDrawer();openPilatesScreen()"><span class="di-icon">🤸</span>Pilates</button>
+    <button class="drawer-item" onclick="closeDrawer();openSnackScreen()"><span class="di-icon">⚡</span>Snacks</button>
     <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon">📏</span>Cuerpo</button>
     <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon">🥗</span>Menú semanal</button>
     <button class="drawer-item" onclick="closeDrawer();openRecetasScreen()"><span class="di-icon">📌</span>Ideas de recetas</button>
@@ -1027,6 +1040,9 @@
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
             <span style="width:10px;height:10px;border-radius:50%;background:#a855f7;display:inline-block"></span>Yoga
+          </span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
+            <span style="width:10px;height:10px;border-radius:50%;background:#06b6d4;display:inline-block"></span>Pilates
           </span>
         </div>
       </div>
@@ -1511,6 +1527,104 @@
     </div>
   </div>
 
+  <!-- ═══ PILATES ════════════════════════════════════════ -->
+  <div id="screen-pilates" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>🤸 Pilates</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="ci-pad">
+      <div class="ci-block">
+        <div class="ci-q">Fecha</div>
+        <input type="date" id="pilates-fecha" class="receta-input" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Duración (minutos)</div>
+        <input type="number" id="pilates-duracion" class="receta-input" min="5" max="180" step="5" placeholder="30" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Tipo <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="pilates-tipo-grid">
+          <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Mat" onclick="selectPilatesTipo('Mat')">
+            <span class="ptb-icon">🧘</span>
+            <span class="ptb-name">Mat</span>
+            <span class="ptb-desc">En el suelo, sin aparatos</span>
+          </button>
+          <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Reformer" onclick="selectPilatesTipo('Reformer')">
+            <span class="ptb-icon">⚙️</span>
+            <span class="ptb-name">Reformer</span>
+            <span class="ptb-desc">Máquina de resortes y poleas</span>
+          </button>
+          <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Suelo Pélvico" onclick="selectPilatesTipo('Suelo Pélvico')">
+            <span class="ptb-icon">🌸</span>
+            <span class="ptb-name">Suelo Pélvico</span>
+            <span class="ptb-desc">Trabajo de suelo pélvico</span>
+          </button>
+          <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Rehabilitador" onclick="selectPilatesTipo('Rehabilitador')">
+            <span class="ptb-icon">🩹</span>
+            <span class="ptb-name">Rehabilitador</span>
+            <span class="ptb-desc">Enfocado en recuperación</span>
+          </button>
+          <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Animal Flow" onclick="selectPilatesTipo('Animal Flow')">
+            <span class="ptb-icon">🐆</span>
+            <span class="ptb-name">Animal Flow</span>
+            <span class="ptb-desc">Movimiento animal en el suelo</span>
+          </button>
+          <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Otro" onclick="selectPilatesTipo('Otro')">
+            <span class="ptb-icon">✨</span>
+            <span class="ptb-name">Otro</span>
+            <span class="ptb-desc">Otro tipo de pilates</span>
+          </button>
+        </div>
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Nota <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
+        <textarea id="pilates-nota" rows="2" placeholder="¿Cómo te has sentido?"
+          style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);
+                 color:var(--text);font-family:inherit;font-size:14px;padding:10px;
+                 resize:none;box-sizing:border-box"></textarea>
+      </div>
+      <div id="pilates-historial" style="margin-top:6px"></div>
+      <button class="btn-primary" onclick="savePilates()">Guardar sesión de pilates</button>
+    </div>
+  </div>
+
+  <!-- ═══ SNACKS ══════════════════════════════════════════ -->
+  <div id="screen-snack" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>⚡ Snacks</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="ci-pad">
+      <div class="ci-block">
+        <div class="ci-q">Fecha</div>
+        <input type="date" id="snack-fecha" class="receta-input" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div class="ci-q" style="margin:0">Ejercicios</div>
+          <button onclick="addSnackEntry()"
+            style="background:var(--accent-bg);border:1px solid var(--accent);border-radius:8px;
+                   color:var(--accent);font-size:13px;font-weight:600;cursor:pointer;padding:4px 12px">
+            + Añadir
+          </button>
+        </div>
+        <div id="snack-entries"></div>
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Nota <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
+        <textarea id="snack-nota" rows="2" placeholder="¿Cómo te has sentido?"
+          style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);
+                 color:var(--text);font-family:inherit;font-size:14px;padding:10px;
+                 resize:none;box-sizing:border-box"></textarea>
+      </div>
+      <div id="snack-historial" style="margin-top:6px"></div>
+      <button class="btn-primary" onclick="saveSnack()">Guardar snack</button>
+    </div>
+  </div>
+
   <!-- ═══ RECETAS ═════════════════════════════════════════ -->
   <div id="screen-recetas" class="screen">
     <div class="app-header">
@@ -1643,6 +1757,8 @@ const S = {
   checkin:      { radioHoy: false, energia: 7, piel: 'Normal', molestia: 0 },
   medidas:      [],
   yoga:         [],
+  pilates:      [],
+  snacks:       [],
   bodyChart:    null,
   altura:       parseFloat(localStorage.getItem('gfit_altura') || '0'),
   menuSemana:   (() => { const v = localStorage.getItem('gfit_menu_sem'); return (v==='A'||v==='1') ? '1' : (v==='B'||v==='2') ? '2' : '1'; })(),
@@ -1651,6 +1767,9 @@ const S = {
 
 const TMR = { running: false, paused: false, secs: 90, iv: null, label: '' };
 const STMR = { start: null, offset: 0, iv: null }; // session timer
+let _yogaEditCtx    = null;
+let _pilatesEditCtx = null;
+let _snackEditCtx   = null;
 
 // ═══════════════════════════════════════════════════════════
 // PHASE LOGIC
@@ -2085,7 +2204,7 @@ async function api(method, path, body, params) {
 async function ensureSheets() {
   const data  = await api('GET', '');
   const exist = (data.sheets||[]).map(s => s.properties.title);
-  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga'].filter(n => !exist.includes(n))
+  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','snacks'].filter(n => !exist.includes(n))
                   .map(title => ({ addSheet: { properties: { title } } }));
   if (reqs.length) {
     await api('POST', ':batchUpdate', { requests: reqs });
@@ -2105,6 +2224,12 @@ async function ensureSheets() {
     if (!exist.includes('yoga'))
       await api('PUT', '/values/yoga!A1:D1',
         { values:[['fecha','duracion_min','estilo','nota']] }, 'valueInputOption=RAW');
+    if (!exist.includes('pilates'))
+      await api('PUT', '/values/pilates!A1:D1',
+        { values:[['fecha','duracion_min','tipo','nota']] }, 'valueInputOption=RAW');
+    if (!exist.includes('snacks'))
+      await api('PUT', '/values/snacks!A1:F1',
+        { values:[['fecha','ejercicio','series','reps','peso_kg','nota']] }, 'valueInputOption=RAW');
   }
   // Always update sesiones header (handles migration from old 6-col format)
   await api('PUT', '/values/sesiones!A1:K1',
@@ -2410,17 +2535,29 @@ function renderCal() {
     byDate[s.fecha].add(s.ejercicio);
   });
 
-  const fullDays  = new Set(); // entrenamiento completo (todos los ejercicios)
-  const snackDays = new Set(); // día de snacks (incompleto)
+  const fullDays  = new Set();
+  const snackDays = new Set();
   Object.entries(byDate).forEach(([date, exs]) => {
     if (exs.size >= EXERCISES.length) fullDays.add(date);
     else snackDays.add(date);
+  });
+  // Días con snacks dedicados (ejercicios libres)
+  S.snacks.forEach(sn => {
+    const d = parseDate(sn.fecha);
+    if (d && d.getFullYear() === y && d.getMonth() === m && !fullDays.has(sn.fecha))
+      snackDays.add(sn.fecha);
   });
 
   const yogaDays = new Set();
   S.yoga.forEach(ys => {
     const d = parseDate(ys.fecha);
     if (d && d.getFullYear() === y && d.getMonth() === m) yogaDays.add(ys.fecha);
+  });
+
+  const pilatesDays = new Set();
+  S.pilates.forEach(ps => {
+    const d = parseDate(ps.fecha);
+    if (d && d.getFullYear() === y && d.getMonth() === m) pilatesDays.add(ps.fecha);
   });
 
   const grid = document.getElementById('cal-grid');
@@ -2436,18 +2573,25 @@ function renderCal() {
   for (let d=1; d<=days; d++) {
     const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const e  = document.createElement('div');
-    const isFull  = fullDays.has(ds);
-    const isSnack = snackDays.has(ds);
-    const isYoga  = yogaDays.has(ds);
-    const yogaCombo = isYoga && (isFull || isSnack);
+    const isFull    = fullDays.has(ds);
+    const isSnack   = snackDays.has(ds);
+    const isYoga    = yogaDays.has(ds);
+    const isPilates = pilatesDays.has(ds);
+    const yogaCombo    = isYoga && (isFull || isSnack);
+    const pilatesCombo = isPilates && (isFull || isSnack || isYoga);
     e.className = 'cal-day'
       + (isFull  ? ' trained' : '')
       + (isSnack ? ' snack'   : '')
-      + (isYoga && !isFull && !isSnack ? ' yoga' : '')
-      + (yogaCombo ? ' yoga-combo' : '')
+      + (isYoga    && !isFull && !isSnack && !isPilates ? ' yoga'    : '')
+      + (yogaCombo && !isPilates ? ' yoga-combo' : '')
+      + (isPilates && !isFull && !isSnack && !isYoga ? ' pilates' : '')
+      + (isPilates && isYoga && !isFull && !isSnack ? ' pilates-combo' : '')
+      + (pilatesCombo && (isFull || isSnack) ? ' pilates-combo' : '')
       + (ds === todayS ? ' today' : '');
     e.textContent = d;
-    if (isFull || isSnack) e.onclick = () => openSessionSheet(ds);
+    const hasContent = isFull || isSnack || isYoga || isPilates;
+    if (hasContent) e.onclick = () => openSessionSheet(ds);
+    if (hasContent && !isFull && !isSnack) e.style.cursor = 'pointer';
     grid.appendChild(e);
   }
 }
@@ -3252,31 +3396,119 @@ function toggleSessionItem(date) {
   item.classList.toggle('open');
 }
 
+function linkify(text) {
+  const escaped = text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return escaped.replace(/(https?:\/\/[^\s]+)/g,
+    url => `<a href="${url}" target="_blank" rel="noopener"
+               style="color:var(--accent);word-break:break-all">${url}</a>`);
+}
+
 function openSessionSheet(date) {
-  const rows = S.sessions.filter(s => s.fecha === date);
-  if (!rows.length) return;
-  const dur        = rows.find(r => r.duracion_min > 0);
-  const meta       = rows.find(r => r.cansancio || r.nota);
-  const durTxt     = dur ? ` · ${dur.duracion_min} min` : '';
+  const rows        = S.sessions.filter(s => s.fecha === date);
+  const yogaRows    = S.yoga.filter(y => y.fecha === date);
+  const pilatesRows = S.pilates.filter(p => p.fecha === date);
+  const snackRows   = S.snacks.filter(s => s.fecha === date);
+  if (!rows.length && !yogaRows.length && !pilatesRows.length && !snackRows.length) { closeSessionSheet(); return; }
+
+  const dur    = rows.find(r => r.duracion_min > 0);
+  const meta   = rows.find(r => r.cansancio || r.nota);
+  const durTxt = dur ? ` · ${dur.duracion_min} min` : '';
   document.getElementById('session-sheet-title').textContent = fmtDateES(date) + durTxt;
 
-  let metaHtml = '';
-  if (meta?.cansancio) {
-    const c = meta.cansancio;
-    const color = c <= 3 ? '#4ade80' : c <= 6 ? '#facc15' : c <= 8 ? '#fb923c' : '#f87171';
-    metaHtml += `<div style="display:flex;align-items:center;gap:8px;padding:10px 16px 4px">
-      <span style="font-size:12px;color:var(--muted)">Cansancio</span>
-      <span style="background:${color};color:#000;font-weight:700;font-size:13px;
-                   border-radius:6px;padding:2px 9px">${c}/10</span>
+  const iconBtn = (icon, onclick, title) =>
+    `<button onclick="${onclick}" title="${title}"
+       style="background:none;border:1px solid var(--border2);border-radius:6px;color:var(--muted);
+              font-size:12px;cursor:pointer;padding:2px 8px;line-height:1.4">${icon}</button>`;
+
+  let html = '';
+
+  if (rows.length) {
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 4px">
+      <span style="font-size:13px;font-weight:700;color:var(--accent)">🏋️ Entrenamiento</span>
+      <div style="display:flex;gap:6px">
+        ${iconBtn('✏️ Editar', `editSessionByDate('${date}')`, 'Editar')}
+        ${iconBtn('🗑 Eliminar', `deleteGymSession('${date}')`, 'Eliminar')}
+      </div>
     </div>`;
-  }
-  if (meta?.nota) {
-    metaHtml += `<div style="padding:6px 16px 10px;font-size:13px;color:var(--muted);
-                              border-bottom:1px solid var(--border);font-style:italic">
-      "${meta.nota}"</div>`;
+    if (meta?.cansancio) {
+      const c = meta.cansancio;
+      const color = c <= 3 ? '#4ade80' : c <= 6 ? '#facc15' : c <= 8 ? '#fb923c' : '#f87171';
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:2px 16px 4px">
+        <span style="font-size:12px;color:var(--muted)">Cansancio</span>
+        <span style="background:${color};color:#000;font-weight:700;font-size:13px;
+                     border-radius:6px;padding:2px 9px">${c}/10</span>
+      </div>`;
+    }
+    if (meta?.nota) {
+      html += `<div style="padding:4px 16px 8px;font-size:13px;color:var(--muted);font-style:italic">"${linkify(meta.nota)}"</div>`;
+    }
+    html += renderSessionDetail(date, rows);
   }
 
-  document.getElementById('session-sheet-body').innerHTML = metaHtml + renderSessionDetail(date, rows);
+  if (yogaRows.length) {
+    const sep = rows.length ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
+      <span style="font-size:13px;font-weight:700;color:#a855f7">🧘 Yoga</span>
+    </div>`;
+    html += yogaRows.map((y, nth) => {
+      const parts = [y.duracion_min ? `${y.duracion_min} min` : null, y.estilo || null].filter(Boolean);
+      return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:2px 16px 8px;gap:8px">
+        <div>
+          <div style="font-size:13px;color:var(--text)">${parts.join(' · ') || '—'}</div>
+          ${y.nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic">"${linkify(y.nota)}"</div>` : ''}
+        </div>
+        <div style="display:flex;gap:4px">
+          ${iconBtn('✏️', `editYogaEntry('${date}', ${nth})`, 'Editar')}
+          ${iconBtn('🗑', `deleteYogaEntry('${date}', ${nth})`, 'Eliminar')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (pilatesRows.length) {
+    const sep = (rows.length || yogaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
+      <span style="font-size:13px;font-weight:700;color:#06b6d4">🤸 Pilates</span>
+    </div>`;
+    html += pilatesRows.map((p, nth) => {
+      const parts = [p.duracion_min ? `${p.duracion_min} min` : null, p.tipo || null].filter(Boolean);
+      return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:2px 16px 8px;gap:8px">
+        <div>
+          <div style="font-size:13px;color:var(--text)">${parts.join(' · ') || '—'}</div>
+          ${p.nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic">"${linkify(p.nota)}"</div>` : ''}
+        </div>
+        <div style="display:flex;gap:4px">
+          ${iconBtn('✏️', `editPilatesEntry('${date}', ${nth})`, 'Editar')}
+          ${iconBtn('🗑', `deletePilatesEntry('${date}', ${nth})`, 'Eliminar')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (snackRows.length) {
+    const sep = (rows.length || yogaRows.length || pilatesRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
+      <span style="font-size:13px;font-weight:700;color:var(--warning)">⚡ Snacks</span>
+      <div style="display:flex;gap:6px">
+        ${iconBtn('✏️ Editar', `editSnackEntry('${date}')`, 'Editar')}
+        ${iconBtn('🗑 Eliminar', `deleteSnackEntry('${date}')`, 'Eliminar')}
+      </div>
+    </div>`;
+    const snackNota = snackRows[0]?.nota;
+    html += snackRows.map(sn => {
+      const chips = [
+        sn.series ? `${sn.series}s` : null,
+        sn.reps   ? `${sn.reps}r`   : null,
+        sn.peso_kg ? `${sn.peso_kg}kg` : null
+      ].filter(Boolean).join(' × ');
+      return `<div style="padding:2px 16px 4px;font-size:13px;color:var(--text)">
+        ${sn.ejercicio}${chips ? `<span style="color:var(--muted);margin-left:6px">${chips}</span>` : ''}
+      </div>`;
+    }).join('');
+    if (snackNota) html += `<div style="padding:2px 16px 10px;font-size:12px;color:var(--muted);font-style:italic">"${linkify(snackNota)}"</div>`;
+  }
+
+  document.getElementById('session-sheet-body').innerHTML = html;
   document.getElementById('session-sheet-overlay').style.display = '';
   document.getElementById('session-sheet').style.display = '';
 }
@@ -3286,15 +3518,118 @@ function closeSessionSheet() {
   document.getElementById('session-sheet').style.display = 'none';
 }
 
+async function deleteGymSession(date) {
+  if (!confirm('¿Eliminar el entrenamiento de este día?')) return;
+  try {
+    await deleteSessionsByDate(date);
+    S.sessions = S.sessions.filter(s => s.fecha !== date);
+    renderCal();
+    toast('Entrenamiento eliminado ✓', 'success');
+    openSessionSheet(date);
+  } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
+}
+
+async function deleteYogaEntry(date, nth) {
+  if (!confirm('¿Eliminar esta sesión de yoga?')) return;
+  try {
+    const data = await api('GET', '/values/yoga!A:A');
+    const rows = data.values || [];
+    let count = -1, targetIdx = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === date) { count++; if (count === nth) { targetIdx = i; break; } }
+    }
+    if (targetIdx === -1) { toast('No se encontró la sesión', 'error'); return; }
+    const meta = await api('GET', '');
+    const sheetId = meta.sheets.find(s => s.properties.title === 'yoga')?.properties.sheetId;
+    await api('POST', ':batchUpdate', { requests: [{ deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: targetIdx, endIndex: targetIdx + 1 } } }] });
+    await loadYoga();
+    renderCal();
+    toast('Sesión de yoga eliminada ✓', 'success');
+    openSessionSheet(date);
+  } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
+}
+
+async function deletePilatesEntry(date, nth) {
+  if (!confirm('¿Eliminar esta sesión de pilates?')) return;
+  try {
+    const data = await api('GET', '/values/pilates!A:A');
+    const rows = data.values || [];
+    let count = -1, targetIdx = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === date) { count++; if (count === nth) { targetIdx = i; break; } }
+    }
+    if (targetIdx === -1) { toast('No se encontró la sesión', 'error'); return; }
+    const meta = await api('GET', '');
+    const sheetId = meta.sheets.find(s => s.properties.title === 'pilates')?.properties.sheetId;
+    await api('POST', ':batchUpdate', { requests: [{ deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: targetIdx, endIndex: targetIdx + 1 } } }] });
+    await loadPilates();
+    renderCal();
+    toast('Sesión de pilates eliminada ✓', 'success');
+    openSessionSheet(date);
+  } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
+}
+
+function editSessionByDate(date) {
+  const saved = S.sessions.filter(s => s.fecha === date);
+  const lw = getLastWeights();
+  S.workout = {
+    date, editing: true, dirty: false, _pwShown: true,
+    exercises: EXERCISES.map(ex => ({
+      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
+      series: Array.from({length: ex.sets}, (_, i) => {
+        const row = saved.find(s => s.ejercicio === ex.name && s.serie === i + 1);
+        return {
+          weight: row ? row.peso_kg : (lw[ex.name]?.[i+1]?.peso || 0),
+          reps:   row ? row.reps   : (lw[ex.name]?.[i+1]?.reps || ex.reps),
+          done:   !!row,
+        };
+      }),
+    })),
+  };
+  closeSessionSheet();
+  renderWorkout();
+  showScreen('workout');
+}
+
+async function editYogaEntry(date, nth) {
+  const entry = S.yoga.filter(y => y.fecha === date)[nth];
+  if (!entry) return;
+  _yogaEditCtx = { date, nth };
+  closeSessionSheet();
+  showScreen('yoga');
+  document.getElementById('yoga-fecha').value = entry.fecha;
+  document.getElementById('yoga-duracion').value = entry.duracion_min || '';
+  document.getElementById('yoga-nota').value = entry.nota || '';
+  document.querySelectorAll('#yoga-estilo-grid .receta-cat-btn').forEach(b =>
+    b.classList.toggle('sel', b.dataset.estilo === entry.estilo));
+  document.querySelector('#screen-yoga .btn-primary').textContent = 'Actualizar sesión de yoga';
+  renderYogaHistorial();
+}
+
+async function editPilatesEntry(date, nth) {
+  const entry = S.pilates.filter(p => p.fecha === date)[nth];
+  if (!entry) return;
+  _pilatesEditCtx = { date, nth };
+  closeSessionSheet();
+  showScreen('pilates');
+  document.getElementById('pilates-fecha').value = entry.fecha;
+  document.getElementById('pilates-duracion').value = entry.duracion_min || '';
+  document.getElementById('pilates-nota').value = entry.nota || '';
+  document.querySelectorAll('#pilates-tipo-grid .receta-cat-btn').forEach(b =>
+    b.classList.toggle('sel', b.dataset.tipo === entry.tipo));
+  document.querySelector('#screen-pilates .btn-primary').textContent = 'Actualizar sesión de pilates';
+  renderPilatesHistorial();
+}
+
 function renderSessionDetail(date, rows) {
   const byEx = {};
   rows.forEach(r => {
-    if (!byEx[r.ejercicio]) byEx[r.ejercicio] = [];
-    byEx[r.ejercicio].push(r);
+    if (!byEx[r.ejercicio]) byEx[r.ejercicio] = {};
+    byEx[r.ejercicio][r.serie] = r; // deduplica por nº de serie
   });
-  return Object.entries(byEx).map(([exName, series]) => {
+  return Object.entries(byEx).map(([exName, seriesMap]) => {
     const ex = EXERCISES.find(e => e.name === exName) || {};
-    const sorted = series.sort((a,b) => a.serie - b.serie);
+    const sorted = Object.values(seriesMap).sort((a,b) => a.serie - b.serie);
     const chips = sorted.map(s => {
       let inner;
       if (ex.unit === 'seg')  inner = `${s.reps}s`;
@@ -3665,11 +4000,14 @@ async function loadYoga() {
 }
 
 async function openYogaScreen() {
+  _yogaEditCtx = null;
   showScreen('yoga');
   document.getElementById('yoga-fecha').value = todayStr();
   document.getElementById('yoga-duracion').value = '';
   document.getElementById('yoga-nota').value = '';
+  document.getElementById('yoga-nota').value = '';
   document.querySelectorAll('#yoga-estilo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelector('#screen-yoga .btn-primary').textContent = 'Guardar sesión de yoga';
   try { await loadYoga(); } catch(e) { console.warn('loadYoga:', e); }
   renderYogaHistorial();
 }
@@ -3705,6 +4043,37 @@ async function saveYoga() {
   if (!fecha) { toast('Selecciona una fecha', 'error'); return; }
   if (dur !== null && (isNaN(dur) || dur < 1)) { toast('Introduce una duración válida', 'error'); return; }
 
+  const resetForm = () => {
+    document.getElementById('yoga-duracion').value = '';
+    document.getElementById('yoga-nota').value = '';
+    document.querySelectorAll('#yoga-estilo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
+    document.querySelector('#screen-yoga .btn-primary').textContent = 'Guardar sesión de yoga';
+  };
+
+  if (_yogaEditCtx) {
+    try {
+      const { date: editDate, nth } = _yogaEditCtx;
+      const data = await api('GET', '/values/yoga!A:A');
+      const sheetRows = data.values || [];
+      let count = -1, targetIdx = -1;
+      for (let i = 1; i < sheetRows.length; i++) {
+        if (sheetRows[i][0] === editDate) { count++; if (count === nth) { targetIdx = i; break; } }
+      }
+      if (targetIdx !== -1)
+        await api('PUT', `/values/yoga!A${targetIdx+1}:D${targetIdx+1}`,
+          { values: [[fecha, dur !== null ? dur : '', estilo, nota]] }, 'valueInputOption=RAW');
+      _yogaEditCtx = null;
+      await loadYoga();
+      renderCal();
+      toast('Sesión de yoga actualizada ✓', 'success');
+      resetForm();
+      renderYogaHistorial();
+    } catch(e) { toast('Error al actualizar: ' + e.message, 'error'); }
+    return;
+  }
+
+  if (S.yoga.some(y => y.fecha === fecha) && !confirm('Ya tienes una sesión de yoga para esta fecha. ¿Añadir otra?')) return;
+
   try {
     await api('POST', '/values/yoga!A:D:append',
       { values: [[fecha, dur !== null ? dur : '', estilo, nota]] },
@@ -3713,13 +4082,307 @@ async function saveYoga() {
     localStorage.setItem('gfit_yoga', JSON.stringify(S.yoga));
     renderCal();
     toast('Sesión de yoga guardada ✓', 'success');
-    document.getElementById('yoga-duracion').value = '';
-    document.getElementById('yoga-nota').value = '';
-    document.querySelectorAll('#yoga-estilo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
+    resetForm();
     renderYogaHistorial();
+  } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
+}
+
+async function loadPilates() {
+  try {
+    const d = await api('GET', '/values/pilates!A2:D');
+    S.pilates = (d.values||[]).filter(r=>r[0]).map(r => ({
+      fecha: r[0], duracion_min: r[1] ? +r[1] : null, tipo: r[2]||'', nota: r[3]||''
+    }));
+    localStorage.setItem('gfit_pilates', JSON.stringify(S.pilates));
   } catch(e) {
-    toast('Error al guardar: ' + e.message, 'error');
+    if (e.code === 'offline') {
+      const c = localStorage.getItem('gfit_pilates');
+      if (c) S.pilates = JSON.parse(c);
+    } else throw e;
   }
+}
+
+async function openPilatesScreen() {
+  _pilatesEditCtx = null;
+  showScreen('pilates');
+  document.getElementById('pilates-fecha').value = todayStr();
+  document.getElementById('pilates-duracion').value = '';
+  document.getElementById('pilates-nota').value = '';
+  document.querySelectorAll('#pilates-tipo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
+  document.querySelector('#screen-pilates .btn-primary').textContent = 'Guardar sesión de pilates';
+  try { await loadPilates(); } catch(e) { console.warn('loadPilates:', e); }
+  renderPilatesHistorial();
+}
+
+function selectPilatesTipo(tipo) {
+  document.querySelectorAll('#pilates-tipo-grid .receta-cat-btn').forEach(b => {
+    b.classList.toggle('sel', b.dataset.tipo === tipo);
+  });
+}
+
+function renderPilatesHistorial() {
+  const wrap = document.getElementById('pilates-historial');
+  const last = [...S.pilates].sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,5);
+  if (!last.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="recetas-cat-title">Últimas sesiones</div>` +
+    last.map(p => {
+      const parts = [p.duracion_min ? `${p.duracion_min} min` : null, p.tipo || null, p.nota || null].filter(Boolean);
+      return `<div class="receta-card" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <div style="font-size:13px;font-weight:600">${fmtDateES(p.fecha)}</div>
+        <div style="font-size:12px;color:var(--muted)">${parts.join(' · ') || '—'}</div>
+      </div>`;
+    }).join('');
+}
+
+async function savePilates() {
+  const fecha = document.getElementById('pilates-fecha').value;
+  const durRaw = document.getElementById('pilates-duracion').value;
+  const dur = durRaw ? +durRaw : null;
+  const selBtn = document.querySelector('#pilates-tipo-grid .receta-cat-btn.sel');
+  const tipo = selBtn ? selBtn.dataset.tipo : '';
+  const nota = document.getElementById('pilates-nota').value.trim();
+
+  if (!fecha) { toast('Selecciona una fecha', 'error'); return; }
+  if (dur !== null && (isNaN(dur) || dur < 1)) { toast('Introduce una duración válida', 'error'); return; }
+
+  const resetForm = () => {
+    document.getElementById('pilates-duracion').value = '';
+    document.getElementById('pilates-nota').value = '';
+    document.querySelectorAll('#pilates-tipo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
+    document.querySelector('#screen-pilates .btn-primary').textContent = 'Guardar sesión de pilates';
+  };
+
+  if (_pilatesEditCtx) {
+    try {
+      const { date: editDate, nth } = _pilatesEditCtx;
+      const data = await api('GET', '/values/pilates!A:A');
+      const sheetRows = data.values || [];
+      let count = -1, targetIdx = -1;
+      for (let i = 1; i < sheetRows.length; i++) {
+        if (sheetRows[i][0] === editDate) { count++; if (count === nth) { targetIdx = i; break; } }
+      }
+      if (targetIdx !== -1)
+        await api('PUT', `/values/pilates!A${targetIdx+1}:D${targetIdx+1}`,
+          { values: [[fecha, dur !== null ? dur : '', tipo, nota]] }, 'valueInputOption=RAW');
+      _pilatesEditCtx = null;
+      await loadPilates();
+      renderCal();
+      toast('Sesión de pilates actualizada ✓', 'success');
+      resetForm();
+      renderPilatesHistorial();
+    } catch(e) { toast('Error al actualizar: ' + e.message, 'error'); }
+    return;
+  }
+
+  if (S.pilates.some(p => p.fecha === fecha) && !confirm('Ya tienes una sesión de pilates para esta fecha. ¿Añadir otra?')) return;
+
+  try {
+    await api('POST', '/values/pilates!A:D:append',
+      { values: [[fecha, dur !== null ? dur : '', tipo, nota]] },
+      'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    S.pilates.push({ fecha, duracion_min: dur, tipo, nota });
+    localStorage.setItem('gfit_pilates', JSON.stringify(S.pilates));
+    renderCal();
+    toast('Sesión de pilates guardada ✓', 'success');
+    resetForm();
+    renderPilatesHistorial();
+  } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
+}
+
+// ═══════════════════════════════════════════════════════════
+// SNACKS
+// ═══════════════════════════════════════════════════════════
+
+let _snackEntries = []; // [{ ejercicio, series, reps, peso_kg }]
+
+async function loadSnacks() {
+  try {
+    const d = await api('GET', '/values/snacks!A2:F');
+    S.snacks = (d.values||[]).filter(r=>r[0]).map(r => ({
+      fecha: r[0], ejercicio: r[1]||'', series: r[2] ? +r[2] : null,
+      reps: r[3] ? +r[3] : null, peso_kg: r[4] ? +r[4] : null, nota: r[5]||''
+    }));
+    localStorage.setItem('gfit_snacks', JSON.stringify(S.snacks));
+  } catch(e) {
+    if (e.code === 'offline') {
+      const c = localStorage.getItem('gfit_snacks');
+      if (c) S.snacks = JSON.parse(c);
+    } else throw e;
+  }
+}
+
+function updateSnackEntry(i, field, val) {
+  if (_snackEntries[i]) _snackEntries[i][field] = val === '' ? null : (field === 'ejercicio' ? val : +val || null);
+}
+
+function snackNumField(i, field, val, ph, label) {
+  return '<div style="flex:1">' +
+    '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">' + label + '</div>' +
+    '<input type="number" value="' + (val || '') + '" placeholder="' + ph + '" min="0" step="0.5"' +
+    ' oninput="updateSnackEntry(' + i + ',\'' + field + '\',this.value)"' +
+    ' style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:8px;' +
+    'color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px;box-sizing:border-box"></div>';
+}
+
+function renderSnackEntries() {
+  const wrap = document.getElementById('snack-entries');
+  if (!wrap) return;
+  let html = '';
+  _snackEntries.forEach(function(e, i) {
+    const rmBtn = _snackEntries.length > 1
+      ? '<button onclick="removeSnackEntry(' + i + ')" style="background:none;border:none;' +
+        'color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>'
+      : '';
+    const safeVal = (e.ejercicio || '').replace(/"/g, '&quot;');
+    html +=
+      '<div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);' +
+      'padding:10px 12px;margin-bottom:8px">' +
+        '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">' +
+          '<input type="text" value="' + safeVal + '" placeholder="Nombre del ejercicio"' +
+          ' oninput="updateSnackEntry(' + i + ',\'ejercicio\',this.value)"' +
+          ' style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:8px;' +
+          'color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px">' +
+          rmBtn +
+        '</div>' +
+        '<div style="display:flex;gap:8px">' +
+          snackNumField(i, 'series',  e.series,  '3',  'Series') +
+          snackNumField(i, 'reps',    e.reps,    '12', 'Reps') +
+          snackNumField(i, 'peso_kg', e.peso_kg, '—',  'Kg (opc.)') +
+        '</div>' +
+      '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+function addSnackEntry() {
+  _snackEntries.push({ ejercicio: '', series: null, reps: null, peso_kg: null });
+  renderSnackEntries();
+}
+
+function removeSnackEntry(i) {
+  _snackEntries.splice(i, 1);
+  renderSnackEntries();
+}
+
+async function openSnackScreen() {
+  _snackEditCtx = null;
+  _snackEntries = [{ ejercicio: '', series: null, reps: null, peso_kg: null }];
+  showScreen('snack');
+  document.getElementById('snack-fecha').value = todayStr();
+  document.getElementById('snack-nota').value = '';
+  document.querySelector('#screen-snack .btn-primary').textContent = 'Guardar snack';
+  renderSnackEntries();
+  try { await loadSnacks(); } catch(e) { console.warn('loadSnacks:', e); }
+  renderSnackHistorial();
+}
+
+function renderSnackHistorial() {
+  const wrap = document.getElementById('snack-historial');
+  // Group by date, take last 5 dates
+  const byDate = {};
+  S.snacks.forEach(sn => {
+    if (!byDate[sn.fecha]) byDate[sn.fecha] = { rows: [], nota: sn.nota };
+    byDate[sn.fecha].rows.push(sn);
+  });
+  const dates = Object.keys(byDate).sort().reverse().slice(0, 5);
+  if (!dates.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="recetas-cat-title">Últimas sesiones</div>` +
+    dates.map(fecha => {
+      const { rows, nota } = byDate[fecha];
+      const exLines = rows.map(r => {
+        const parts = [r.series ? `${r.series}s` : null, r.reps ? `${r.reps}r` : null, r.peso_kg ? `${r.peso_kg}kg` : null].filter(Boolean);
+        return `${r.ejercicio}${parts.length ? ' · ' + parts.join(' × ') : ''}`;
+      }).join(', ');
+      return `<div class="receta-card" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <div style="font-size:13px;font-weight:600">${fmtDateES(fecha)}</div>
+        <div style="font-size:12px;color:var(--muted)">${exLines || '—'}${nota ? ' · ' + nota : ''}</div>
+      </div>`;
+    }).join('');
+}
+
+async function saveSnack() {
+  const fecha = document.getElementById('snack-fecha').value;
+  const nota  = document.getElementById('snack-nota').value.trim();
+
+  if (!fecha) { toast('Selecciona una fecha', 'error'); return; }
+  const valid = _snackEntries.filter(e => e.ejercicio.trim());
+  if (!valid.length) { toast('Añade al menos un ejercicio', 'error'); return; }
+
+  const resetForm = () => {
+    _snackEntries = [{ ejercicio: '', series: null, reps: null, peso_kg: null }];
+    document.getElementById('snack-nota').value = '';
+    document.querySelector('#screen-snack .btn-primary').textContent = 'Guardar snack';
+    renderSnackEntries();
+  };
+
+  const sheetRows = valid.map((e, i) => [
+    fecha, e.ejercicio.trim(), e.series||'', e.reps||'', e.peso_kg||'', i === 0 ? nota : ''
+  ]);
+
+  if (_snackEditCtx) {
+    try {
+      await deleteSnacksByDate(_snackEditCtx.date);
+      await api('POST', '/values/snacks!A:F:append',
+        { values: sheetRows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+      _snackEditCtx = null;
+      await loadSnacks(); renderCal();
+      toast('Snack actualizado ✓', 'success');
+      resetForm(); renderSnackHistorial();
+    } catch(e) { toast('Error al actualizar: ' + e.message, 'error'); }
+    return;
+  }
+
+  try {
+    await api('POST', '/values/snacks!A:F:append',
+      { values: sheetRows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    sheetRows.forEach((r, i) => S.snacks.push({
+      fecha: r[0], ejercicio: r[1], series: r[2]||null, reps: r[3]||null, peso_kg: r[4]||null, nota: r[5]||''
+    }));
+    localStorage.setItem('gfit_snacks', JSON.stringify(S.snacks));
+    renderCal();
+    toast('Snack guardado ✓', 'success');
+    resetForm(); renderSnackHistorial();
+  } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
+}
+
+async function deleteSnacksByDate(date) {
+  const data = await api('GET', '/values/snacks!A:A');
+  const rows = data.values || [];
+  const toDelete = [];
+  for (let i = 1; i < rows.length; i++) { if (rows[i][0] === date) toDelete.push(i); }
+  if (!toDelete.length) return;
+  const meta = await api('GET', '');
+  const sheetId = meta.sheets.find(s => s.properties.title === 'snacks')?.properties.sheetId;
+  const requests = [...toDelete].reverse().map(idx => ({
+    deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: idx, endIndex: idx + 1 } }
+  }));
+  await api('POST', ':batchUpdate', { requests });
+}
+
+async function editSnackEntry(date) {
+  const entries = S.snacks.filter(s => s.fecha === date);
+  if (!entries.length) return;
+  _snackEditCtx = { date };
+  _snackEntries = entries.map(e => ({
+    ejercicio: e.ejercicio, series: e.series, reps: e.reps, peso_kg: e.peso_kg
+  }));
+  closeSessionSheet();
+  showScreen('snack');
+  document.getElementById('snack-fecha').value = date;
+  document.getElementById('snack-nota').value = entries[0]?.nota || '';
+  document.querySelector('#screen-snack .btn-primary').textContent = 'Actualizar snack';
+  renderSnackEntries();
+  renderSnackHistorial();
+}
+
+async function deleteSnackEntry(date) {
+  if (!confirm('¿Eliminar todos los snacks de este día?')) return;
+  try {
+    await deleteSnacksByDate(date);
+    await loadSnacks(); renderCal();
+    toast('Snack eliminado ✓', 'success');
+    openSessionSheet(date);
+  } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
 }
 
 async function openBodyScreen() {
@@ -3995,7 +4658,7 @@ async function boot() {
 
   try {
     await ensureSheets();
-    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga()]);
+    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadSnacks()]);
     if (S.pending.length) await syncQueue();
     renderDash();
     updateSyncBtn();
