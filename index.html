@@ -1729,7 +1729,7 @@ const EXERCISES = [
   { name: 'Press Militar', sets: 3, reps: 10, note: 'Con mancuernas sentada; si brazo izquierdo no sube del todo, bajar peso.' },
   { name: 'Curl de Bíceps',        sets: 3, reps: 12, note: 'Codos pegados al cuerpo, sin balanceo.' },
   { name: 'Extensión de Tríceps',  sets: 3, reps: 12, note: 'Tras nuca si no molesta; si hay tirantez, sustituir por kickback.' },
-  { name: 'Bird-Dog',              sets: 3, reps: 12, unit: 'x lado', note: 'En cuadrupedia, sin presión en el pecho; trabaja core y espalda baja.' },
+  { name: 'Bird-Dog',              sets: 3, reps: 12, unit: 'x lado', weight: true, note: 'En cuadrupedia, sin presión en el pecho; trabaja core y espalda baja.' },
   { name: 'Plancha Frontal',       sets: 3, reps: 30, unit: 'seg', note: 'Sobre antebrazos, cuerpo recto. Si la piel izquierda tira, apoya rodillas.' },
   { name: 'Deadbug',               sets: 3, reps: 10, unit: 'x lado', note: 'Boca arriba, baja pierna y brazo contrario sin despegar la espalda. Trabaja el transverso sin tensión en la cicatriz.' },
 ];
@@ -2832,7 +2832,7 @@ function renderWorkout() {
       </div>
       <div class="series-col-headers">
         <span class="col-spacer"></span>
-        <span class="col-lbl">${!!ex.unit ? '' : 'Peso'}</span>
+        <span class="col-lbl">${(!ex.unit || ex.weight) ? 'Peso' : ''}</span>
         <span class="col-lbl">${ex.unit || 'Reps'}</span>
         <span class="col-chk"></span>
       </div>
@@ -2841,7 +2841,7 @@ function renderWorkout() {
         <div class="series-row${s.done?' s-done':''}" id="sr-${ei}-${si}">
           <span class="s-lbl">S${si+1}</span>
           <div class="s-inputs">
-            ${!!ex.unit ? '' : `
+            ${(!ex.unit || ex.weight) ? `
             <div class="inp-wrap">
               <input type="number" id="w-${ei}-${si}"
                 value="${s.weight !== '' ? s.weight : 0}"
@@ -2849,7 +2849,7 @@ function renderWorkout() {
                 onfocus="if(this.value==='0')this.value=''"
                 oninput="updWD(${ei},${si},'w',this.value);checkSave()">
               <span class="inp-unit">kg</span>
-            </div>`}
+            </div>` : ''}
             <div class="inp-wrap">
               <input type="number" id="r-${ei}-${si}"
                 value="${s.reps}" placeholder="${ex.targetReps}"
@@ -3149,8 +3149,9 @@ function downloadWorkoutPNG() {
   const exLines = S.workout.exercises.map(ex => {
     const doneSeries = ex.series.map((s, i) => {
       if (!s.done) return null;
-      if (ex.unit === 'seg') return `S${i+1}: ${s.reps} seg`;
-      if (ex.unit)           return `S${i+1}: ${s.reps} ${ex.unit}`;
+      if (ex.unit === 'seg')        return `S${i+1}: ${s.reps} seg`;
+      if (ex.unit && ex.weight)    return `S${i+1}: ${s.weight > 0 ? s.weight+'kg · ' : ''}${s.reps} ${ex.unit}`;
+      if (ex.unit)                 return `S${i+1}: ${s.reps} ${ex.unit}`;
       return `S${i+1}: ${s.weight}kg × ${s.reps} rep`;
     }).filter(Boolean);
     return { name: ex.name, series: doneSeries, allDone: doneSeries.length === ex.sets };
@@ -3636,8 +3637,9 @@ function renderSessionDetail(date, rows) {
     const sorted = Object.values(seriesMap).sort((a,b) => a.serie - b.serie);
     const chips = sorted.map(s => {
       let inner;
-      if (ex.unit === 'seg')  inner = `${s.reps}s`;
-      else if (ex.unit)       inner = `${s.reps}×lado`;
+      if (ex.unit === 'seg')        inner = `${s.reps}s`;
+      else if (ex.unit && ex.weight) inner = `<span class="chip-kg">${s.peso_kg > 0 ? s.peso_kg+'kg' : '—'}</span>·${s.reps}×lado`;
+      else if (ex.unit)             inner = `${s.reps}×lado`;
       else if (s.peso_kg > 0) inner = `<span class="chip-kg">${s.peso_kg}kg</span>·${s.reps}r`;
       else                    inner = `${s.reps}r`;
       return `<span class="sess-serie-chip">S${s.serie}: ${inner}</span>`;
