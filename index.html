@@ -283,6 +283,34 @@
     /* ── Dashboard ─────────────────────────────────────────── */
     .dash-pad { padding: 18px 18px 0; }
 
+    /* Pick modality screen */
+    .mod-btn {
+      display: flex; align-items: center; gap: 14px;
+      width: 100%; padding: 18px 18px;
+      background: var(--card); border: 1px solid var(--border2);
+      border-radius: var(--r); margin-bottom: 12px;
+      color: var(--text); cursor: pointer; font-family: inherit;
+      text-align: left;
+    }
+    .mod-btn:active { opacity: .75; }
+    .mod-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+    .mod-text { flex: 1; min-width: 0; }
+    .mod-title { font-size: 17px; font-weight: 700; }
+    .mod-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* Snack name autocomplete */
+    .snack-sugg {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 50;
+      background: var(--card); border: 1px solid var(--border2); border-radius: 8px;
+      max-height: 240px; overflow-y: auto;
+      box-shadow: 0 8px 20px rgba(0,0,0,.4);
+    }
+    .snack-sugg-item { padding: 8px 10px; cursor: pointer; border-bottom: 1px solid var(--border2); }
+    .snack-sugg-item:last-child { border-bottom: none; }
+    .snack-sugg-item:hover { background: var(--border); }
+    .snack-sugg-name { font-size: 13px; color: var(--text); }
+    .snack-sugg-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+
     .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
     .stat-card {
       background: var(--card); border: 1px solid var(--border);
@@ -960,8 +988,9 @@
     <div class="drawer-sep"></div>
     <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()"><span class="di-icon">☁</span>Sincronizar datos locales</button>
     <button class="drawer-item" onclick="closeDrawer();cleanEmptyRows()"><span class="di-icon">🧹</span>Limpiar filas vacías</button>
+    <button class="drawer-item" onclick="closeDrawer();openRenameSnacksScreen()"><span class="di-icon">✏️</span>Renombrar ejercicios snacks</button>
     <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon">↩</span>Cerrar sesión</button>
-    <div style="padding:12px 22px 6px;font-size:11px;color:var(--muted)">v2026-04-26</div>
+    <div style="padding:12px 22px 6px;font-size:11px;color:var(--muted)">v2026-05-25b</div>
   </nav>
 
   <div id="screen-dashboard" class="screen">
@@ -973,46 +1002,8 @@
     </div>
     <div class="dash-pad">
 
-      <!-- Nav rápida -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:12px">
-        <button onclick="openHistory()"    style="padding:9px 4px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;">Progreso</button>
-        <button onclick="openBodyScreen()" style="padding:9px 4px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;">Cuerpo</button>
-        <button onclick="openMenuScreen()" style="padding:9px 4px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;">Menú</button>
-        <button onclick="showScreen('guia')" style="padding:9px 4px;background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);color:var(--muted);cursor:pointer;font-family:inherit;font-size:11px;font-weight:600;">Guía</button>
-      </div>
-
-      <!-- Stats + rec en una sola fila -->
-      <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;margin-bottom:10px">
-        <div class="stat-card" style="padding:10px 12px">
-          <div class="stat-val" id="streak-current" style="font-size:28px">0</div>
-          <div class="stat-lbl">Racha</div>
-        </div>
-        <div class="stat-card" style="padding:10px 12px">
-          <div class="stat-val" id="streak-record" style="font-size:28px">0</div>
-          <div class="stat-lbl">Récord</div>
-        </div>
-        <div class="stat-card" style="padding:10px 14px;text-align:left;min-width:0">
-          <div class="rec-title" id="rec-title" style="font-size:13px;font-weight:600">¡Hora de entrenar!</div>
-          <div class="rec-sub"   id="rec-sub"   style="font-size:11px;color:var(--muted);margin-top:2px">Empieza tu sesión</div>
-        </div>
-      </div>
-
-      <!-- Phase card compacta -->
-      <div class="phase-card" id="phase-card" style="padding:10px 14px;margin-bottom:10px">
-        <div class="phase-badge" id="phase-badge" style="width:32px;height:32px;font-size:12px">F1</div>
-        <div class="phase-info">
-          <div class="phase-name" id="phase-name" style="font-size:13px">Fase 1 · Mantenimiento</div>
-          <div class="phase-desc" id="phase-desc" style="font-size:11px">Pesos ligeros, trabaja la técnica. RPE 5-6.</div>
-        </div>
-        <div class="phase-changer">
-          <div class="phase-dot active" id="pdot-1" onclick="setFase(1)"></div>
-          <div class="phase-dot"        id="pdot-2" onclick="setFase(2)"></div>
-          <div class="phase-dot"        id="pdot-3" onclick="setFase(3)"></div>
-        </div>
-      </div>
-
-      <button class="btn-primary" id="dash-start-btn" onclick="openCheckin()">
-        EMPEZAR ENTRENAMIENTO HOY
+      <button class="btn-primary" id="dash-start-btn" onclick="openPickModality()">
+        EMPEZAR ENTRENAMIENTO
       </button>
 
       <!-- Edit / delete today's session -->
@@ -1054,6 +1045,45 @@
     </div>
   </div>
 
+  <!-- ═══ PICK MODALITY ══════════════════════════════════════ -->
+  <div id="screen-pick-modality" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>¿Qué vas a entrenar?</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="dash-pad">
+      <button class="mod-btn" onclick="pickMod('fuerza')">
+        <span class="mod-icon" style="color:var(--accent)">🏋️</span>
+        <div class="mod-text">
+          <div class="mod-title">Fuerza</div>
+          <div class="mod-sub">Rutina completa</div>
+        </div>
+      </button>
+      <button class="mod-btn" onclick="pickMod('yoga')">
+        <span class="mod-icon" style="color:#a855f7">🧘</span>
+        <div class="mod-text">
+          <div class="mod-title">Yoga</div>
+          <div class="mod-sub">Sesión libre</div>
+        </div>
+      </button>
+      <button class="mod-btn" onclick="pickMod('pilates')">
+        <span class="mod-icon" style="color:#06b6d4">🤸</span>
+        <div class="mod-text">
+          <div class="mod-title">Pilates</div>
+          <div class="mod-sub">Sesión libre</div>
+        </div>
+      </button>
+      <button class="mod-btn" onclick="pickMod('snacks')">
+        <span class="mod-icon" style="color:var(--warning)">⚡</span>
+        <div class="mod-text">
+          <div class="mod-title">Snacks</div>
+          <div class="mod-sub">Ejercicios sueltos</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
   <!-- ═══ WORKOUT ════════════════════════════════════════════ -->
   <div id="screen-workout" class="screen">
     <div class="app-header">
@@ -1091,15 +1121,6 @@
       <div style="width:40px"></div>
     </div>
     <div class="ci-pad">
-
-      <!-- Q1: Radio hoy -->
-      <div class="ci-block">
-        <div class="ci-q">¿Tienes sesión de <strong>radioterapia hoy</strong>?</div>
-        <div class="pair-btns">
-          <button class="pair-btn selected" id="radio-no" onclick="setCiRadio(false)">No</button>
-          <button class="pair-btn" id="radio-si" onclick="setCiRadio(true)">Sí, hoy tengo radio</button>
-        </div>
-      </div>
 
       <!-- Q2: Energy -->
       <div class="ci-block">
@@ -1629,6 +1650,21 @@
     </div>
   </div>
 
+  <!-- ═══ RENAME SNACKS ═════════════════════════════════════ -->
+  <div id="screen-rename-snacks" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>Renombrar snacks</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="dash-pad">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
+        Toca un ejercicio para renombrarlo. Se actualizarán <strong>todas las filas</strong> de la hoja <code>snacks</code> que usen ese nombre.
+      </div>
+      <div id="rename-snacks-list"></div>
+    </div>
+  </div>
+
   <!-- ═══ RECETAS ═════════════════════════════════════════ -->
   <div id="screen-recetas" class="screen">
     <div class="app-header">
@@ -1808,8 +1844,10 @@ function setFase(n) {
 
 function renderFaseCard() {
   const f = FASE_INFO[S.fase];
-  document.getElementById('phase-badge').textContent = f.badge;
-  document.getElementById('phase-badge').className   = 'phase-badge ' + f.cls;
+  const badge = document.getElementById('phase-badge');
+  if (!badge) return; // card removed from dashboard
+  badge.textContent = f.badge;
+  badge.className   = 'phase-badge ' + f.cls;
   document.getElementById('phase-name').textContent  = f.name;
   document.getElementById('phase-desc').textContent  = f.desc;
   [1,2,3].forEach(i => {
@@ -1833,8 +1871,7 @@ function openCheckin() {
 function buildCheckinUI() {
   // Radio buttons
   const ci = S.checkin;
-  document.getElementById('radio-no').className = 'pair-btn' + (!ci.radioHoy ? ' selected' : '');
-  document.getElementById('radio-si').className = 'pair-btn' + ( ci.radioHoy ? ' selected-warn' : '');
+  // Radio question removed from UI; radioHoy stays false by default.
 
   // Energy 1-10
   const eRow = document.getElementById('energia-row');
@@ -2523,25 +2560,27 @@ function getLastSession() {
 // ═══════════════════════════════════════════════════════════
 
 function renderDash() {
-  const { cur, rec } = calcStreak();
-  document.getElementById('streak-current').textContent = cur;
-  document.getElementById('streak-record').textContent  = rec;
-
-  const r = getRec();
-  document.getElementById('rec-title').textContent = r.title;
-  document.getElementById('rec-sub').textContent   = r.sub;
-
-  const btn = document.getElementById('dash-start-btn');
-  btn.disabled    = !r.train;
-  btn.textContent = r.train ? 'EMPEZAR ENTRENAMIENTO HOY' : 'YA ENTRENASTE HOY';
-
   // Show edit/delete buttons only when trained today
   const trainedToday = S.sessions.some(s => s.fecha === todayStr());
   const actions = document.getElementById('today-actions');
   if (actions) actions.classList.toggle('hidden', !trainedToday);
 
-  renderFaseCard();
   renderCal();
+}
+
+function openPickModality() {
+  showScreen('pick-modality');
+}
+
+function pickMod(mod) {
+  if (mod === 'fuerza') {
+    // Si ya hay sesión de Fuerza hoy, saltar el check-in y abrir directamente la sesión
+    if (S.sessions.some(s => s.fecha === todayStr())) editTodayWorkout();
+    else { buildCheckinUI(); showScreen('checkin'); }
+  }
+  else if (mod === 'yoga')    openYogaScreen();
+  else if (mod === 'pilates') openPilatesScreen();
+  else if (mod === 'snacks')  openSnackScreen();
 }
 
 function renderCal() {
@@ -4025,15 +4064,22 @@ async function loadYoga() {
 }
 
 async function openYogaScreen() {
-  _yogaEditCtx = null;
   showScreen('yoga');
   document.getElementById('yoga-fecha').value = todayStr();
+  try { await loadYoga(); } catch(e) { console.warn('loadYoga:', e); }
+
+  // Si ya hay sesión(es) de yoga hoy, abrir la primera en modo edición
+  const today = todayStr();
+  if (S.yoga.some(y => y.fecha === today)) {
+    await editYogaEntry(today, 0);
+    return;
+  }
+
+  _yogaEditCtx = null;
   document.getElementById('yoga-duracion').value = '';
-  document.getElementById('yoga-nota').value = '';
   document.getElementById('yoga-nota').value = '';
   document.querySelectorAll('#yoga-estilo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
   document.querySelector('#screen-yoga .btn-primary').textContent = 'Guardar sesión de yoga';
-  try { await loadYoga(); } catch(e) { console.warn('loadYoga:', e); }
   renderYogaHistorial();
 }
 
@@ -4128,14 +4174,22 @@ async function loadPilates() {
 }
 
 async function openPilatesScreen() {
-  _pilatesEditCtx = null;
   showScreen('pilates');
   document.getElementById('pilates-fecha').value = todayStr();
+  try { await loadPilates(); } catch(e) { console.warn('loadPilates:', e); }
+
+  // Si ya hay sesión(es) de pilates hoy, abrir la primera en modo edición
+  const today = todayStr();
+  if (S.pilates.some(p => p.fecha === today)) {
+    await editPilatesEntry(today, 0);
+    return;
+  }
+
+  _pilatesEditCtx = null;
   document.getElementById('pilates-duracion').value = '';
   document.getElementById('pilates-nota').value = '';
   document.querySelectorAll('#pilates-tipo-grid .receta-cat-btn').forEach(b => b.classList.remove('sel'));
   document.querySelector('#screen-pilates .btn-primary').textContent = 'Guardar sesión de pilates';
-  try { await loadPilates(); } catch(e) { console.warn('loadPilates:', e); }
   renderPilatesHistorial();
 }
 
@@ -4252,9 +4306,32 @@ function snackNumField(i, field, val, ph, label) {
 function renderSnackEntries() {
   const wrap = document.getElementById('snack-entries');
   if (!wrap) return;
+  const editableCount = _snackEntries.filter(en => en._src !== 'sess').length;
   let html = '';
   _snackEntries.forEach(function(e, i) {
-    const rmBtn = _snackEntries.length > 1
+    // Read-only display for Fuerza exercises from an incomplete strength session
+    if (e._src === 'sess') {
+      const def = EXERCISES.find(x => x.name === e.ejercicio) || {};
+      let repsTxt;
+      if (def.unit === 'seg')             repsTxt = e.reps + 's';
+      else if (def.unit)                  repsTxt = e.reps + '×lado';
+      else                                repsTxt = e.reps + 'r';
+      const chips = [
+        e.series ? e.series + ' series' : null,
+        e.reps   ? repsTxt              : null,
+        e.peso_kg ? e.peso_kg + 'kg'     : null
+      ].filter(Boolean).join(' × ');
+      html +=
+        '<div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);' +
+        'padding:10px 12px;margin-bottom:8px;opacity:.85">' +
+          '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">🏋️ Fuerza</div>' +
+          '<div style="font-size:14px;color:var(--text)">' + e.ejercicio +
+          (chips ? '<span style="color:var(--muted);margin-left:8px;font-size:12px">' + chips + '</span>' : '') +
+          '</div>' +
+        '</div>';
+      return;
+    }
+    const rmBtn = editableCount > 1
       ? '<button onclick="removeSnackEntry(' + i + ')" style="background:none;border:none;' +
         'color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>'
       : '';
@@ -4263,10 +4340,16 @@ function renderSnackEntries() {
       '<div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);' +
       'padding:10px 12px;margin-bottom:8px">' +
         '<div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">' +
-          '<input type="text" value="' + safeVal + '" placeholder="Nombre del ejercicio"' +
-          ' oninput="updateSnackEntry(' + i + ',\'ejercicio\',this.value)"' +
-          ' style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:8px;' +
-          'color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px">' +
+          '<div style="position:relative;flex:1">' +
+            '<input type="text" id="snack-name-' + i + '" value="' + safeVal + '" placeholder="Buscar o crear ejercicio"' +
+            ' autocomplete="off"' +
+            ' oninput="onSnackNameInput(' + i + ',this.value)"' +
+            ' onfocus="showSnackSuggestions(' + i + ',this.value)"' +
+            ' onblur="hideSnackSuggestions(' + i + ')"' +
+            ' style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);border-radius:8px;' +
+            'color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px">' +
+            '<div id="snack-sugg-' + i + '" class="snack-sugg" style="display:none"></div>' +
+          '</div>' +
           rmBtn +
         '</div>' +
         '<div style="display:flex;gap:8px">' +
@@ -4277,6 +4360,75 @@ function renderSnackEntries() {
       '</div>';
   });
   wrap.innerHTML = html;
+}
+
+// Snack name autocomplete ------------------------------------------------
+let _snackSuggCache = []; // per-entry-index → array of suggested names currently shown
+
+function getSnackHistory() {
+  // Returns { exerciseName: { lastDate, series, reps, peso_kg } } using most-recent entry per name.
+  const byName = {};
+  const sorted = [...S.snacks].sort((a, b) => b.fecha.localeCompare(a.fecha));
+  sorted.forEach(s => {
+    const key = (s.ejercicio || '').trim();
+    if (!key) return;
+    if (byName[key]) return;
+    byName[key] = { lastDate: s.fecha, series: s.series, reps: s.reps, peso_kg: s.peso_kg };
+  });
+  return byName;
+}
+
+function onSnackNameInput(i, val) {
+  updateSnackEntry(i, 'ejercicio', val);
+  showSnackSuggestions(i, val);
+}
+
+function showSnackSuggestions(i, val) {
+  const wrap = document.getElementById('snack-sugg-' + i);
+  if (!wrap) return;
+  const hist = getSnackHistory();
+  const q = (val || '').trim().toLowerCase();
+  const used = new Set(_snackEntries.filter((_, idx) => idx !== i).map(e => (e.ejercicio || '').trim().toLowerCase()).filter(Boolean));
+  let names = Object.keys(hist).filter(n => !used.has(n.toLowerCase()));
+  if (q) names = names.filter(n => n.toLowerCase().includes(q));
+  names.sort((a, b) => {
+    const ap = a.toLowerCase().startsWith(q) ? 0 : 1;
+    const bp = b.toLowerCase().startsWith(q) ? 0 : 1;
+    if (ap !== bp) return ap - bp;
+    return hist[b].lastDate.localeCompare(hist[a].lastDate);
+  });
+  const top = names.slice(0, 6);
+  _snackSuggCache[i] = top;
+  if (!top.length) { wrap.style.display = 'none'; return; }
+  wrap.innerHTML = top.map((n, idx) => {
+    const h = hist[n];
+    const chips = [h.series ? h.series + 's' : null, h.reps ? h.reps + 'r' : null, h.peso_kg ? h.peso_kg + 'kg' : null].filter(Boolean).join(' × ');
+    return '<div class="snack-sugg-item" onmousedown="event.preventDefault();pickSnackSuggestion(' + i + ',' + idx + ')">' +
+      '<div class="snack-sugg-name">' + n + '</div>' +
+      (chips ? '<div class="snack-sugg-meta">' + chips + '</div>' : '') +
+      '</div>';
+  }).join('');
+  wrap.style.display = '';
+}
+
+function hideSnackSuggestions(i) {
+  setTimeout(() => {
+    const wrap = document.getElementById('snack-sugg-' + i);
+    if (wrap) wrap.style.display = 'none';
+  }, 120);
+}
+
+function pickSnackSuggestion(i, idx) {
+  const name = _snackSuggCache[i]?.[idx];
+  if (!name || !_snackEntries[i]) return;
+  const h = getSnackHistory()[name];
+  _snackEntries[i].ejercicio = name;
+  if (h) {
+    if (_snackEntries[i].series  == null) _snackEntries[i].series  = h.series;
+    if (_snackEntries[i].reps    == null) _snackEntries[i].reps    = h.reps;
+    if (_snackEntries[i].peso_kg == null) _snackEntries[i].peso_kg = h.peso_kg;
+  }
+  renderSnackEntries();
 }
 
 function addSnackEntry() {
@@ -4290,14 +4442,22 @@ function removeSnackEntry(i) {
 }
 
 async function openSnackScreen() {
-  _snackEditCtx = null;
-  _snackEntries = [{ ejercicio: '', series: null, reps: null, peso_kg: null }];
   showScreen('snack');
   document.getElementById('snack-fecha').value = todayStr();
+  try { await loadSnacks(); } catch(e) { console.warn('loadSnacks:', e); }
+
+  // Si ya hay snacks de hoy, abrir en modo edición para verlos/modificarlos
+  const today = todayStr();
+  if (S.snacks.some(s => s.fecha === today)) {
+    await editSnackEntry(today);
+    return;
+  }
+
+  _snackEditCtx = null;
+  _snackEntries = [{ ejercicio: '', series: null, reps: null, peso_kg: null }];
   document.getElementById('snack-nota').value = '';
   document.querySelector('#screen-snack .btn-primary').textContent = 'Guardar snack';
   renderSnackEntries();
-  try { await loadSnacks(); } catch(e) { console.warn('loadSnacks:', e); }
   renderSnackHistorial();
 }
 
@@ -4330,7 +4490,7 @@ async function saveSnack() {
   const nota  = document.getElementById('snack-nota').value.trim();
 
   if (!fecha) { toast('Selecciona una fecha', 'error'); return; }
-  const valid = _snackEntries.filter(e => e.ejercicio.trim());
+  const valid = _snackEntries.filter(e => e._src !== 'sess' && e.ejercicio.trim());
   if (!valid.length) { toast('Añade al menos un ejercicio', 'error'); return; }
 
   const resetForm = () => {
@@ -4370,6 +4530,65 @@ async function saveSnack() {
   } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
 }
 
+async function openRenameSnacksScreen() {
+  showScreen('rename-snacks');
+  try { await loadSnacks(); } catch(e) { console.warn('loadSnacks:', e); }
+  renderRenameSnacksList();
+}
+
+function renderRenameSnacksList() {
+  const wrap = document.getElementById('rename-snacks-list');
+  if (!wrap) return;
+  const counts = {};
+  S.snacks.forEach(s => {
+    const k = (s.ejercicio || '').trim();
+    if (!k) return;
+    counts[k] = (counts[k] || 0) + 1;
+  });
+  const names = Object.keys(counts).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  if (!names.length) { wrap.innerHTML = '<div style="color:var(--muted);font-size:13px">No hay snacks registrados.</div>'; return; }
+  wrap.innerHTML = names.map(n => {
+    const safe = n.replace(/"/g, '&quot;');
+    return '<div class="mod-btn" onclick="renameSnackPrompt(\'' + n.replace(/'/g, "\\'") + '\')" style="padding:12px 14px;margin-bottom:8px">' +
+      '<div class="mod-text">' +
+        '<div class="mod-title" style="font-size:14px">' + safe + '</div>' +
+        '<div class="mod-sub">' + counts[n] + ' fila' + (counts[n] === 1 ? '' : 's') + '</div>' +
+      '</div>' +
+      '<span style="color:var(--muted);font-size:18px">✏️</span>' +
+      '</div>';
+  }).join('');
+}
+
+async function renameSnackPrompt(oldName) {
+  const newName = prompt('Nuevo nombre para "' + oldName + '":', oldName);
+  if (newName == null) return;
+  const trimmed = newName.trim();
+  if (!trimmed || trimmed === oldName) return;
+  try {
+    const n = await renameSnackExercise(oldName, trimmed);
+    toast('Renombrado en ' + n + ' fila' + (n === 1 ? '' : 's') + ' ✓', 'success');
+    renderRenameSnacksList();
+    renderCal();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+async function renameSnackExercise(oldName, newName) {
+  const data = await api('GET', '/values/snacks!A:B');
+  const rows = data.values || [];
+  const updates = [];
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][1] || '') === oldName) {
+      updates.push({ range: 'snacks!B' + (i + 1), values: [[newName]] });
+    }
+  }
+  if (!updates.length) return 0;
+  await api('POST', '/values:batchUpdate', { data: updates, valueInputOption: 'RAW' });
+  await loadSnacks();
+  return updates.length;
+}
+
 async function deleteSnacksByDate(date) {
   const data = await api('GET', '/values/snacks!A:A');
   const rows = data.values || [];
@@ -4387,10 +4606,34 @@ async function deleteSnacksByDate(date) {
 async function editSnackEntry(date) {
   const entries = S.snacks.filter(s => s.fecha === date);
   if (!entries.length) return;
+
+  // Si la rutina de Fuerza del día está incompleta, incluir sus ejercicios (solo lectura)
+  const sessRows = S.sessions.filter(s => s.fecha === date);
+  const sessExs  = [...new Set(sessRows.map(s => s.ejercicio))];
+  const routineIncomplete = sessExs.length > 0 && sessExs.length < EXERCISES.length;
+  let sessEntries = [];
+  if (routineIncomplete) {
+    const byEx = {};
+    sessRows.forEach(r => { (byEx[r.ejercicio] ||= []).push(r); });
+    sessEntries = Object.entries(byEx).map(([name, rs]) => {
+      const done = rs.filter(r => r.completada);
+      return {
+        ejercicio: name,
+        series:   done.length || null,
+        reps:     done[0]?.reps    ?? null,
+        peso_kg:  done[0]?.peso_kg ?? null,
+        _src: 'sess',
+      };
+    });
+  }
+
   _snackEditCtx = { date };
-  _snackEntries = entries.map(e => ({
-    ejercicio: e.ejercicio, series: e.series, reps: e.reps, peso_kg: e.peso_kg
-  }));
+  _snackEntries = [
+    ...sessEntries,
+    ...entries.map(e => ({
+      ejercicio: e.ejercicio, series: e.series, reps: e.reps, peso_kg: e.peso_kg, _src: 'snack'
+    }))
+  ];
   closeSessionSheet();
   showScreen('snack');
   document.getElementById('snack-fecha').value = date;
