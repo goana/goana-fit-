@@ -979,7 +979,7 @@
     <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon">📈</span>Progreso</button>
     <button class="drawer-item" onclick="closeDrawer();openYogaScreen()"><span class="di-icon">🧘</span>Yoga</button>
     <button class="drawer-item" onclick="closeDrawer();openPilatesScreen()"><span class="di-icon">🤸</span>Pilates</button>
-    <button class="drawer-item" onclick="closeDrawer();openSnackScreen()"><span class="di-icon">⚡</span>Snacks</button>
+    <button class="drawer-item" onclick="closeDrawer();openSnackScreen()"><span class="di-icon">⚡</span>Fuerza</button>
     <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon">📏</span>Cuerpo</button>
     <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon">🥗</span>Menú semanal</button>
     <button class="drawer-item" onclick="closeDrawer();openRecetasScreen()"><span class="di-icon">📌</span>Ideas de recetas</button>
@@ -988,7 +988,7 @@
     <div class="drawer-sep"></div>
     <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()"><span class="di-icon">☁</span>Sincronizar datos locales</button>
     <button class="drawer-item" onclick="closeDrawer();cleanEmptyRows()"><span class="di-icon">🧹</span>Limpiar filas vacías</button>
-    <button class="drawer-item" onclick="closeDrawer();openRenameSnacksScreen()"><span class="di-icon">✏️</span>Renombrar ejercicios snacks</button>
+    <button class="drawer-item" onclick="closeDrawer();openRenameSnacksScreen()"><span class="di-icon">✏️</span>Editar ejercicios de fuerza</button>
     <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon">↩</span>Cerrar sesión</button>
     <div style="padding:12px 22px 6px;font-size:11px;color:var(--muted)">v2026-05-25b</div>
   </nav>
@@ -1028,10 +1028,10 @@
         <div class="cal-grid" id="cal-grid"></div>
         <div style="display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span>Fuerza
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span>Rutina completa
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--warning);display:inline-block"></span>Snacks
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--warning);display:inline-block"></span>Fuerza
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
             <span style="width:10px;height:10px;border-radius:50%;background:#a855f7;display:inline-block"></span>Yoga
@@ -1056,8 +1056,8 @@
       <button class="mod-btn" onclick="pickMod('fuerza')">
         <span class="mod-icon" style="color:var(--accent)">🏋️</span>
         <div class="mod-text">
-          <div class="mod-title">Fuerza</div>
-          <div class="mod-sub">Rutina completa</div>
+          <div class="mod-title">Rutina completa</div>
+          <div class="mod-sub">9 ejercicios · full body</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('yoga')">
@@ -1077,8 +1077,8 @@
       <button class="mod-btn" onclick="pickMod('snacks')">
         <span class="mod-icon" style="color:var(--warning)">⚡</span>
         <div class="mod-text">
-          <div class="mod-title">Snacks</div>
-          <div class="mod-sub">Ejercicios sueltos</div>
+          <div class="mod-title">Fuerza</div>
+          <div class="mod-sub">Ejercicios libres / máquinas</div>
         </div>
       </button>
     </div>
@@ -1127,19 +1127,6 @@
         <div class="ci-q">¿Cómo está tu <strong>nivel de energía</strong> hoy?</div>
         <div class="ci-hint">1 = agotada &nbsp;·&nbsp; 10 = con mucha energía</div>
         <div class="scale-row" id="energia-row"></div>
-      </div>
-
-      <!-- Q3: Skin -->
-      <div class="ci-block">
-        <div class="ci-q">¿Cómo está la <strong>piel</strong> de la zona tratada?</div>
-        <div class="skin-row" id="skin-row"></div>
-      </div>
-
-      <!-- Q4: Discomfort left side -->
-      <div class="ci-block">
-        <div class="ci-q">¿Molestia en el <strong>lado izquierdo</strong>?</div>
-        <div class="ci-hint">0 = sin molestia &nbsp;·&nbsp; 5 = mucha molestia</div>
-        <div class="scale-row" id="molestia-row"></div>
       </div>
 
       <!-- Adaptation summary -->
@@ -1352,7 +1339,7 @@
         <div class="guia-section-title">Suplementación</div>
         <div class="guia-card">
           <div class="guia-card-title">Vitamina D + K2</div>
-          <p>4.000 UI/día. Guardar en nevera. 1 cápsula al día acompañando alguna comida.<br>
+          <p>4.000 UI, <b>4 veces/semana (lunes a jueves)</b>. Guardar en nevera. 1 cápsula acompañando alguna comida.<br>
           <span style="font-size:12px"><a href="https://www.nutrimarket.com/es/vitaminas-minerales/life-pro-vit-dk-90caps.html" target="_blank" rel="noopener" style="color:var(--accent)">Comprar en Nutrimarket</a> · código "JOTA" · farmacia · herbolario</span></p>
         </div>
         <div class="guia-card">
@@ -1403,16 +1390,17 @@
         <div class="guia-card">
           <div class="guia-card-title">Comida y Cena</div>
           <ul>
-            <li><b>Verduras (1/3):</b> ensaladas, brócoli, setas, cremas, salteados...</li>
-            <li><b>Proteína (1/3):</b> carne blanca 120 g / roja 100 g (≤1/sem), pescado 120-140 g, huevos (1+3 claras), legumbres 200 g cocidas</li>
-            <li><b>Hidratos (1/3):</b> patata/boniato 1 ud grande, arroz/pasta/pan/quinoa 60 g (cena: 40-60 g opcional)</li>
-            <li><b>Grasas:</b> aceite oliva 2 cdas, aguacate 100 g, frutos secos 20 g</li>
-            <li><b>Postre opcional:</b> 1 pieza fruta</li>
+            <li><b>Verduras (1/3):</b> hoja y hortalizas, 2 palmas llenas (no hace falta pesar)</li>
+            <li><b>Proteína (1/3):</b> carne blanca 120 g · carne roja/pescado azul 100 g (roja &lt;2/sem) · pescado/marisco blanco 140 g · 1 huevo + 3 claras (90 g) · proteína en polvo 40 g · legumbres 200 g cocidas</li>
+            <li><b>Hidratos (1/3):</b> arroz/quinoa/pasta 60 g (150 g cocido) · pan 90 g · patata/boniato 300 g · gnocchis 120 g · tortitas 6 u</li>
+            <li><b>Grasas:</b> aceite 2,5 cdas (20 g) · aguacate 150 g · queso/mayonesa 30 g (&lt;4/sem) · frutos secos 20 g</li>
+            <li><b>Postre:</b> 1 pieza fruta</li>
           </ul>
         </div>
         <div class="guia-card">
-          <div class="guia-card-title">Merienda / Media mañana</div>
-          <p>Elegir 2 de: pieza de fruta · puñado frutos secos · yogur natural o kéfir</p>
+          <div class="guia-card-title">Media mañana / Merienda</div>
+          <p><b>Media mañana:</b> 1 pieza de fruta + 30 g de frutos secos (ve alternando).<br>
+          <b>Merienda:</b> según menú — smoothie de frutos rojos, yogur natural con fruta y frutos secos, leche con cacao, helado casero de fruta…</p>
         </div>
       </div>
 
@@ -1490,6 +1478,7 @@
       <div class="menu-ab-toggle">
         <button class="mab-btn active" id="mab-a" onclick="setMenuSemana('1')">Menú 1</button>
         <button class="mab-btn"        id="mab-b" onclick="setMenuSemana('2')">Menú 2</button>
+        <button class="mab-btn"        id="mab-c" onclick="setMenuSemana('3')">Menú 3</button>
       </div>
     </div>
 
@@ -1619,7 +1608,7 @@
   <div id="screen-snack" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1>⚡ Snacks</h1>
+      <h1>⚡ Fuerza</h1>
       <div style="width:40px"></div>
     </div>
     <div class="ci-pad">
@@ -1646,7 +1635,7 @@
                  resize:none;box-sizing:border-box"></textarea>
       </div>
       <div id="snack-historial" style="margin-top:6px"></div>
-      <button class="btn-primary" onclick="saveSnack()">Guardar snack</button>
+      <button class="btn-primary" onclick="saveSnack()">Guardar</button>
     </div>
   </div>
 
@@ -1654,12 +1643,12 @@
   <div id="screen-rename-snacks" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1>Renombrar snacks</h1>
+      <h1>Editar ejercicios de fuerza</h1>
       <div style="width:40px"></div>
     </div>
     <div class="dash-pad">
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-        Toca un ejercicio para renombrarlo. Se actualizarán <strong>todas las filas</strong> de la hoja <code>snacks</code> que usen ese nombre.
+        Toca un ejercicio para renombrarlo, o usa 🔗 para añadir/editar su enlace. Se actualizarán <strong>todas las filas</strong> que usen ese nombre.
       </div>
       <div id="rename-snacks-list"></div>
     </div>
@@ -1801,7 +1790,7 @@ const S = {
   snacks:       [],
   bodyChart:    null,
   altura:       parseFloat(localStorage.getItem('gfit_altura') || '0'),
-  menuSemana:   (() => { const v = localStorage.getItem('gfit_menu_sem'); return (v==='A'||v==='1') ? '1' : (v==='B'||v==='2') ? '2' : '1'; })(),
+  menuSemana:   (() => { const v = localStorage.getItem('gfit_menu_sem'); return (v==='B'||v==='2') ? '2' : (v==='3') ? '3' : '1'; })(),
   menuView:     'hoy',
 };
 
@@ -1882,29 +1871,6 @@ function buildCheckinUI() {
     btn.textContent = i;
     btn.onclick = () => { ci.energia = i; buildCheckinUI(); updateAdaptation(); };
     eRow.appendChild(btn);
-  }
-
-  // Skin
-  const sRow = document.getElementById('skin-row');
-  sRow.innerHTML = '';
-  SKIN_OPTS.forEach(opt => {
-    const btn = document.createElement('button');
-    const isSel = ci.piel === opt;
-    btn.className = 'pair-btn' + (isSel ? (opt==='Tirante'?' selected-warn':' selected') : '');
-    btn.textContent = opt;
-    btn.onclick = () => { ci.piel = opt; buildCheckinUI(); updateAdaptation(); };
-    sRow.appendChild(btn);
-  });
-
-  // Molestia 0-5
-  const mRow = document.getElementById('molestia-row');
-  mRow.innerHTML = '';
-  for (let i=0; i<=5; i++) {
-    const btn = document.createElement('button');
-    btn.className = 'scale-btn' + molestiaClass(i, ci.molestia);
-    btn.textContent = i;
-    btn.onclick = () => { ci.molestia = i; buildCheckinUI(); updateAdaptation(); };
-    mRow.appendChild(btn);
   }
 
   updateAdaptation();
@@ -2269,9 +2235,12 @@ async function ensureSheets() {
       await api('PUT', '/values/pilates!A1:D1',
         { values:[['fecha','duracion_min','tipo','nota']] }, 'valueInputOption=RAW');
     if (!exist.includes('snacks'))
-      await api('PUT', '/values/snacks!A1:F1',
-        { values:[['fecha','ejercicio','series','reps','peso_kg','nota']] }, 'valueInputOption=RAW');
+      await api('PUT', '/values/snacks!A1:G1',
+        { values:[['fecha','ejercicio','series','reps','peso_kg','nota','link']] }, 'valueInputOption=RAW');
   }
+  // Always update snacks header (handles migration from old 6-col format → adds 'link')
+  await api('PUT', '/values/snacks!A1:G1',
+    { values:[['fecha','ejercicio','series','reps','peso_kg','nota','link']] }, 'valueInputOption=RAW');
   // Always update sesiones header (handles migration from old 6-col format)
   await api('PUT', '/values/sesiones!A1:K1',
     { values:[['fecha','ejercicio','reps_1','reps_2','reps_3','peso_1','peso_2','peso_3','duracion_min','cansancio','nota']] }, 'valueInputOption=RAW');
@@ -2866,7 +2835,7 @@ function renderWorkout() {
       const seriesTxt = prev.series.map(s => {
         if (ex.unit === 'seg') return `S${s.serie}:${s.reps}s`;
         if (ex.unit)           return `S${s.serie}:${s.reps}×lado`;
-        return `S${s.serie}:${s.peso_kg > 0 ? s.peso_kg+'kg·' : ''}${s.reps}r`;
+        return `S${s.serie}:${s.peso_kg > 0 ? String(s.peso_kg).replace('.', ',')+'kg·' : ''}${s.reps}r`;
       }).join('  ');
       prevHtml = `<div class="prev-ref"><span class="prev-lbl">Anterior ${dateLabel}</span><span class="prev-vals">${seriesTxt}</span></div>`;
     }
@@ -2901,9 +2870,9 @@ function renderWorkout() {
           <div class="s-inputs">
             ${(!ex.unit || ex.weight) ? `
             <div class="inp-wrap">
-              <input type="number" id="w-${ei}-${si}"
-                value="${s.weight !== '' ? s.weight : 0}"
-                min="0" step="0.5" inputmode="decimal"
+              <input type="text" id="w-${ei}-${si}"
+                value="${s.weight !== '' ? String(s.weight).replace('.', ',') : 0}"
+                inputmode="decimal"
                 onfocus="if(this.value==='0')this.value=''"
                 oninput="updWD(${ei},${si},'w',this.value);checkSave()">
               <span class="inp-unit">kg</span>
@@ -2937,7 +2906,7 @@ function toggleNote(ei) {
 function updWD(ei, si, field, val) {
   if (!S.workout) return;
   const s = S.workout.exercises[ei].series[si];
-  if (field==='w') s.weight = val==='' ? '' : parseFloat(val);
+  if (field==='w') s.weight = val==='' ? '' : parseFloat(String(val).replace(',', '.'));
   if (field==='r') s.reps   = parseInt(val)||0;
   S.workout.dirty = true;
 }
@@ -2953,7 +2922,7 @@ function toggleSerie(ei, si) {
   // Sync from DOM first
   const wEl = document.getElementById(`w-${ei}-${si}`);
   const rEl = document.getElementById(`r-${ei}-${si}`);
-  s.weight = wEl ? (wEl.value === '' ? '' : parseFloat(wEl.value)) : 0;
+  s.weight = wEl ? (wEl.value === '' ? '' : parseFloat(wEl.value.replace(',', '.'))) : 0;
   s.done = !s.done;
 
   if (rEl) {
@@ -3085,7 +3054,7 @@ async function handleSave(silent = false) {
     ex.series.forEach((s,si) => {
       const w = document.getElementById(`w-${ei}-${si}`);
       const r = document.getElementById(`r-${ei}-${si}`);
-      s.weight = w?.value==='' ? 0 : parseFloat(w?.value)||0;
+      s.weight = w?.value==='' ? 0 : parseFloat(String(w?.value).replace(',', '.'))||0;
       s.reps   = parseInt(r?.value)||ex.targetReps;
     });
   });
@@ -3487,7 +3456,7 @@ function openSessionSheet(date) {
 
   if (rows.length) {
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 4px">
-      <span style="font-size:13px;font-weight:700;color:var(--accent)">🏋️ Fuerza</span>
+      <span style="font-size:13px;font-weight:700;color:var(--accent)">🏋️ Rutina completa</span>
       <div style="display:flex;gap:6px">
         ${iconBtn('✏️ Editar', `editSessionByDate('${date}')`, 'Editar')}
         ${iconBtn('🗑 Eliminar', `deleteGymSession('${date}')`, 'Eliminar')}
@@ -3551,7 +3520,7 @@ function openSessionSheet(date) {
   if (snackRows.length) {
     const sep = (rows.length || yogaRows.length || pilatesRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
-      <span style="font-size:13px;font-weight:700;color:var(--warning)">⚡ Snacks</span>
+      <span style="font-size:13px;font-weight:700;color:var(--warning)">⚡ Fuerza</span>
       <div style="display:flex;gap:6px">
         ${iconBtn('✏️ Editar', `editSnackEntry('${date}')`, 'Editar')}
         ${iconBtn('🗑 Eliminar', `deleteSnackEntry('${date}')`, 'Eliminar')}
@@ -3838,100 +3807,132 @@ function renderRepsChart(labels, data) {
 
 // Desayuno y merienda son iguales en ambos menús
 const _DE = [
-  'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con huevo y espinacas, y 2 cdas aceite/100 g aguacate\n1 pieza fruta',
-  'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con 50 g queso, y 2 cdas aceite/100 g aguacate\n1 pieza fruta',
-  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y 20 g frutos secos',
-  'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con huevo y espinacas, y 1 cda aceite/50 g aguacate\n1 pieza fruta',
-  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y 20 g frutos secos',
-  'Café con leche + 20 g proteína en polvo\nPan integral (60 g) con 50 g queso, y 1 cda aceite/50 g aguacate\n1 pieza fruta',
-  'Café con leche\nGachas de avena y proteína (40 g avena, 30 g proteína en polvo, 1 vaso leche)\nPor encima 1 taza arándanos/fresas/fruta y 20 g frutos secos',
+  'Café con leche + 20 g proteína en polvo\nPan integral (90 g) con atún y 100 g aguacate\n1 pieza fruta',
+  'Café con leche + 20 g proteína en polvo\nBowl de granola con 1 yogur: granola de sartén con frutos secos (40 g avena, 30 g nueces)\n1 cdita tahini encima',
+  'Café con leche\nBowl: 150 g kéfir mezclado con 20 g proteína y por encima 1 pieza fruta con 30 g frutos secos, 1 cdita tahini y 1 cdita miel',
+  'Café con leche + 20 g proteína en polvo\nTostada integral con aguacate, huevo duro y semillas (90 g pan, 100 g aguacate, 1 huevo)',
+  'Café con leche + 20 g proteína en polvo\nPan integral (90 g) con 50 g mozzarella fresca, 1 cda aceite y encima 2 nueces',
+  'Café con leche + 20 g proteína en polvo\nTortitas de avena (40 g avena)\nPor encima 20 g tahini + plátano en rodajas',
+  'Café con leche + 20 g proteína en polvo\nTostada con ricotta, pera y nueces (90 g pan, 100 g queso, 1 pera, 20 g nueces)',
 ];
+const _MM = Array(7).fill('1 pieza fruta + 30 g frutos secos\n(alterna entre almendras, nueces, pistachos, pipas de calabaza…)');
 const _ME = [
-  'Leche con cacao*\n40 g frutos secos y pipas calabaza',
-  'Yogur natural con 1 pieza fruta + 40 g frutos secos',
-  'Leche con cacao*\n40 g frutos secos y pipas calabaza',
-  'Galletas de avena y chocolate (3 u)\n40 g frutos secos',
-  'Yogur natural con 1 pieza fruta + 40 g frutos secos',
-  'Leche con cacao*\n40 g frutos secos y pipas calabaza',
+  'Smoothie de frutos rojos',
+  'Helado casero de fruta\nPor encima 1 cdita tahini',
+  'Leche con cacao*\n30 g frutos secos',
+  'Leche con cacao*\nGalletas de avena y chocolate (4 u)',
+  'Yogur natural con 1 pieza fruta + 20 g frutos secos',
+  'Helado casero de fruta\nPor encima 1 cdita tahini',
   'Brownie casero',
 ];
 
 const MENUS = {
   '1': {
     de: _DE,
+    mm: _MM,
     al: [
-      'Tomate aliñado con sardinas\nGarbanzos con espinacas\n1 fruta cítrica (mandarina, naranja)',
-      'Champiñones al ajillo\nPechuga a la plancha\nGuarnición de arroz\n1 pieza fruta',
-      'Ensalada de pasta de lenteja roja\n1 fruta cítrica (mandarina, naranja)',
-      'Zanahoria en bastoncitos con hummus\nDorada al horno con patata, cebolla y tomate\n1 pieza fruta',
-      'Ensalada de lentejas con pimientos, cottage y mostaza con miel\n1 fruta cítrica (mandarina, naranja)',
-      'Ensalada al gusto\nEspaguetis integrales con gambas\n1 pieza fruta',
-      'Salteado de ternera con pimientos y arroz integral\n1 pieza fruta',
+      'Potaje de lentejas con patata, cebolla, zanahoria y espinacas\nHuevo a la plancha\n1 fruta cítrica',
+      'Coliflor con cúrcuma\nPollo guisado con patatas\n1 pieza fruta',
+      'Potaje de lentejas con patata, cebolla, zanahoria y espinacas\nHuevo a la plancha\n1 fruta cítrica',
+      'Ensalada de salmón a la plancha, arroz integral, brotes tiernos, tomate, aceite y pimienta\n1 pieza fruta',
+      'Ensalada de garbanzos, atún, tomate, cebolla, aceitunas, aceite, mostaza\nPan integral\n1 fruta cítrica',
+      'Pasta con huevo cocido y verduras\n1 pieza fruta',
+      'Gazpacho andaluz\nTernera/Lomo/Pechuga a la plancha\nGuarnición de arroz\n1 pieza fruta',
     ],
     me: _ME,
     ce: [
-      'Brócoli salteado al ajillo\nSalmón a la plancha\nPatatas prebióticas\n1 pieza fruta',
-      'Zanahoria en bastoncitos con hummus\nTostada integral con aguacate, huevo duro y semillas\n1 pieza fruta',
-      'Fajita de pollo con verdura\n1 pieza fruta',
-      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 30 g anacardos/almendras y 10 g pipas calabaza',
-      'Coliflor con cúrcuma\nTosta con pechuga y parmesano\n1 pieza fruta',
-      'Ensalada de canónigos con atún, huevo cocido, aceitunas, patata, tomate y aceite\n1 pieza fruta',
-      'Huevos revueltos con calabacín\nMayonesa de aguacate y cilantro\nPan\n1 pieza fruta',
+      'Crema de verduras\nMerluza a la plancha\nPatatas prebióticas\n1 pieza fruta',
+      'Ensalada con atún, huevo cocido, aceitunas, lechuga, tomate, aguacate y aceite\nPan integral\n1 pieza fruta',
+      'Sopa fría al gusto\nPechuga plancha\nGuarnición de quinoa\n1 pieza fruta',
+      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 40 g frutos secos y pipas calabaza',
+      'Salteado de setas\nTosta con pechuga y parmesano\n1 pieza fruta',
+      'Quesadillas rellenas de huevos revueltos y aguacate\n1 pieza fruta',
+      'Mejillones a la vinagreta\nGuarnición de gnocchis\n1 pieza fruta',
     ],
   },
   '2': {
     de: _DE,
+    mm: _MM,
     al: [
-      'Potaje de lentejas con calabaza, cebolla, zanahoria y espinacas\n1 fruta cítrica (mandarina, naranja)',
-      'Ensalada de espinacas, tomate y cebolla\nPollo al chilindrón\nGuarnición de arroz\n1 pieza fruta',
-      'Potaje de lentejas con calabaza, cebolla, zanahoria y espinacas\n1 fruta cítrica (mandarina, naranja)',
-      'Zanahoria en bastoncitos con hummus\nSardinas a la plancha\nPatatas prebióticas\n1 pieza fruta',
-      'Sopa de pollo con garbanzos, jengibre y cúrcuma\n1 fruta cítrica (mandarina, naranja)',
-      'Pasta con huevo cocido y verduras\n1 pieza fruta',
-      'Zanahoria en bastoncitos con hummus\nGuiso de ternera y patata\n1 pieza fruta',
+      'Ensalada de tomate con atún y aguacate\nGarbanzos con espinacas\n1 fruta cítrica',
+      'Gazpacho andaluz\nPechuga con cúrcuma\nGuarnición de quinoa\n1 pieza fruta',
+      'Ensalada de tomate con atún y aguacate\nGarbanzos con espinacas\n1 fruta cítrica',
+      'Dorada al horno con patata, cebolla y tomate\n1 pieza fruta',
+      'Boloñesa vegetal\nGuarnición de arroz\n1 fruta cítrica',
+      'Pasta con pechuga y verduras\n1 pieza fruta',
+      'Risotto de arroz con verduras\nTernera/Lomo/Pechuga a la plancha\n1 pieza fruta',
     ],
     me: _ME,
     ce: [
-      'Ensalada de brotes tiernos, zanahoria, cebolla y aceitunas\nDorada a la plancha\nGuarnición de patata/boniato\n1 pieza fruta',
+      'Sopa fría al gusto\nSardinas a la plancha o de conserva\nGuarnición de gnocchis\n1 pieza fruta',
+      'Ensalada thai de pepino\nTostada de huevos revueltos\n1 pieza fruta',
+      'Brócoli salteado al ajillo\nPechuga plancha\nPatatas prebióticas\n1 pieza fruta',
+      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 30 g frutos secos y 10 g pipas calabaza',
+      'Gazpacho andaluz\nMuslo de pollo al horno con patatas/boniato\n1 pieza fruta',
+      'Ensalada campera\n1 pieza fruta',
+      'Sopa fría al gusto\nPescado a la plancha\nGuarnición de quinoa\n1 pieza fruta',
+    ],
+  },
+  '3': {
+    de: _DE,
+    mm: _MM,
+    al: [
+      'Ensalada de garbanzos, tomate, huevo cocido, pepino, aceite y sal\nPan\n1 fruta cítrica',
+      'Ensalada thai de pepino\nGuiso de ternera y patata\n1 pieza fruta',
+      'Tofu marinado con verduras salteadas y arroz\n1 fruta cítrica',
+      'Salmorejo tradicional\nHuevo duro y atún por encima\n1 pieza fruta',
+      'Tofu marinado con verduras salteadas y arroz\n1 fruta cítrica',
+      'Ensalada al gusto\nEspaguetis integrales con gambas\n1 pieza fruta',
+      'Pollo al chilindrón\nGuarnición de arroz\n1 pieza fruta',
+    ],
+    me: _ME,
+    ce: [
+      'Gazpacho andaluz\nSardinas a la plancha o en conserva\nGuarnición de gnocchis\n1 pieza fruta',
       'Tomate con aguacate\nTostada de huevos revueltos\n1 pieza fruta',
-      'Alcachofas con gambas al limón\nTosta con pechuga y parmesano\n1 pieza fruta',
-      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 30 g anacardos/almendras y 10 g pipas calabaza',
+      'Fajita de pollo con verdura\n1 pieza fruta',
+      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 40 g frutos secos y pipas calabaza',
       'Pizza fajita de barbacoa\n1 pieza fruta',
-      'Pescado blanco a la plancha\nPuré de patata\nMayonesa de aguacate y cilantro\n1 pieza fruta',
-      'Bowl: 1 yogur natural mezclado con 30 g proteína, y por encima 1 fruta troceada y 30 g anacardos/almendras y 10 g pipas calabaza',
+      'Piriñaca cántabra\n1 pieza fruta',
+      'Huevos revueltos con calabacín\nMayonesa de aguacate y cilantro\nPan\n1 pieza fruta',
     ],
   },
 };
 
-const MEAL_LABELS = { de:'Desayuno', al:'Almuerzo', me:'Merienda', ce:'Cena' };
+const MEAL_LABELS = { de:'Desayuno', mm:'Media mañana', al:'Almuerzo', me:'Merienda', ce:'Cena' };
 const DAY_NAMES   = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
 
 const RECIPE_LINKS = {
-  'Gachas de avena y proteína':                          'https://drive.google.com/file/d/1sap4097x_z_y0XWD3e5kVk4nDkijfhJ7/view?usp=sharing',
-  'Champiñones al ajillo':                               'https://www.directoalpaladar.com/recetas-de-legumbres-y-verduras/champinones-al-ajillo-receta',
-  'Ensalada de pasta de lenteja roja':                   'https://drive.google.com/file/d/1qW7zPE-Xr6vKGQP4FnSbakV5WFa2vWzR/view?usp=sharing',
-  'Ensalada de lentejas con pimientos, cottage y mostaza con miel': 'https://drive.google.com/file/d/10X99vR2-3F7P__uGa9wNTDoJ1jjDqBmb/view?usp=sharing',
-  'Salteado de ternera con pimientos y arroz integral':  'https://drive.google.com/file/d/1bdC7j8WFlmY5nsf4IjiIOuREClyP-P5R/view?usp=sharing',
-  'Espaguetis integrales con gambas':                    'https://drive.google.com/file/d/1GXIBZa3VNYdkbUbS0uZIh_-Fh4u67_sM/view?usp=sharing',
-  'Garbanzos con espinacas':                             'https://drive.google.com/file/d/1XvZs_rP0oVbbAKsMlGHZSofBavC2IOl5/view?usp=sharing',
-  'Dorada al horno con patata, cebolla y tomate':        'https://drive.google.com/file/d/1nS9Db4oN7Nyp7JKEBLtgVaXrmGRWfq-H/view?usp=sharing',
-  'Galletas de avena y chocolate (3 u)':                 'https://drive.google.com/file/d/1J-C_-3cXcZwPUJooLHvWXu6fE_UyxMh7/view?usp=sharing',
-  'Brownie casero':                                      'https://drive.google.com/file/d/1_ErO8x9z9OhOvMsD_d1Psczm0Cjz4y9i/view?usp=sharing',
-  'Brócoli salteado al ajillo':                          'https://drive.google.com/file/d/1o47EMgZgWS8vjvnLAPhJQ0kOOZBwWSoz/view?usp=sharing',
-  'Fajita de pollo con verdura':                         'https://drive.google.com/file/d/1TJ_EDxJTVN5YYHx0X92bAZvF_q1ngwaU/view?usp=sharing',
   'Coliflor con cúrcuma':                                'https://drive.google.com/file/d/1dva8Hw9FGkx70poYi-aSCGe_OoVkO9fx/view?usp=sharing',
-  'Tosta con pechuga y parmesano':                       'https://drive.google.com/file/d/1misBpNLXh_j4rAz17oIM5H3dhKuJnoS5/view?usp=sharing',
-  'Mayonesa de aguacate y cilantro':                     'https://drive.google.com/file/d/1yMQ-a1lHw5pDs4zFwreurwnRGXGD1aiu/view?usp=sharing',
-  'Patatas prebióticas':                                 'https://drive.google.com/file/d/1o3kbppINtEOgYrpcwC23432WkIi2rzt5/view?usp=sharing',
-  'Tostada integral con aguacate, huevo duro y semillas':'https://drive.google.com/file/d/1mAFYgG8MlDGHsxJpzGFtVyIEilMDKVvj/view?usp=sharing',
-  'Sopa de pollo con garbanzos, jengibre y cúrcuma':     'https://drive.google.com/file/d/1bNKqvmTVZxcdBDqGOqanoAT6XAyDLEUz/view?usp=sharing',
+  'Pollo guisado con patatas':                           'https://drive.google.com/file/d/163j6dh16IE28YzozmlfMy1NRl7U155SN/view?usp=sharing',
   'Pasta con huevo cocido y verduras':                   'https://drive.google.com/file/d/1suZR5lgSEBm4HkBKfmDxvcPeHECHgxwG/view?usp=sharing',
-  'Pollo al chilindrón':                                 'https://drive.google.com/file/d/1D67hBBTQ0x6b-80fxLkugZQ4LKHpXblu/view?usp=sharing',
-  'Sardinas a la plancha':                               'https://drive.google.com/file/d/1nKGWh7foeyzHJycI1H3vHkCmAtJZANaP/view?usp=sharing',
+  'Gazpacho andaluz':                                    'https://drive.google.com/file/d/1Mb-xWQNDrpO6BQmuKZp0VuukHOAjip7J/view?usp=sharing',
+  'Patatas prebióticas':                                 'https://drive.google.com/file/d/1o3kbppINtEOgYrpcwC23432WkIi2rzt5/view?usp=sharing',
+  'Tosta con pechuga y parmesano':                       'https://drive.google.com/file/d/1misBpNLXh_j4rAz17oIM5H3dhKuJnoS5/view?usp=sharing',
+  'Quesadillas rellenas de huevos revueltos y aguacate': 'https://drive.google.com/file/d/1mL-bdeOspVZ0dODUGTEPXrP0t2u-qko6/view?usp=sharing',
+  'Mejillones a la vinagreta':                           'https://drive.google.com/file/d/1vbOuCSVHWd5rUpk7wXVj-K5eGXolzEVI/view?usp=sharing',
+  'Guarnición de gnocchis':                              'https://drive.google.com/file/d/1aHN5Kf3lOiuOq5p4KIXBPPC8Ni1nBpz0/view?usp=sharing',
+  'Garbanzos con espinacas':                             'https://drive.google.com/file/d/1XvZs_rP0oVbbAKsMlGHZSofBavC2IOl5/view?usp=sharing',
+  'Pechuga con cúrcuma':                                 'https://drive.google.com/file/d/1WxiofAuLj9dntMv-ULy-QEXbgUwwyv-x/view?usp=sharing',
+  'Dorada al horno con patata, cebolla y tomate':        'https://drive.google.com/file/d/1nS9Db4oN7Nyp7JKEBLtgVaXrmGRWfq-H/view?usp=sharing',
+  'Boloñesa vegetal':                                    'https://drive.google.com/file/d/1HvFmF1EY2_RtFZHBEmnind31aMfhsaob/view?usp=sharing',
+  'Pasta con pechuga y verduras':                        'https://drive.google.com/file/d/1q-aFPPKogUC9Y9_B9alxmiNdW-mcbuJC/view?usp=sharing',
+  'Risotto de arroz con verduras':                       'https://drive.google.com/file/d/1Ud1huOQRocgKHRPCcHvT4X1JITGVxZJI/view?usp=sharing',
+  'Ensalada thai de pepino':                             'https://drive.google.com/file/d/1JWVeBXNhIVfZcOLLXXb-qS3Ne8FPL1aq/view?usp=sharing',
+  'Brócoli salteado al ajillo':                          'https://drive.google.com/file/d/1o47EMgZgWS8vjvnLAPhJQ0kOOZBwWSoz/view?usp=sharing',
+  'Ensalada campera':                                    'https://drive.google.com/file/d/1O-yy_PeEEVzVdpfQ8-renCQqO2iLaDri/view?usp=sharing',
   'Guiso de ternera y patata':                           'https://drive.google.com/file/d/12ymN6Sb9rW_MY7az0KBELnlQpVQldFrc/view?usp=sharing',
-  'Alcachofas con gambas al limón':                      'https://drive.google.com/file/d/1OrZvyBsGjV1w7FhOLLks4qewTJZFyWq7/view?usp=sharing',
+  'Tofu marinado con verduras salteadas y arroz':        'https://drive.google.com/file/d/1VfUE2eHpikFcRqPtzqjOMnJJChv8Yz7W/view?usp=sharing',
+  'Salmorejo tradicional':                               'https://drive.google.com/file/d/1ir8BMopIUno_I-tHzYr5tCjx5RNAmfBF/view?usp=sharing',
+  'Espaguetis integrales con gambas':                    'https://drive.google.com/file/d/1GXIBZa3VNYdkbUbS0uZIh_-Fh4u67_sM/view?usp=sharing',
+  'Pollo al chilindrón':                                 'https://drive.google.com/file/d/1D67hBBTQ0x6b-80fxLkugZQ4LKHpXblu/view?usp=sharing',
+  'Fajita de pollo con verdura':                         'https://drive.google.com/file/d/1TJ_EDxJTVN5YYHx0X92bAZvF_q1ngwaU/view?usp=sharing',
   'Pizza fajita de barbacoa':                            'https://drive.google.com/file/d/1xDZ9uX9QacxJ7Nvnd3rgAimy6X_UrHU0/view?usp=sharing',
-  'Guarnición de patata/boniato':                        'https://drive.google.com/file/d/1ioktdP_sP973S7X6scgXFi3KefL5sA9f/view?usp=sharing',
+  'Piriñaca cántabra':                                   'https://drive.google.com/file/d/12PALYNKbLcIWfHUqxfjnJ8zAGgyIkT-H/view?usp=sharing',
+  'Mayonesa de aguacate y cilantro':                     'https://drive.google.com/file/d/1yMQ-a1lHw5pDs4zFwreurwnRGXGD1aiu/view?usp=sharing',
+  'Helado casero de fruta':                              'https://drive.google.com/file/d/1G5_gE92yYQ0BZpe-MHzs1uNmy47Cjf8P/view?usp=sharing',
+  'Smoothie de frutos rojos':                            'https://drive.google.com/file/d/1ImgyKhl7sUs-sgLa33ht0twcwizcnege/view?usp=sharing',
+  'Galletas de avena y chocolate (4 u)':                 'https://drive.google.com/file/d/1J-C_-3cXcZwPUJooLHvWXu6fE_UyxMh7/view?usp=sharing',
+  'Brownie casero':                                      'https://drive.google.com/file/d/1_ErO8x9z9OhOvMsD_d1Psczm0Cjz4y9i/view?usp=sharing',
 };
 
 function linkifyLine(line) {
@@ -3966,6 +3967,7 @@ function renderMenuScreen() {
   // A/B toggle
   document.getElementById('mab-a').className = 'mab-btn' + (S.menuSemana === '1' ? ' active' : '');
   document.getElementById('mab-b').className = 'mab-btn' + (S.menuSemana === '2' ? ' active' : '');
+  document.getElementById('mab-c').className = 'mab-btn' + (S.menuSemana === '3' ? ' active' : '');
   // View tabs
   document.getElementById('view-hoy').classList.toggle('active', S.menuView === 'hoy');
   document.getElementById('view-semana').classList.toggle('active', S.menuView === 'semana');
@@ -3991,7 +3993,7 @@ function renderMenuHoy(menu) {
   document.getElementById('menu-hoy-lbl').textContent = DAY_NAMES[dayIdx];
   const checks = getTodayMenuChecks();
   document.getElementById('menu-meal-cards').innerHTML =
-    ['de','al','me','ce'].map(key => {
+    ['de','mm','al','me','ce'].map(key => {
       const done  = !!checks[key];
       const lines = menu[key][dayIdx].split('\n').map(l => `<div>${linkifyLine(l)}</div>`).join('');
       return `
@@ -4010,7 +4012,7 @@ function renderMenuSemana(menu) {
   document.getElementById('menu-week-grid').innerHTML = DAY_NAMES.map((day, i) => `
     <div class="week-day-block${i === todayIdx ? ' today' : ''}">
       <div class="week-day-title">${day}${i === todayIdx ? ' · Hoy' : ''}</div>
-      ${['de','al','me','ce'].map(key => `
+      ${['de','mm','al','me','ce'].map(key => `
         <div class="week-meal-row">
           <span class="week-meal-lbl">${MEAL_LABELS[key]}</span>
           <span class="week-meal-txt">${linkifyLine(menu[key][i].split('\n')[0])}</span>
@@ -4276,10 +4278,10 @@ let _snackEntries = []; // [{ ejercicio, series, reps, peso_kg }]
 
 async function loadSnacks() {
   try {
-    const d = await api('GET', '/values/snacks!A2:F');
+    const d = await api('GET', '/values/snacks!A2:G');
     S.snacks = (d.values||[]).filter(r=>r[0]).map(r => ({
       fecha: r[0], ejercicio: r[1]||'', series: r[2] ? +r[2] : null,
-      reps: r[3] ? +r[3] : null, peso_kg: r[4] ? +r[4] : null, nota: r[5]||''
+      reps: r[3] ? +r[3] : null, peso_kg: r[4] ? +r[4] : null, nota: r[5]||'', link: r[6]||''
     }));
     localStorage.setItem('gfit_snacks', JSON.stringify(S.snacks));
   } catch(e) {
@@ -4291,7 +4293,7 @@ async function loadSnacks() {
 }
 
 function updateSnackEntry(i, field, val) {
-  if (_snackEntries[i]) _snackEntries[i][field] = val === '' ? null : (field === 'ejercicio' ? val : +val || null);
+  if (_snackEntries[i]) _snackEntries[i][field] = val === '' ? null : ((field === 'ejercicio' || field === 'link') ? val : +val || null);
 }
 
 function snackNumField(i, field, val, ph, label) {
@@ -4324,7 +4326,7 @@ function renderSnackEntries() {
       html +=
         '<div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);' +
         'padding:10px 12px;margin-bottom:8px;opacity:.85">' +
-          '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">🏋️ Fuerza</div>' +
+          '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">🏋️ Rutina completa</div>' +
           '<div style="font-size:14px;color:var(--text)">' + e.ejercicio +
           (chips ? '<span style="color:var(--muted);margin-left:8px;font-size:12px">' + chips + '</span>' : '') +
           '</div>' +
@@ -4336,6 +4338,7 @@ function renderSnackEntries() {
         'color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0">×</button>'
       : '';
     const safeVal = (e.ejercicio || '').replace(/"/g, '&quot;');
+    const safeLink = (e.link || '').replace(/"/g, '&quot;');
     html +=
       '<div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);' +
       'padding:10px 12px;margin-bottom:8px">' +
@@ -4357,6 +4360,13 @@ function renderSnackEntries() {
           snackNumField(i, 'reps',    e.reps,    '12', 'Reps') +
           snackNumField(i, 'peso_kg', e.peso_kg, '—',  'Kg (opc.)') +
         '</div>' +
+        '<div style="margin-top:8px">' +
+          '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">🔗 Enlace (vídeo/referencia, opcional)</div>' +
+          '<input type="url" value="' + safeLink + '" placeholder="https://…" autocomplete="off"' +
+          ' oninput="updateSnackEntry(' + i + ',\'link\',this.value)"' +
+          ' style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);border-radius:8px;' +
+          'color:var(--text);font-family:inherit;font-size:14px;padding:8px 10px">' +
+        '</div>' +
       '</div>';
   });
   wrap.innerHTML = html;
@@ -4372,8 +4382,8 @@ function getSnackHistory() {
   sorted.forEach(s => {
     const key = (s.ejercicio || '').trim();
     if (!key) return;
-    if (byName[key]) return;
-    byName[key] = { lastDate: s.fecha, series: s.series, reps: s.reps, peso_kg: s.peso_kg };
+    if (!byName[key]) byName[key] = { lastDate: s.fecha, series: s.series, reps: s.reps, peso_kg: s.peso_kg, link: s.link || '' };
+    else if (!byName[key].link && s.link) byName[key].link = s.link; // recupera el enlace de filas anteriores
   });
   return byName;
 }
@@ -4387,13 +4397,14 @@ function showSnackSuggestions(i, val) {
   const wrap = document.getElementById('snack-sugg-' + i);
   if (!wrap) return;
   const hist = getSnackHistory();
-  const q = (val || '').trim().toLowerCase();
+  const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const q = norm((val || '').trim());
   const used = new Set(_snackEntries.filter((_, idx) => idx !== i).map(e => (e.ejercicio || '').trim().toLowerCase()).filter(Boolean));
   let names = Object.keys(hist).filter(n => !used.has(n.toLowerCase()));
-  if (q) names = names.filter(n => n.toLowerCase().includes(q));
+  if (q) names = names.filter(n => norm(n).includes(q));
   names.sort((a, b) => {
-    const ap = a.toLowerCase().startsWith(q) ? 0 : 1;
-    const bp = b.toLowerCase().startsWith(q) ? 0 : 1;
+    const ap = norm(a).startsWith(q) ? 0 : 1;
+    const bp = norm(b).startsWith(q) ? 0 : 1;
     if (ap !== bp) return ap - bp;
     return hist[b].lastDate.localeCompare(hist[a].lastDate);
   });
@@ -4427,12 +4438,13 @@ function pickSnackSuggestion(i, idx) {
     if (_snackEntries[i].series  == null) _snackEntries[i].series  = h.series;
     if (_snackEntries[i].reps    == null) _snackEntries[i].reps    = h.reps;
     if (_snackEntries[i].peso_kg == null) _snackEntries[i].peso_kg = h.peso_kg;
+    if (!_snackEntries[i].link)           _snackEntries[i].link    = h.link || '';
   }
   renderSnackEntries();
 }
 
 function addSnackEntry() {
-  _snackEntries.push({ ejercicio: '', series: null, reps: null, peso_kg: null });
+  _snackEntries.push({ ejercicio: '', series: null, reps: null, peso_kg: null, link: '' });
   renderSnackEntries();
 }
 
@@ -4454,9 +4466,9 @@ async function openSnackScreen() {
   }
 
   _snackEditCtx = null;
-  _snackEntries = [{ ejercicio: '', series: null, reps: null, peso_kg: null }];
+  _snackEntries = [{ ejercicio: '', series: null, reps: null, peso_kg: null, link: '' }];
   document.getElementById('snack-nota').value = '';
-  document.querySelector('#screen-snack .btn-primary').textContent = 'Guardar snack';
+  document.querySelector('#screen-snack .btn-primary').textContent = 'Guardar';
   renderSnackEntries();
   renderSnackHistorial();
 }
@@ -4474,13 +4486,17 @@ function renderSnackHistorial() {
   wrap.innerHTML = `<div class="recetas-cat-title">Últimas sesiones</div>` +
     dates.map(fecha => {
       const { rows, nota } = byDate[fecha];
-      const exLines = rows.map(r => {
-        const parts = [r.series ? `${r.series}s` : null, r.reps ? `${r.reps}r` : null, r.peso_kg ? `${r.peso_kg}kg` : null].filter(Boolean);
-        return `${r.ejercicio}${parts.length ? ' · ' + parts.join(' × ') : ''}`;
-      }).join(', ');
+      const hist = getSnackHistory();
+      const exLines = rows.map((r, idx) => {
+        const parts = [r.series ? `${r.series}s` : null, r.reps ? `${r.reps}r` : null, r.peso_kg ? `${String(r.peso_kg).replace('.', ',')}kg` : null].filter(Boolean);
+        const url = (r.link || hist[(r.ejercicio || '').trim()]?.link || '').trim();
+        const linkIcon = url ? ` <a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Ver enlace" style="text-decoration:none">🎬</a>` : '';
+        return `${idx + 1}. ${r.ejercicio}${parts.length ? ' · ' + parts.join(' × ') : ''}${linkIcon}`;
+      }).join('<br>');
       return `<div class="receta-card" style="flex-direction:column;align-items:flex-start;gap:2px">
-        <div style="font-size:13px;font-weight:600">${fmtDateES(fecha)}</div>
-        <div style="font-size:12px;color:var(--muted)">${exLines || '—'}${nota ? ' · ' + nota : ''}</div>
+        <div style="font-size:13px;font-weight:600">${fmtDateES(fecha)} · ${rows.length} ${rows.length === 1 ? 'ejercicio' : 'ejercicios'}</div>
+        <div style="font-size:12px;color:var(--muted);line-height:1.7">${exLines || '—'}</div>
+        ${nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:2px">📝 ${nota}</div>` : ''}
       </div>`;
     }).join('');
 }
@@ -4493,40 +4509,29 @@ async function saveSnack() {
   const valid = _snackEntries.filter(e => e._src !== 'sess' && e.ejercicio.trim());
   if (!valid.length) { toast('Añade al menos un ejercicio', 'error'); return; }
 
-  const resetForm = () => {
-    _snackEntries = [{ ejercicio: '', series: null, reps: null, peso_kg: null }];
-    document.getElementById('snack-nota').value = '';
-    document.querySelector('#screen-snack .btn-primary').textContent = 'Guardar snack';
-    renderSnackEntries();
-  };
-
   const sheetRows = valid.map((e, i) => [
-    fecha, e.ejercicio.trim(), e.series||'', e.reps||'', e.peso_kg||'', i === 0 ? nota : ''
+    fecha, e.ejercicio.trim(), e.series||'', e.reps||'', e.peso_kg||'', i === 0 ? nota : '', (e.link||'').trim()
   ]);
 
   if (_snackEditCtx) {
     try {
       await deleteSnacksByDate(_snackEditCtx.date);
-      await api('POST', '/values/snacks!A:F:append',
+      await api('POST', '/values/snacks!A:G:append',
         { values: sheetRows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
       _snackEditCtx = null;
       await loadSnacks(); renderCal();
-      toast('Snack actualizado ✓', 'success');
-      resetForm(); renderSnackHistorial();
+      toast('Actualizado ✓', 'success');
+      await editSnackEntry(fecha); // mantiene los ejercicios guardados visibles en el formulario
     } catch(e) { toast('Error al actualizar: ' + e.message, 'error'); }
     return;
   }
 
   try {
-    await api('POST', '/values/snacks!A:F:append',
+    await api('POST', '/values/snacks!A:G:append',
       { values: sheetRows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
-    sheetRows.forEach((r, i) => S.snacks.push({
-      fecha: r[0], ejercicio: r[1], series: r[2]||null, reps: r[3]||null, peso_kg: r[4]||null, nota: r[5]||''
-    }));
-    localStorage.setItem('gfit_snacks', JSON.stringify(S.snacks));
-    renderCal();
-    toast('Snack guardado ✓', 'success');
-    resetForm(); renderSnackHistorial();
+    await loadSnacks(); renderCal();
+    toast('Guardado ✓', 'success');
+    await editSnackEntry(fecha); // mantiene los ejercicios guardados visibles en el formulario
   } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
 }
 
@@ -4546,15 +4551,19 @@ function renderRenameSnacksList() {
     counts[k] = (counts[k] || 0) + 1;
   });
   const names = Object.keys(counts).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-  if (!names.length) { wrap.innerHTML = '<div style="color:var(--muted);font-size:13px">No hay snacks registrados.</div>'; return; }
+  if (!names.length) { wrap.innerHTML = '<div style="color:var(--muted);font-size:13px">No hay ejercicios registrados.</div>'; return; }
+  const hist = getSnackHistory();
   wrap.innerHTML = names.map(n => {
     const safe = n.replace(/"/g, '&quot;');
-    return '<div class="mod-btn" onclick="renameSnackPrompt(\'' + n.replace(/'/g, "\\'") + '\')" style="padding:12px 14px;margin-bottom:8px">' +
-      '<div class="mod-text">' +
+    const esc  = n.replace(/'/g, "\\'");
+    const hasLink = !!(hist[n] && hist[n].link);
+    return '<div class="mod-btn" style="padding:12px 14px;margin-bottom:8px">' +
+      '<div class="mod-text" onclick="renameSnackPrompt(\'' + esc + '\')" style="cursor:pointer;flex:1">' +
         '<div class="mod-title" style="font-size:14px">' + safe + '</div>' +
-        '<div class="mod-sub">' + counts[n] + ' fila' + (counts[n] === 1 ? '' : 's') + '</div>' +
+        '<div class="mod-sub">' + counts[n] + ' fila' + (counts[n] === 1 ? '' : 's') + (hasLink ? ' · 🔗 con enlace' : '') + '</div>' +
       '</div>' +
-      '<span style="color:var(--muted);font-size:18px">✏️</span>' +
+      '<button onclick="renameSnackPrompt(\'' + esc + '\')" title="Renombrar" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 6px">✏️</button>' +
+      '<button onclick="setSnackLinkPrompt(\'' + esc + '\')" title="Editar enlace" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 6px;opacity:' + (hasLink ? '1' : '.45') + '">🔗</button>' +
       '</div>';
   }).join('');
 }
@@ -4572,6 +4581,33 @@ async function renameSnackPrompt(oldName) {
   } catch(e) {
     toast('Error: ' + e.message, 'error');
   }
+}
+
+async function setSnackLinkPrompt(name) {
+  const current = getSnackHistory()[name]?.link || '';
+  const url = prompt('Enlace para "' + name + '" (vídeo/referencia). Deja el campo vacío para quitarlo:', current);
+  if (url == null) return;
+  try {
+    const n = await setSnackExerciseLink(name, url.trim());
+    toast(url.trim() ? 'Enlace guardado en ' + n + ' fila' + (n === 1 ? '' : 's') + ' ✓' : 'Enlace quitado ✓', 'success');
+    renderRenameSnacksList();
+    renderSnackHistorial();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+async function setSnackExerciseLink(name, link) {
+  const data = await api('GET', '/values/snacks!A:G');
+  const rows = data.values || [];
+  const updates = [];
+  for (let i = 1; i < rows.length; i++) {
+    if ((rows[i][1] || '') === name) updates.push({ range: 'snacks!G' + (i + 1), values: [[link]] });
+  }
+  if (!updates.length) return 0;
+  await api('POST', '/values:batchUpdate', { data: updates, valueInputOption: 'RAW' });
+  await loadSnacks();
+  return updates.length;
 }
 
 async function renameSnackExercise(oldName, newName) {
@@ -4631,24 +4667,24 @@ async function editSnackEntry(date) {
   _snackEntries = [
     ...sessEntries,
     ...entries.map(e => ({
-      ejercicio: e.ejercicio, series: e.series, reps: e.reps, peso_kg: e.peso_kg, _src: 'snack'
+      ejercicio: e.ejercicio, series: e.series, reps: e.reps, peso_kg: e.peso_kg, link: e.link || '', _src: 'snack'
     }))
   ];
   closeSessionSheet();
   showScreen('snack');
   document.getElementById('snack-fecha').value = date;
   document.getElementById('snack-nota').value = entries[0]?.nota || '';
-  document.querySelector('#screen-snack .btn-primary').textContent = 'Actualizar snack';
+  document.querySelector('#screen-snack .btn-primary').textContent = 'Actualizar';
   renderSnackEntries();
   renderSnackHistorial();
 }
 
 async function deleteSnackEntry(date) {
-  if (!confirm('¿Eliminar todos los snacks de este día?')) return;
+  if (!confirm('¿Eliminar todos los ejercicios de fuerza de este día?')) return;
   try {
     await deleteSnacksByDate(date);
     await loadSnacks(); renderCal();
-    toast('Snack eliminado ✓', 'success');
+    toast('Eliminado ✓', 'success');
     openSessionSheet(date);
   } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
 }
