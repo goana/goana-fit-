@@ -1129,6 +1129,14 @@
         <div class="scale-row" id="energia-row"></div>
       </div>
 
+      <!-- Semana de descarga -->
+      <div class="ci-block">
+        <div class="ci-q">🪶 Semana de descarga</div>
+        <div class="ci-hint">2 series y pesos rebajados (~35%). Mantenlo activo durante la semana de deload.</div>
+        <button id="deload-toggle" class="pair-btn" style="margin-top:8px" onclick="toggleDeload()">Desactivada</button>
+        <div id="deload-hint" style="font-size:12px;margin-top:8px;color:var(--muted)"></div>
+      </div>
+
       <!-- Adaptation summary -->
       <div id="ci-adaptation" class="adaptation-card hidden"></div>
 
@@ -1783,6 +1791,7 @@ const S = {
   offline:      !navigator.onLine,
   pending:      [],
   fase:         parseInt(localStorage.getItem('gfit_fase') || '1'),
+  deload:       localStorage.getItem('gfit_deload') === '1',
   checkin:      { radioHoy: false, energia: 7, piel: 'Normal', molestia: 0 },
   medidas:      [],
   yoga:         [],
@@ -1824,6 +1833,46 @@ const FASE_INFO = {
     rpe: '8-9', tip: '¡Hora de buscar la mejora! Sube peso cuando hagas todas las reps con buena técnica.',
   },
 };
+
+// ── Semana de descarga (deload) ──
+const DELOAD_CADA_SEMANAS = 6; // sugerir descarga cada ~6 semanas
+function _deloadKg(w) { return w ? Math.round(w * 0.65 * 2) / 2 : 0; } // ~35% menos, redondeo a 0,5
+function deloadWeeksSince() {
+  let anchor = localStorage.getItem('gfit_last_deload');
+  if (!anchor) {
+    const dates = (S.sessions || []).map(s => s.fecha).filter(Boolean).sort();
+    anchor = dates[0] || todayStr(); // 1ª vez: cuenta desde la primera sesión registrada
+  }
+  const ms = new Date(todayStr()) - new Date(anchor);
+  return Math.max(0, Math.floor(ms / (7 * 24 * 3600 * 1000)));
+}
+function toggleDeload() {
+  S.deload = !S.deload;
+  localStorage.setItem('gfit_deload', S.deload ? '1' : '0');
+  if (S.deload) localStorage.setItem('gfit_last_deload', todayStr()); // marca el inicio de la descarga
+  renderDeloadToggle();
+}
+function renderDeloadToggle() {
+  const b = document.getElementById('deload-toggle');
+  if (b) {
+    b.textContent = S.deload ? 'Activada ✓' : 'Desactivada';
+    b.className = 'pair-btn' + (S.deload ? ' selected' : '');
+  }
+  const hint = document.getElementById('deload-hint');
+  if (hint) {
+    if (S.deload) {
+      hint.textContent = '✓ Descarga activa. Acuérdate de apagarla al terminar la semana.';
+      hint.style.color = 'var(--accent)';
+    } else {
+      const w = deloadWeeksSince();
+      const due = w >= DELOAD_CADA_SEMANAS;
+      hint.textContent = due
+        ? `⚠️ Llevas ${w} semanas sin descarga — buen momento para hacer una.`
+        : `Llevas ${w} semana${w === 1 ? '' : 's'} desde la última descarga (se sugiere cada ${DELOAD_CADA_SEMANAS}).`;
+      hint.style.color = due ? 'var(--warning)' : 'var(--muted)';
+    }
+  }
+}
 
 function setFase(n) {
   S.fase = n;
@@ -1873,6 +1922,7 @@ function buildCheckinUI() {
     eRow.appendChild(btn);
   }
 
+  renderDeloadToggle();
   updateAdaptation();
 }
 
@@ -1943,6 +1993,7 @@ async function saveCheckin() {
 function getWorkoutWarnings() {
   const ci = S.checkin;
   const warns = [];
+  if (S.deload) warns.push({ text:'🪶 Semana de descarga — 2 series y pesos rebajados. No falles, RPE 5-6.', type:'warn' });
   if (ci.radioHoy) warns.push({ text:'Hoy hay radio — RPE 5-6. No fuerces el rango.', type:'warn' });
   if (ci.energia < 5) warns.push({ text:`Energía baja (${ci.energia}/10) — considera hacer solo 2 series hoy.`, type:'warn' });
   return warns;
@@ -2685,18 +2736,22 @@ async function deleteTodayWorkout() {
 function startWorkout() {
   if (!S.workout?.editing && !getRec().train) { toast('Ya entrenaste hoy — ¡descansa!','info'); return; }
   const lw = getLastWeights();
+  const dl = S.deload;
   if (!S.workout?.editing) S.workout = {
     date: todayStr(),
-    editing: false, dirty: false,
+    editing: false, dirty: false, deload: dl,
     _pwShown: localStorage.getItem('gfit_pw_done') === todayStr(),
-    exercises: EXERCISES.map(ex => ({
-      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit, weight: ex.weight,
-      series: Array.from({length:ex.sets},(_,i) => ({
-        weight: lw[ex.name]?.[i+1]?.peso ?? 0,
-        reps:   lw[ex.name]?.[i+1]?.reps ?? ex.reps,
-        done: false,
-      })),
-    })),
+    exercises: EXERCISES.map(ex => {
+      const sets = dl ? Math.min(2, ex.sets) : ex.sets; // descarga: 2 series
+      return {
+        name: ex.name, sets, targetReps: ex.reps, unit: ex.unit, weight: ex.weight,
+        series: Array.from({length: sets},(_,i) => ({
+          weight: dl ? _deloadKg(lw[ex.name]?.[i+1]?.peso ?? 0) : (lw[ex.name]?.[i+1]?.peso ?? 0),
+          reps:   lw[ex.name]?.[i+1]?.reps ?? ex.reps,
+          done: false,
+        })),
+      };
+    }),
   };
   renderWorkout();
   showScreen('workout');
