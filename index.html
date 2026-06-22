@@ -1028,7 +1028,7 @@
         <div class="cal-grid" id="cal-grid"></div>
         <div style="display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span>Rutina completa
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span>Rutina de fuerza
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
             <span style="width:10px;height:10px;border-radius:50%;background:var(--warning);display:inline-block"></span>Fuerza
@@ -1058,6 +1058,20 @@
         <div class="mod-text">
           <div class="mod-title">Rutina completa</div>
           <div class="mod-sub">9 ejercicios · full body</div>
+        </div>
+      </button>
+      <button class="mod-btn" onclick="pickMod('inferior')">
+        <span class="mod-icon" style="color:#f59e0b">🦵</span>
+        <div class="mod-text">
+          <div class="mod-title">Tren inferior</div>
+          <div class="mod-sub">6 ejercicios · piernas y glúteo</div>
+        </div>
+      </button>
+      <button class="mod-btn" onclick="pickMod('superior')">
+        <span class="mod-icon" style="color:#ec4899">💪</span>
+        <div class="mod-text">
+          <div class="mod-title">Tren superior</div>
+          <div class="mod-sub">6 ejercicios · brazos, espalda y core</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('yoga')">
@@ -1094,7 +1108,7 @@
     <div class="workout-meta">
       <div class="workout-date-lbl" id="workout-date-lbl"></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <div class="workout-hint">9 ejercicios · 3 series · descansa 90 s entre series</div>
+        <div class="workout-hint" id="workout-hint">9 ejercicios · 3 series · descansa 90 s entre series</div>
         <div style="display:flex;align-items:center;gap:6px">
           <button class="stmr-ctrl-btn" id="stmr-ctrl-btn" onclick="toggleSessionTimer()"><svg width="10" height="10" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg></button>
           <div class="session-timer" id="session-timer">00:00</div>
@@ -1755,17 +1769,59 @@
 // CONSTANTS
 // ═══════════════════════════════════════════════════════════
 
-const EXERCISES = [
-  { name: 'Sentadilla Goblet',     sets: 3, reps: 12, note: 'Sujeta una mancuerna contra el pecho para estabilidad sin tensión.' },
-  { name: 'Remo a una mano',       sets: 3, reps: 10, note: 'Apoya la mano derecha en banco para controlar el lado izquierdo.' },
-  { name: 'Zancadas / Lunges',     sets: 3, reps: 12, note: 'Paso largo, rodillas a 90°, para ganar volumen en tren inferior.' },
-  { name: 'Press Militar', sets: 3, reps: 10, note: 'Con mancuernas sentada; si brazo izquierdo no sube del todo, bajar peso.' },
-  { name: 'Curl de Bíceps',        sets: 3, reps: 12, note: 'Codos pegados al cuerpo, sin balanceo.' },
-  { name: 'Extensión de Tríceps',  sets: 3, reps: 12, note: 'Tras nuca si no molesta; si hay tirantez, sustituir por kickback.' },
-  { name: 'Bird-Dog',              sets: 3, reps: 12, unit: 'x lado', weight: true, note: 'En cuadrupedia, sin presión en el pecho; trabaja core y espalda baja.' },
-  { name: 'Plancha Frontal',       sets: 3, reps: 30, unit: 'seg', note: 'Sobre antebrazos, cuerpo recto. Si la piel izquierda tira, apoya rodillas.' },
-  { name: 'Deadbug',               sets: 3, reps: 10, unit: 'x lado', note: 'Boca arriba, baja pierna y brazo contrario sin despegar la espalda. Trabaja el transverso sin tensión en la cicatriz.' },
-];
+// Catálogo de ejercicios (un único sitio donde se definen)
+const EX = {
+  goblet:     { name: 'Sentadilla Goblet',    sets: 3, reps: 12, note: 'Sujeta una mancuerna contra el pecho para estabilidad sin tensión. Si solo tienes una mancuerna ligera, baja en 3 s y sube despacio, y sube reps (15-20) para compensar.' },
+  remo:       { name: 'Remo a una mano',       sets: 3, reps: 10, note: 'Apoya la mano derecha en banco para controlar el lado izquierdo.' },
+  zancadas:   { name: 'Zancadas / Lunges',     sets: 3, reps: 12, note: 'Paso largo, rodillas a 90°, para ganar volumen en tren inferior.' },
+  press:      { name: 'Press Militar',         sets: 3, reps: 10, note: 'Con mancuernas sentada; si brazo izquierdo no sube del todo, bajar peso. Piel tirante → elevaciones laterales.' },
+  curl:       { name: 'Curl de Bíceps',        sets: 3, reps: 12, note: 'Codos pegados al cuerpo, sin balanceo.' },
+  triceps:    { name: 'Extensión de Tríceps',  sets: 3, reps: 12, note: 'Tras nuca si no molesta; si hay tirantez, sustituir por kickback.' },
+  birddog:    { name: 'Bird-Dog',              sets: 3, reps: 12, unit: 'x lado', weight: true, note: 'En cuadrupedia, sin presión en el pecho; trabaja core y espalda baja.' },
+  plancha:    { name: 'Plancha Frontal',       sets: 3, reps: 30, unit: 'seg', note: 'Sobre antebrazos, cuerpo recto. Si la piel izquierda tira, apoya rodillas.' },
+  deadbug:    { name: 'Deadbug',               sets: 3, reps: 10, unit: 'x lado', note: 'Boca arriba, baja pierna y brazo contrario sin despegar la espalda. Trabaja el transverso sin tensión en la cicatriz.' },
+  // Nuevos — tren inferior
+  pesomuerto: { name: 'Peso muerto rumano',    sets: 3, reps: 12, weight: true, note: 'Bisagra de cadera con la espalda recta y las mancuernas pegadas a la pierna. Femoral y glúteo. Con una sola mancuerna: a dos manos o alternando lados.' },
+  puente:     { name: 'Puente de glúteo',      sets: 3, reps: 15, weight: true, note: 'Boca arriba, sube la cadera y aprieta el glúteo 1 s arriba. Apoya la mancuerna sobre la cadera para añadir carga, sin presión en el pecho.' },
+  gemelo:     { name: 'Elevación de gemelo',   sets: 3, reps: 15, weight: true, note: 'De pie, sube sobre las puntas con rango completo y baja despacio. Mancuerna en la mano para más carga.' },
+};
+
+// Rutinas estructuradas seleccionables
+const ROUTINES = {
+  completa: { id: 'completa', name: 'Rutina completa', sub: '9 ejercicios · full body',          icon: '🏋️', color: 'var(--accent)',
+    exercises: [EX.goblet, EX.remo, EX.zancadas, EX.press, EX.curl, EX.triceps, EX.birddog, EX.plancha, EX.deadbug] },
+  inferior: { id: 'inferior', name: 'Tren inferior', sub: '6 ejercicios · piernas y glúteo',      icon: '🦵', color: '#f59e0b',
+    exercises: [EX.goblet, EX.zancadas, EX.pesomuerto, EX.puente, EX.gemelo, EX.plancha] },
+  superior: { id: 'superior', name: 'Tren superior', sub: '6 ejercicios · brazos, espalda y core', icon: '💪', color: '#ec4899',
+    exercises: [EX.remo, EX.press, EX.curl, EX.triceps, EX.birddog, EX.deadbug] },
+};
+
+const ALL_EX = Object.values(EX);
+
+let activeRoutine = localStorage.getItem('gfit_routine') || 'completa';
+if (!ROUTINES[activeRoutine]) activeRoutine = 'completa';
+let EXERCISES = ROUTINES[activeRoutine].exercises;
+
+function setRoutine(id) {
+  if (!ROUTINES[id]) id = 'completa';
+  activeRoutine = id;
+  EXERCISES = ROUTINES[id].exercises;
+  localStorage.setItem('gfit_routine', id);
+}
+
+// Infiere qué rutina se entrenó un día a partir de los ejercicios registrados
+function routineForDate(date) {
+  const done = new Set(S.sessions.filter(s => s.fecha === date).map(s => s.ejercicio));
+  if (!done.size) return activeRoutine;
+  let best = activeRoutine, bestScore = -1;
+  for (const r of Object.values(ROUTINES)) {
+    const names = r.exercises.map(e => e.name);
+    const hit = names.filter(n => done.has(n)).length;
+    const score = hit - (names.length - hit) * 0.1; // cubre la rutina, penaliza huecos
+    if (hit > 0 && score > bestScore) { bestScore = score; best = r.id; }
+  }
+  return best;
+}
 
 const SCOPES    = 'https://www.googleapis.com/auth/spreadsheets';
 const SHTS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
@@ -2548,7 +2604,7 @@ function getRec() {
 function getLastWeights() {
   const today = todayStr();
   const w = {};
-  EXERCISES.forEach(ex => {
+  ALL_EX.forEach(ex => {
     const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha !== today);
     if (!rows.length) { w[ex.name] = {}; return; }
     const lastDate = rows.map(r => r.fecha).sort().reverse()[0];
@@ -2563,7 +2619,7 @@ function getLastWeights() {
 function getLastSession() {
   const today = todayStr();
   const result = {};
-  EXERCISES.forEach(ex => {
+  ALL_EX.forEach(ex => {
     const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha !== today && s.completada);
     if (!rows.length) { result[ex.name] = null; return; }
     const lastDate = rows.map(r => r.fecha).sort().reverse()[0];
@@ -2593,8 +2649,9 @@ function openPickModality() {
 }
 
 function pickMod(mod) {
-  if (mod === 'fuerza') {
-    // Si ya hay sesión de Fuerza hoy, saltar el check-in y abrir directamente la sesión
+  if (mod === 'fuerza' || mod === 'inferior' || mod === 'superior') {
+    setRoutine(mod === 'fuerza' ? 'completa' : mod);
+    // Si ya hay sesión de fuerza hoy, saltar el check-in y abrir directamente la sesión
     if (S.sessions.some(s => s.fecha === todayStr())) editTodayWorkout();
     else { buildCheckinUI(); showScreen('checkin'); }
   }
@@ -2620,7 +2677,8 @@ function renderCal() {
   const fullDays  = new Set();
   const snackDays = new Set();
   Object.entries(byDate).forEach(([date, exs]) => {
-    if (exs.size >= EXERCISES.length) fullDays.add(date);
+    const isFull = Object.values(ROUTINES).some(r => r.exercises.every(e => exs.has(e.name)));
+    if (isFull) fullDays.add(date);
     else snackDays.add(date);
   });
   // Días con snacks dedicados (ejercicios libres)
@@ -2686,6 +2744,7 @@ function navCal(dir) { S.calDate.setMonth(S.calDate.getMonth()+dir); renderCal()
 
 function editTodayWorkout() {
   const date = todayStr();
+  setRoutine(routineForDate(date)); // abre la rutina que se entrenó hoy
   const saved = S.sessions.filter(s => s.fecha === date);
   const lw = getLastWeights(); // fallback: previous session weights
   const pwDone = localStorage.getItem('gfit_pw_done') === date;
@@ -2860,6 +2919,13 @@ function renderWorkout() {
   document.querySelector('#screen-workout .app-header h1').textContent =
     S.workout.editing ? 'Editando sesión' : 'Sesión de hoy';
 
+  // Hint dinámico según la rutina activa
+  const hintEl = document.getElementById('workout-hint');
+  if (hintEl) {
+    const r = ROUTINES[activeRoutine] || ROUTINES.completa;
+    hintEl.textContent = `${r.name} · ${S.workout.exercises.length} ejercicios · descansa 90 s entre series`;
+  }
+
   // Workout-level warnings (energy, radio)
   const existingWarn = document.getElementById('workout-global-warn');
   if (existingWarn) existingWarn.remove();
@@ -2877,7 +2943,7 @@ function renderWorkout() {
   const lastSess = getLastSession();
 
   S.workout.exercises.forEach((ex, ei) => {
-    const def = EXERCISES[ei];
+    const def = ALL_EX.find(e => e.name === ex.name) || {};
     const vUrl = (typeof VIDEO_URLS!=='undefined' && VIDEO_URLS[ex.name]) ? VIDEO_URLS[ex.name] : null;
     const doneCnt = ex.series.filter(s=>s.done).length;
     const allDone = doneCnt===ex.sets;
@@ -3430,8 +3496,8 @@ function skipTimer() {
 
 function openHistory() {
   const sel = document.getElementById('ex-sel');
-  sel.innerHTML = EXERCISES.map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
-  renderHistExercise(EXERCISES[0].name);
+  sel.innerHTML = ALL_EX.map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
+  renderHistExercise(ALL_EX[0].name);
   switchHistTab('ex');
   showScreen('history');
 }
@@ -3510,8 +3576,9 @@ function openSessionSheet(date) {
   let html = '';
 
   if (rows.length) {
+    const _r = ROUTINES[routineForDate(date)] || ROUTINES.completa;
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 4px">
-      <span style="font-size:13px;font-weight:700;color:var(--accent)">🏋️ Rutina completa</span>
+      <span style="font-size:13px;font-weight:700;color:var(--accent)">${_r.icon} ${_r.name}</span>
       <div style="display:flex;gap:6px">
         ${iconBtn('✏️ Editar', `editSessionByDate('${date}')`, 'Editar')}
         ${iconBtn('🗑 Eliminar', `deleteGymSession('${date}')`, 'Eliminar')}
@@ -3657,6 +3724,7 @@ async function deletePilatesEntry(date, nth) {
 }
 
 function editSessionByDate(date) {
+  setRoutine(routineForDate(date)); // edita con la rutina que se entrenó ese día
   const saved = S.sessions.filter(s => s.fecha === date);
   const lw = getLastWeights();
   S.workout = {
@@ -3715,7 +3783,7 @@ function renderSessionDetail(date, rows) {
     byEx[r.ejercicio][r.serie] = r; // deduplica por nº de serie
   });
   return Object.entries(byEx).map(([exName, seriesMap]) => {
-    const ex = EXERCISES.find(e => e.name === exName) || {};
+    const ex = ALL_EX.find(e => e.name === exName) || {};
     const sorted = Object.values(seriesMap).sort((a,b) => a.serie - b.serie);
     const chips = sorted.map(s => {
       let inner;
@@ -4368,7 +4436,7 @@ function renderSnackEntries() {
   _snackEntries.forEach(function(e, i) {
     // Read-only display for Fuerza exercises from an incomplete strength session
     if (e._src === 'sess') {
-      const def = EXERCISES.find(x => x.name === e.ejercicio) || {};
+      const def = ALL_EX.find(x => x.name === e.ejercicio) || {};
       let repsTxt;
       if (def.unit === 'seg')             repsTxt = e.reps + 's';
       else if (def.unit)                  repsTxt = e.reps + '×lado';
@@ -4381,7 +4449,7 @@ function renderSnackEntries() {
       html +=
         '<div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);' +
         'padding:10px 12px;margin-bottom:8px;opacity:.85">' +
-          '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">🏋️ Rutina completa</div>' +
+          '<div style="font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">' + ((ROUTINES[routineForDate(_snackEditCtx?.date)] || ROUTINES.completa).icon) + ' ' + ((ROUTINES[routineForDate(_snackEditCtx?.date)] || ROUTINES.completa).name) + '</div>' +
           '<div style="font-size:14px;color:var(--text)">' + e.ejercicio +
           (chips ? '<span style="color:var(--muted);margin-left:8px;font-size:12px">' + chips + '</span>' : '') +
           '</div>' +
@@ -4701,7 +4769,7 @@ async function editSnackEntry(date) {
   // Si la rutina de Fuerza del día está incompleta, incluir sus ejercicios (solo lectura)
   const sessRows = S.sessions.filter(s => s.fecha === date);
   const sessExs  = [...new Set(sessRows.map(s => s.ejercicio))];
-  const routineIncomplete = sessExs.length > 0 && sessExs.length < EXERCISES.length;
+  const routineIncomplete = sessExs.length > 0 && sessExs.length < ROUTINES[routineForDate(date)].exercises.length;
   let sessEntries = [];
   if (routineIncomplete) {
     const byEx = {};

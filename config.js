@@ -26,4 +26,8 @@ const VIDEO_URLS = {
   'Bird-Dog':              'https://youtu.be/O1HWwhYmQGE?si=INuIIJ71pUzbhEC5',
   'Plancha Frontal':       'https://youtube.com/shorts/WRS7srxj0QM?si=4TnvU9R5NnWlRNjN',
   'Deadbug':               'https://youtube.com/shorts/fzVzaIWOZUQ?si=wCoYZ8mrev_XOkt3',
+  // Tren inferior (pega la URL del vídeo cuando quieras)
+  'Peso muerto rumano':    null,
+  'Puente de glúteo':      null,
+  'Elevación de gemelo':   null,
 };
