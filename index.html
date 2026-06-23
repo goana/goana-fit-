@@ -1018,6 +1018,14 @@
         </button>
       </div>
 
+      <div class="section-lbl">Plan de la semana</div>
+      <div class="cal-card">
+        <div id="week-plan-rows"></div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          Toca un día para cambiar qué toca.
+        </div>
+      </div>
+
       <div class="section-lbl">Este mes</div>
       <div class="cal-card">
         <div class="cal-head">
@@ -2635,12 +2643,56 @@ function getLastSession() {
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════
 
+// ── Plan de la semana (editable) ──
+const PLAN_TYPES = {
+  inferior: { label: 'Tren inferior',    icon: '🦵', color: '#f59e0b' },
+  superior: { label: 'Tren superior',    icon: '💪', color: '#ec4899' },
+  completa: { label: 'Rutina completa',  icon: '🏋️', color: 'var(--accent)' },
+  caminar:  { label: 'Descanso activo',  icon: '🚶', color: '#10b981' },
+  descanso: { label: 'Descanso',         icon: '😴', color: 'var(--muted)' },
+};
+const PLAN_ORDER = ['inferior', 'superior', 'completa', 'caminar', 'descanso'];
+const DEFAULT_WEEK_PLAN = ['descanso', 'inferior', 'superior', 'caminar', 'inferior', 'superior', 'completa']; // Lun..Dom
+
+function getWeekPlan() {
+  try {
+    const v = JSON.parse(localStorage.getItem('gfit_week_plan'));
+    if (Array.isArray(v) && v.length === 7 && v.every(k => PLAN_TYPES[k])) return v;
+  } catch (e) {}
+  return DEFAULT_WEEK_PLAN.slice();
+}
+function todayWeekIdx() { return (new Date(todayStr()).getDay() + 6) % 7; } // 0 = Lunes
+function cycleWeekDay(i) {
+  const plan = getWeekPlan();
+  plan[i] = PLAN_ORDER[(PLAN_ORDER.indexOf(plan[i]) + 1) % PLAN_ORDER.length];
+  localStorage.setItem('gfit_week_plan', JSON.stringify(plan));
+  renderWeekPlan();
+}
+function renderWeekPlan() {
+  const wrap = document.getElementById('week-plan-rows');
+  if (!wrap) return;
+  const plan = getWeekPlan();
+  const ti = todayWeekIdx();
+  wrap.innerHTML = plan.map((k, i) => {
+    const p = PLAN_TYPES[k], today = i === ti;
+    return `<button onclick="cycleWeekDay(${i})" style="display:flex;align-items:center;gap:10px;width:100%;text-align:left;`
+      + `padding:9px 10px;margin-bottom:4px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;`
+      + `background:transparent;border:1px solid ${today ? 'var(--accent)' : 'var(--border)'};color:var(--text)">`
+      + `<span style="width:20px;font-weight:700;color:${today ? 'var(--accent)' : 'var(--muted)'}">${WDAYS[i]}</span>`
+      + `<span style="font-size:15px">${p.icon}</span>`
+      + `<span style="flex:1">${p.label}</span>`
+      + (today ? '<span style="font-size:10px;font-weight:700;color:var(--accent)">HOY</span>' : '')
+      + `</button>`;
+  }).join('');
+}
+
 function renderDash() {
   // Show edit/delete buttons only when trained today
   const trainedToday = S.sessions.some(s => s.fecha === todayStr());
   const actions = document.getElementById('today-actions');
   if (actions) actions.classList.toggle('hidden', !trainedToday);
 
+  renderWeekPlan();
   renderCal();
 }
 
