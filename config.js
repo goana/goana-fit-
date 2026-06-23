@@ -27,7 +27,7 @@ const VIDEO_URLS = {
   'Plancha Frontal':       'https://youtube.com/shorts/WRS7srxj0QM?si=4TnvU9R5NnWlRNjN',
   'Deadbug':               'https://youtube.com/shorts/fzVzaIWOZUQ?si=wCoYZ8mrev_XOkt3',
   // Tren inferior (pega la URL del vídeo cuando quieras)
-  'Peso muerto rumano':    null,
+  'Peso muerto rumano':    'https://musclewiki.com/es-es/exercise/dumbbell-romanian-deadlift?model=f',
   'Puente de glúteo':      null,
   'Elevación de gemelo':   null,
 };
