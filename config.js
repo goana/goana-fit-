@@ -28,6 +28,6 @@ const VIDEO_URLS = {
   'Deadbug':               'https://youtube.com/shorts/fzVzaIWOZUQ?si=wCoYZ8mrev_XOkt3',
   // Tren inferior (pega la URL del vídeo cuando quieras)
   'Peso muerto rumano':    'https://musclewiki.com/es-es/exercise/dumbbell-romanian-deadlift?model=f',
-  'Puente de glúteo':      null,
+  'Puente de glúteo':      'https://musclewiki.com/es-es/exercise/dumbbell-glute-bridge?model=f',
   'Elevación de gemelo':   'https://musclewiki.com/es-es/exercise/dumbbell-calf-raise?model=f',
 };
