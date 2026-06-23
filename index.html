@@ -2702,10 +2702,14 @@ function openPickModality() {
 
 function pickMod(mod) {
   if (mod === 'fuerza' || mod === 'inferior' || mod === 'superior') {
-    setRoutine(mod === 'fuerza' ? 'completa' : mod);
-    // Si ya hay sesión de fuerza hoy, saltar el check-in y abrir directamente la sesión
-    if (S.sessions.some(s => s.fecha === todayStr())) editTodayWorkout();
-    else { buildCheckinUI(); showScreen('checkin'); }
+    const rid = mod === 'fuerza' ? 'completa' : mod;
+    setRoutine(rid);
+    // ¿Ya hay ejercicios de ESTA rutina registrados hoy? → reanudar/editar.
+    // Si no, es una rutina adicional para hoy → check-in y sesión nueva.
+    const todays = new Set(S.sessions.filter(s => s.fecha === todayStr()).map(s => s.ejercicio));
+    const alreadyThis = ROUTINES[rid].exercises.some(e => todays.has(e.name));
+    if (alreadyThis) editTodayWorkout(rid);
+    else { S.workout = null; buildCheckinUI(); showScreen('checkin'); }
   }
   else if (mod === 'yoga')    openYogaScreen();
   else if (mod === 'pilates') openPilatesScreen();
@@ -2794,9 +2798,9 @@ function navCal(dir) { S.calDate.setMonth(S.calDate.getMonth()+dir); renderCal()
 // WORKOUT SESSION
 // ═══════════════════════════════════════════════════════════
 
-function editTodayWorkout() {
+function editTodayWorkout(forceRoutine) {
   const date = todayStr();
-  setRoutine(routineForDate(date)); // abre la rutina que se entrenó hoy
+  setRoutine(forceRoutine || routineForDate(date)); // rutina indicada, o la inferida del día
   const saved = S.sessions.filter(s => s.fecha === date);
   const lw = getLastWeights(); // fallback: previous session weights
   const pwDone = localStorage.getItem('gfit_pw_done') === date;
@@ -2845,7 +2849,9 @@ async function deleteTodayWorkout() {
 }
 
 function startWorkout() {
-  if (!S.workout?.editing && !getRec().train) { toast('Ya entrenaste hoy — ¡descansa!','info'); return; }
+  const dayHasThisRoutine = S.sessions.some(s => s.fecha === todayStr()
+      && ROUTINES[activeRoutine].exercises.some(e => e.name === s.ejercicio));
+  if (!S.workout?.editing && dayHasThisRoutine) { toast('Ya hiciste esta rutina hoy — ¡descansa!','info'); return; }
   const lw = getLastWeights();
   const dl = S.deload;
   if (!S.workout?.editing) S.workout = {
@@ -3251,7 +3257,6 @@ async function handleSave(silent = false) {
 
   if (S.offline) {
     // ── OFFLINE path: queue everything and update local cache ──
-    if (S.workout.editing) S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
     queueAction({ type:'append', rows });
     const {cur,rec} = calcStreak();
     queueAction({ type:'cfg', key:'streak_actual', value: String(cur) });
@@ -3300,8 +3305,11 @@ async function handleSave(silent = false) {
     }
   }
 
-  // Actualizar caché local solo si el API respondió bien
-  S.sessions = S.sessions.filter(s => s.fecha !== S.workout.date);
+  // Actualizar caché local solo si el API respondió bien.
+  // Solo reemplaza las filas de HOY de los ejercicios de esta rutina, para no
+  // borrar otra rutina entrenada el mismo día (ej. inferior + superior).
+  const curNames = new Set(S.workout.exercises.map(e => e.name));
+  S.sessions = S.sessions.filter(s => !(s.fecha === S.workout.date && curNames.has(s.ejercicio)));
   rows.forEach(r => {
     [0,1,2].forEach(i => {
       if (r[2+i] === '') return; // skip undone series
