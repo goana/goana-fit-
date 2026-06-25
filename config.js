@@ -34,6 +34,6 @@ const VIDEO_URLS = {
   'Elevación lateral':     'https://musclewiki.com/es-es/exercise/dumbbell-lateral-raise?model=f',
   'Curl martillo':         'https://musclewiki.com/es-es/exercise/dumbbell-hammer-curl?model=f',
   'Patada de tríceps':     'https://musclewiki.com/es-es/exercise/dumbbell-tricep-kickback?model=f',
-  'Plancha lateral (izq)': 'https://musclewiki.com/es-es/exercise/bodyweight-side-plank?model=f',
-  'Plancha lateral (der)': 'https://musclewiki.com/es-es/exercise/bodyweight-side-plank?model=f',
+  'Plancha lateral (izq)': 'https://musclewiki.com/es-es/exercise/dumbbell-hand-side-plank?model=f',
+  'Plancha lateral (der)': 'https://musclewiki.com/es-es/exercise/dumbbell-hand-side-plank?model=f',
 };
