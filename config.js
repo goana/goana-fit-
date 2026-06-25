@@ -33,6 +33,6 @@ const VIDEO_URLS = {
   // Tren superior y core (nuevos)
   'Elevación lateral':     'https://musclewiki.com/es-es/exercise/dumbbell-lateral-raise?model=f',
   'Curl martillo':         'https://musclewiki.com/es-es/exercise/dumbbell-hammer-curl?model=f',
-  'Patada de tríceps':     'https://musclewiki.com/es-es/exercise/dumbbell-kickback?model=f',
+  'Patada de tríceps':     'https://musclewiki.com/es-es/exercise/dumbbell-tricep-kickback?model=f',
   'Plancha lateral':       'https://musclewiki.com/es-es/exercise/bodyweight-side-plank?model=f',
 };
