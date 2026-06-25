@@ -1079,7 +1079,7 @@
         <span class="mod-icon" style="color:#ec4899">💪</span>
         <div class="mod-text">
           <div class="mod-title">Tren superior</div>
-          <div class="mod-sub">6 ejercicios · brazos, espalda y core</div>
+          <div class="mod-sub">10 ejercicios · brazos, espalda y core</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('yoga')">
@@ -1792,6 +1792,11 @@ const EX = {
   pesomuerto: { name: 'Peso muerto rumano',    sets: 3, reps: 12, weight: true, note: 'Bisagra de cadera con la espalda recta y las mancuernas pegadas a la pierna. Femoral y glúteo. Con una sola mancuerna: a dos manos o alternando lados.' },
   puente:     { name: 'Puente de glúteo',      sets: 3, reps: 15, weight: true, note: 'Boca arriba, sube la cadera y aprieta el glúteo 1 s arriba. Apoya la mancuerna sobre la cadera para añadir carga, sin presión en el pecho.' },
   gemelo:     { name: 'Elevación de gemelo',   sets: 3, reps: 15, weight: true, note: 'De pie, sube sobre las puntas con rango completo y baja despacio. Mancuerna en la mano para más carga.' },
+  // Nuevos — tren superior y core
+  lateral:    { name: 'Elevación lateral',     sets: 3, reps: 14, note: 'De pie, sube las mancuernas a los lados hasta la altura del hombro con los codos algo flexionados. Peso ligero y mucho control, sin balanceo. Hombro medio, sin forzar el rango del brazo izquierdo.' },
+  martillo:   { name: 'Curl martillo',         sets: 3, reps: 12, note: 'Curl con las palmas mirándose (agarre neutro) y codos pegados al cuerpo. Bíceps y antebrazo; suele tolerarse mejor que el curl clásico en el lado izquierdo.' },
+  patada:     { name: 'Patada de tríceps',     sets: 3, reps: 14, note: 'Inclinada con la mano derecha apoyada en banco; codo alto y fijo, extiende el brazo hacia atrás apretando el tríceps. Poca carga, técnica limpia (kickback).' },
+  planchalat: { name: 'Plancha lateral',       sets: 3, reps: 25, unit: 'seg', note: 'De lado sobre el antebrazo, cuerpo recto y cadera arriba. Oblicuos. Haz cada lado por separado; si la cicatriz del lado izquierdo tira, apoya la rodilla o acorta el tiempo de ese lado.' },
 };
 
 // Rutinas estructuradas seleccionables
@@ -1800,8 +1805,8 @@ const ROUTINES = {
     exercises: [EX.goblet, EX.remo, EX.zancadas, EX.press, EX.curl, EX.triceps, EX.birddog, EX.plancha, EX.deadbug] },
   inferior: { id: 'inferior', name: 'Tren inferior', sub: '6 ejercicios · piernas y glúteo',      icon: '🦵', color: '#f59e0b',
     exercises: [EX.goblet, EX.zancadas, EX.pesomuerto, EX.puente, EX.gemelo, EX.plancha] },
-  superior: { id: 'superior', name: 'Tren superior', sub: '6 ejercicios · brazos, espalda y core', icon: '💪', color: '#ec4899',
-    exercises: [EX.remo, EX.press, EX.curl, EX.triceps, EX.birddog, EX.deadbug] },
+  superior: { id: 'superior', name: 'Tren superior', sub: '10 ejercicios · brazos, espalda y core', icon: '💪', color: '#ec4899',
+    exercises: [EX.remo, EX.press, EX.lateral, EX.curl, EX.martillo, EX.triceps, EX.patada, EX.plancha, EX.planchalat, EX.deadbug] },
 };
 
 const ALL_EX = Object.values(EX);

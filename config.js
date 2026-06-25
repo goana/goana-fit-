@@ -30,4 +30,9 @@ const VIDEO_URLS = {
   'Peso muerto rumano':    'https://musclewiki.com/es-es/exercise/dumbbell-romanian-deadlift?model=f',
   'Puente de glúteo':      'https://musclewiki.com/es-es/exercise/dumbbell-glute-bridge?model=f',
   'Elevación de gemelo':   'https://musclewiki.com/es-es/exercise/dumbbell-calf-raise?model=f',
+  // Tren superior y core (nuevos)
+  'Elevación lateral':     'https://musclewiki.com/es-es/exercise/dumbbell-lateral-raise?model=f',
+  'Curl martillo':         'https://musclewiki.com/es-es/exercise/dumbbell-hammer-curl?model=f',
+  'Patada de tríceps':     'https://musclewiki.com/es-es/exercise/dumbbell-kickback?model=f',
+  'Plancha lateral':       'https://musclewiki.com/es-es/exercise/bodyweight-side-plank?model=f',
 };
