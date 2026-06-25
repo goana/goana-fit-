@@ -2229,13 +2229,67 @@ function waitGIS() {
   });
 }
 
+// Un único callback para TODAS las peticiones de token (conexión inicial y
+// refrescos). Quien pida un token deja un "waiter" que se resuelve aquí; así
+// nunca se queda un callback obsoleto bloqueando futuros logins.
+let tokenWaiter  = null;   // { resolve, timer }
+let refreshTimer = null;   // refresco proactivo programado
+
 function initTokenClient() {
   if (tokenClient) return;
   tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: CLIENT_ID,
     scope: SCOPES,
-    callback: onToken,
+    callback: onTokenResponse,
+    error_callback: () => settleToken(false),
   });
+}
+
+function settleToken(ok) {
+  if (!tokenWaiter) return;
+  clearTimeout(tokenWaiter.timer);
+  const resolve = tokenWaiter.resolve;
+  tokenWaiter = null;
+  resolve(ok);
+}
+
+function onTokenResponse(resp) {
+  if (resp && !resp.error && resp.access_token) {
+    S.token = resp.access_token;
+    S.tokenExpiry = Date.now() + resp.expires_in * 1000;
+    localStorage.setItem('gfit_tok', S.token);
+    localStorage.setItem('gfit_exp', S.tokenExpiry);
+    scheduleProactiveRefresh();
+    settleToken(true);
+  } else {
+    settleToken(false);
+  }
+}
+
+// Pide un token a Google. interactive=true muestra el consentimiento (login
+// manual); interactive=false intenta refrescar en silencio (sin pop-up).
+function requestToken(interactive) {
+  return new Promise(resolve => {
+    initTokenClient();
+    if (!tokenClient) { resolve(false); return; }
+    settleToken(false); // descarta cualquier petición anterior a medias
+    const timer = setTimeout(() => settleToken(false), interactive ? 120000 : 12000);
+    tokenWaiter = { resolve, timer };
+    try {
+      tokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
+    } catch (e) {
+      settleToken(false);
+    }
+  });
+}
+
+// Refresca el token un poco antes de que caduque, para que Ana no se quede
+// "bloqueada" tras un rato de inactividad.
+function scheduleProactiveRefresh() {
+  if (refreshTimer) clearTimeout(refreshTimer);
+  if (!S.tokenExpiry) return;
+  const delay = Math.max(5000, S.tokenExpiry - Date.now() - 120000); // 2 min antes
+  refreshTimer = setTimeout(() => { if (S.token) requestToken(false); }, delay);
 }
 
 async function handleConnectGoogle() {
@@ -2248,17 +2302,8 @@ async function handleConnectGoogle() {
     return;
   }
   await waitGIS();
-  initTokenClient();
-  tokenClient.requestAccessToken({ prompt: 'consent' });
-}
-
-async function onToken(resp) {
-  if (resp.error) { toast('Error de auth: ' + resp.error, 'error'); return; }
-  S.token = resp.access_token;
-  S.tokenExpiry = Date.now() + resp.expires_in * 1000;
-  localStorage.setItem('gfit_tok', S.token);
-  localStorage.setItem('gfit_exp', S.tokenExpiry);
-  await boot();
+  const ok = await requestToken(true);
+  if (ok) await boot();
 }
 
 function checkStoredToken() {
@@ -2272,29 +2317,23 @@ function checkStoredToken() {
 
 async function refreshToken() {
   if (S.token && S.tokenExpiry && Date.now() < S.tokenExpiry - 60000) return true;
-  if (!tokenClient) return false;
-  return new Promise(ok => {
-    let done = false;
-    const timer = setTimeout(() => { if (!done) { done = true; ok(false); } }, 10000);
-    const prev = tokenClient.callback;
-    tokenClient.callback = r => {
-      if (done) return;
-      done = true;
-      clearTimeout(timer);
-      tokenClient.callback = prev;
-      if (!r.error) {
-        S.token = r.access_token;
-        S.tokenExpiry = Date.now() + r.expires_in * 1000;
-        localStorage.setItem('gfit_tok', S.token);
-        localStorage.setItem('gfit_exp', S.tokenExpiry);
-        ok(true);
-      } else ok(false);
-    };
-    tokenClient.requestAccessToken({ prompt: '' });
-  });
+  await waitGIS();
+  return requestToken(false);
 }
 
+// Al volver a la pestaña/app tras un rato, refresca en silencio si el token
+// está a punto de caducar (o ya caducó) antes de que Ana toque nada.
+function maybeRefreshOnFocus() {
+  if (!S.token) return;
+  if (!S.tokenExpiry || Date.now() > S.tokenExpiry - 120000) refreshToken();
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') maybeRefreshOnFocus();
+});
+window.addEventListener('focus', maybeRefreshOnFocus);
+
 function logout() {
+  if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
   localStorage.removeItem('gfit_tok'); localStorage.removeItem('gfit_exp');
   S.token = null; S.tokenExpiry = null;
   skipTimer();
@@ -5374,7 +5413,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   if (checkStoredToken()) {
-    waitGIS().then(() => initTokenClient()); // init for future refreshes
+    waitGIS().then(() => { initTokenClient(); scheduleProactiveRefresh(); }); // refrescos futuros
     await boot();
   } else {
     showScreen('auth');
