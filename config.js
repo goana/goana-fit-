@@ -37,3 +37,16 @@ const VIDEO_URLS = {
   'Plancha lateral (izq)': 'https://musclewiki.com/es-es/exercise/dumbbell-hand-side-plank?model=f',
   'Plancha lateral (der)': 'https://musclewiki.com/es-es/exercise/dumbbell-hand-side-plank?model=f',
 };
+
+// Biblioteca de RUTINAS EN CASA guiadas por vídeo.
+// Cada una la sigues en el vídeo y luego la registras (fecha, duración, nota).
+// Para añadir una nueva: copia una línea y cambia id, nombre, url, dur (min) y tipo.
+const CASA_RUTINAS = [
+  {
+    id:     'fuerza-full-pesas',
+    nombre: 'Fuerza cuerpo completo (pesas)',
+    url:    'https://youtu.be/EJN-KhQXZ5o?si=04IJDl6GtsdMSKeG',
+    dur:    35,
+    tipo:   'Fuerza',
+  },
+];

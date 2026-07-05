@@ -369,6 +369,10 @@
     .cal-day.snack.pilates-combo { background: conic-gradient(var(--warning) 50%, #06b6d4 50%); }
     .cal-day.pilates-combo.today { border-color: transparent; }
     .cal-day.yoga.pilates-combo { background: conic-gradient(#a855f7 50%, #06b6d4 50%); color: #fff; cursor: default; }
+    .cal-day.casa { background: #6366f1; color: #fff; font-weight: 700; cursor: pointer; }
+    .cal-day.casa.today { background: #6366f1; border-color: transparent; }
+    .cal-day.casa-combo { background: conic-gradient(var(--accent) 50%, #6366f1 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.casa-combo.today { border-color: transparent; }
     .pilates-tipo-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 8px; height: auto; }
     .pilates-tipo-btn .ptb-icon  { font-size: 22px; line-height: 1; }
     .pilates-tipo-btn .ptb-name  { font-size: 13px; font-weight: 600; }
@@ -1039,6 +1043,9 @@
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
             <span style="width:10px;height:10px;border-radius:50%;background:#06b6d4;display:inline-block"></span>Pilates
           </span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
+            <span style="width:10px;height:10px;border-radius:50%;background:#6366f1;display:inline-block"></span>En casa
+          </span>
         </div>
       </div>
 
@@ -1094,6 +1101,13 @@
         <div class="mod-text">
           <div class="mod-title">Pilates</div>
           <div class="mod-sub">Sesión libre</div>
+        </div>
+      </button>
+      <button class="mod-btn" onclick="pickMod('casa')">
+        <span class="mod-icon" style="color:#6366f1">🏠</span>
+        <div class="mod-text">
+          <div class="mod-title">En casa</div>
+          <div class="mod-sub">Rutinas guiadas por vídeo</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('snacks')">
@@ -1634,6 +1648,38 @@
     </div>
   </div>
 
+  <!-- ═══ EN CASA (rutinas guiadas por vídeo) ═════════════ -->
+  <div id="screen-casa" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1>🏠 En casa</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="ci-pad">
+      <div class="ci-block">
+        <div class="ci-q">Rutina</div>
+        <div id="casa-lib-grid" style="display:flex;flex-direction:column;gap:8px"></div>
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Fecha</div>
+        <input type="date" id="casa-fecha" class="receta-input" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Duración (minutos)</div>
+        <input type="number" id="casa-duracion" class="receta-input" min="5" max="180" step="5" placeholder="30" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Nota <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
+        <textarea id="casa-nota" rows="2" placeholder="¿Cómo te has sentido? ¿Qué peso usaste?"
+          style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);
+                 color:var(--text);font-family:inherit;font-size:14px;padding:10px;
+                 resize:none;box-sizing:border-box"></textarea>
+      </div>
+      <div id="casa-historial" style="margin-top:6px"></div>
+      <button class="btn-primary" onclick="saveCasa()">Guardar rutina en casa</button>
+    </div>
+  </div>
+
   <!-- ═══ SNACKS ══════════════════════════════════════════ -->
   <div id="screen-snack" class="screen">
     <div class="app-header">
@@ -1768,7 +1814,7 @@
 <div id="toast-root"></div>
 
 <!-- SCRIPTS -->
-<script src="config.js?v=20260625b"></script>
+<script src="config.js?v=20260705a"></script>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <script>
 'use strict';
@@ -1866,6 +1912,7 @@ const S = {
   medidas:      [],
   yoga:         [],
   pilates:      [],
+  casa:         [],
   snacks:       [],
   bodyChart:    null,
   altura:       parseFloat(localStorage.getItem('gfit_altura') || '0'),
@@ -1877,7 +1924,9 @@ const TMR = { running: false, paused: false, secs: 90, iv: null, label: '' };
 const STMR = { start: null, offset: 0, iv: null }; // session timer
 let _yogaEditCtx    = null;
 let _pilatesEditCtx = null;
+let _casaEditCtx    = null;
 let _snackEditCtx   = null;
+let _casaRutinaSel  = null; // id de la rutina de casa seleccionada
 
 // ═══════════════════════════════════════════════════════════
 // PHASE LOGIC
@@ -2371,7 +2420,7 @@ async function api(method, path, body, params) {
 async function ensureSheets() {
   const data  = await api('GET', '');
   const exist = (data.sheets||[]).map(s => s.properties.title);
-  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','snacks'].filter(n => !exist.includes(n))
+  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','casa','snacks'].filter(n => !exist.includes(n))
                   .map(title => ({ addSheet: { properties: { title } } }));
   if (reqs.length) {
     await api('POST', ':batchUpdate', { requests: reqs });
@@ -2394,6 +2443,9 @@ async function ensureSheets() {
     if (!exist.includes('pilates'))
       await api('PUT', '/values/pilates!A1:D1',
         { values:[['fecha','duracion_min','tipo','nota']] }, 'valueInputOption=RAW');
+    if (!exist.includes('casa'))
+      await api('PUT', '/values/casa!A1:D1',
+        { values:[['fecha','duracion_min','rutina','nota']] }, 'valueInputOption=RAW');
     if (!exist.includes('snacks'))
       await api('PUT', '/values/snacks!A1:G1',
         { values:[['fecha','ejercicio','series','reps','peso_kg','nota','link']] }, 'valueInputOption=RAW');
@@ -2618,6 +2670,7 @@ function calcStreak() {
     ...S.sessions.map(s => s.fecha),
     ...(S.yoga    || []).map(s => s.fecha),
     ...(S.pilates || []).map(s => s.fecha),
+    ...(S.casa    || []).map(s => s.fecha),
     ...(S.snacks  || []).map(s => s.fecha),
   ]);
   if (!allDates.size) return { cur: 0, rec: 0 };
@@ -2693,10 +2746,11 @@ const PLAN_TYPES = {
   inferior: { label: 'Tren inferior',    icon: '🦵', color: '#f59e0b' },
   superior: { label: 'Tren superior',    icon: '💪', color: '#ec4899' },
   completa: { label: 'Rutina completa',  icon: '🏋️', color: 'var(--accent)' },
+  casa:     { label: 'En casa',          icon: '🏠', color: '#6366f1' },
   caminar:  { label: 'Descanso activo',  icon: '🚶', color: '#10b981' },
   descanso: { label: 'Descanso',         icon: '😴', color: 'var(--muted)' },
 };
-const PLAN_ORDER = ['inferior', 'superior', 'completa', 'caminar', 'descanso'];
+const PLAN_ORDER = ['inferior', 'superior', 'completa', 'casa', 'caminar', 'descanso'];
 const DEFAULT_WEEK_PLAN = ['descanso', 'inferior', 'superior', 'caminar', 'inferior', 'superior', 'completa']; // Lun..Dom
 
 function getWeekPlan() {
@@ -2758,6 +2812,7 @@ function pickMod(mod) {
   }
   else if (mod === 'yoga')    openYogaScreen();
   else if (mod === 'pilates') openPilatesScreen();
+  else if (mod === 'casa')    openCasaScreen();
   else if (mod === 'snacks')  openSnackScreen();
 }
 
@@ -2801,6 +2856,12 @@ function renderCal() {
     if (d && d.getFullYear() === y && d.getMonth() === m) pilatesDays.add(ps.fecha);
   });
 
+  const casaDays = new Set();
+  S.casa.forEach(cs => {
+    const d = parseDate(cs.fecha);
+    if (d && d.getFullYear() === y && d.getMonth() === m) casaDays.add(cs.fecha);
+  });
+
   const grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
 
@@ -2818,6 +2879,7 @@ function renderCal() {
     const isSnack   = snackDays.has(ds);
     const isYoga    = yogaDays.has(ds);
     const isPilates = pilatesDays.has(ds);
+    const isCasa    = casaDays.has(ds);
     const yogaCombo    = isYoga && (isFull || isSnack);
     const pilatesCombo = isPilates && (isFull || isSnack || isYoga);
     e.className = 'cal-day'
@@ -2828,9 +2890,11 @@ function renderCal() {
       + (isPilates && !isFull && !isSnack && !isYoga ? ' pilates' : '')
       + (isPilates && isYoga && !isFull && !isSnack ? ' pilates-combo' : '')
       + (pilatesCombo && (isFull || isSnack) ? ' pilates-combo' : '')
+      + (isCasa && !isFull && !isSnack && !isYoga && !isPilates ? ' casa' : '')
+      + (isCasa && (isFull || isSnack || isYoga || isPilates) ? ' casa-combo' : '')
       + (ds === todayS ? ' today' : '');
     e.textContent = d;
-    const hasContent = isFull || isSnack || isYoga || isPilates;
+    const hasContent = isFull || isSnack || isYoga || isPilates || isCasa;
     if (hasContent) e.onclick = () => openSessionSheet(ds);
     if (hasContent && !isFull && !isSnack) e.style.cursor = 'pointer';
     grid.appendChild(e);
@@ -3665,8 +3729,9 @@ function openSessionSheet(date) {
   const rows        = S.sessions.filter(s => s.fecha === date);
   const yogaRows    = S.yoga.filter(y => y.fecha === date);
   const pilatesRows = S.pilates.filter(p => p.fecha === date);
+  const casaRows    = S.casa.filter(c => c.fecha === date);
   const snackRows   = S.snacks.filter(s => s.fecha === date);
-  if (!rows.length && !yogaRows.length && !pilatesRows.length && !snackRows.length) { closeSessionSheet(); return; }
+  if (!rows.length && !yogaRows.length && !pilatesRows.length && !casaRows.length && !snackRows.length) { closeSessionSheet(); return; }
 
   const dur    = rows.find(r => r.duracion_min > 0);
   const meta   = rows.find(r => r.cansancio || r.nota);
@@ -3744,8 +3809,30 @@ function openSessionSheet(date) {
     }).join('');
   }
 
-  if (snackRows.length) {
+  if (casaRows.length) {
     const sep = (rows.length || yogaRows.length || pilatesRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
+      <span style="font-size:13px;font-weight:700;color:#6366f1">🏠 En casa</span>
+    </div>`;
+    html += casaRows.map((c, nth) => {
+      const parts = [c.duracion_min ? `${c.duracion_min} min` : null, c.rutina || null].filter(Boolean);
+      const vurl = casaUrlFor(c.rutina);
+      return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:2px 16px 8px;gap:8px">
+        <div>
+          <div style="font-size:13px;color:var(--text)">${parts.join(' · ') || '—'}</div>
+          ${vurl ? `<a href="${vurl}" target="_blank" rel="noopener" style="font-size:12px;color:#6366f1">▶ Ver vídeo</a>` : ''}
+          ${c.nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic">"${linkify(c.nota)}"</div>` : ''}
+        </div>
+        <div style="display:flex;gap:4px">
+          ${iconBtn('✏️', `editCasaEntry('${date}', ${nth})`, 'Editar')}
+          ${iconBtn('🗑', `deleteCasaEntry('${date}', ${nth})`, 'Eliminar')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (snackRows.length) {
+    const sep = (rows.length || yogaRows.length || pilatesRows.length || casaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
       <span style="font-size:13px;font-weight:700;color:var(--warning)">⚡ Fuerza</span>
       <div style="display:flex;gap:6px">
@@ -3828,6 +3915,26 @@ async function deletePilatesEntry(date, nth) {
   } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
 }
 
+async function deleteCasaEntry(date, nth) {
+  if (!confirm('¿Eliminar esta rutina en casa?')) return;
+  try {
+    const data = await api('GET', '/values/casa!A:A');
+    const rows = data.values || [];
+    let count = -1, targetIdx = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === date) { count++; if (count === nth) { targetIdx = i; break; } }
+    }
+    if (targetIdx === -1) { toast('No se encontró la sesión', 'error'); return; }
+    const meta = await api('GET', '');
+    const sheetId = meta.sheets.find(s => s.properties.title === 'casa')?.properties.sheetId;
+    await api('POST', ':batchUpdate', { requests: [{ deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: targetIdx, endIndex: targetIdx + 1 } } }] });
+    await loadCasa();
+    renderCal();
+    toast('Rutina en casa eliminada ✓', 'success');
+    openSessionSheet(date);
+  } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
+}
+
 function editSessionByDate(date) {
   setRoutine(routineForDate(date)); // edita con la rutina que se entrenó ese día
   const saved = S.sessions.filter(s => s.fecha === date);
@@ -3879,6 +3986,23 @@ async function editPilatesEntry(date, nth) {
     b.classList.toggle('sel', b.dataset.tipo === entry.tipo));
   document.querySelector('#screen-pilates .btn-primary').textContent = 'Actualizar sesión de pilates';
   renderPilatesHistorial();
+}
+
+async function editCasaEntry(date, nth) {
+  const entry = S.casa.filter(c => c.fecha === date)[nth];
+  if (!entry) return;
+  _casaEditCtx = { date, nth };
+  closeSessionSheet();
+  showScreen('casa');
+  try { await loadCasa(); } catch(e) { console.warn('loadCasa:', e); }
+  const match = (typeof CASA_RUTINAS !== 'undefined' ? CASA_RUTINAS : []).find(r => r.nombre === entry.rutina);
+  _casaRutinaSel = match ? match.id : null;
+  renderCasaLibrary();
+  document.getElementById('casa-fecha').value = entry.fecha;
+  document.getElementById('casa-duracion').value = entry.duracion_min || '';
+  document.getElementById('casa-nota').value = entry.nota || '';
+  document.querySelector('#screen-casa .btn-primary').textContent = 'Actualizar rutina en casa';
+  renderCasaHistorial();
 }
 
 function renderSessionDetail(date, rows) {
@@ -4495,6 +4619,162 @@ async function savePilates() {
     toast('Sesión de pilates guardada ✓', 'success');
     resetForm();
     renderPilatesHistorial();
+  } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
+}
+
+// ─── EN CASA (rutinas guiadas por vídeo) ──────────────────────
+
+// Devuelve la URL del vídeo de una rutina de casa a partir de su nombre
+function casaUrlFor(nombre) {
+  const lib = (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
+  const r = lib.find(x => x.nombre === nombre);
+  return r ? r.url : null;
+}
+
+async function loadCasa() {
+  try {
+    const d = await api('GET', '/values/casa!A2:D');
+    S.casa = (d.values||[]).filter(r=>r[0]).map(r => ({
+      fecha: r[0], duracion_min: r[1] ? +r[1] : null, rutina: r[2]||'', nota: r[3]||''
+    }));
+    localStorage.setItem('gfit_casa', JSON.stringify(S.casa));
+  } catch(e) {
+    if (e.code === 'offline') {
+      const c = localStorage.getItem('gfit_casa');
+      if (c) S.casa = JSON.parse(c);
+    } else throw e;
+  }
+}
+
+async function openCasaScreen() {
+  showScreen('casa');
+  document.getElementById('casa-fecha').value = todayStr();
+  try { await loadCasa(); } catch(e) { console.warn('loadCasa:', e); }
+
+  // Si ya hay rutina(s) en casa hoy, abrir la primera en modo edición
+  const today = todayStr();
+  if (S.casa.some(c => c.fecha === today)) {
+    await editCasaEntry(today, 0);
+    return;
+  }
+
+  _casaEditCtx = null;
+  _casaRutinaSel = null;
+  document.getElementById('casa-duracion').value = '';
+  document.getElementById('casa-nota').value = '';
+  document.querySelector('#screen-casa .btn-primary').textContent = 'Guardar rutina en casa';
+  renderCasaLibrary();
+  renderCasaHistorial();
+}
+
+function renderCasaLibrary() {
+  const grid = document.getElementById('casa-lib-grid');
+  if (!grid) return;
+  const lib = (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
+  if (!lib.length) {
+    grid.innerHTML = `<div style="font-size:12px;color:var(--muted)">Añade rutinas en <code>config.js</code> (CASA_RUTINAS).</div>`;
+    return;
+  }
+  grid.innerHTML = lib.map(r => {
+    const sel = r.id === _casaRutinaSel;
+    const meta = [r.tipo || null, r.dur ? `~${r.dur} min` : null].filter(Boolean).join(' · ');
+    return `<div style="display:flex;align-items:stretch;gap:6px">
+      <button onclick="selectCasaRutina('${r.id}')"
+        style="flex:1;text-align:left;display:flex;flex-direction:column;gap:2px;padding:10px 12px;
+               border-radius:var(--rs);cursor:pointer;font-family:inherit;
+               background:${sel ? 'rgba(99,102,241,.15)' : 'var(--bg)'};
+               border:1px solid ${sel ? '#6366f1' : 'var(--border2)'};color:var(--text)">
+        <span style="font-size:14px;font-weight:600">${r.nombre}</span>
+        ${meta ? `<span style="font-size:12px;color:var(--muted)">${meta}</span>` : ''}
+      </button>
+      ${r.url ? `<a href="${r.url}" target="_blank" rel="noopener" title="Ver vídeo"
+        style="display:flex;align-items:center;justify-content:center;width:44px;
+               border-radius:var(--rs);border:1px solid var(--border2);
+               background:var(--bg);color:#6366f1;font-size:16px;text-decoration:none">▶</a>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function selectCasaRutina(id) {
+  _casaRutinaSel = id;
+  const lib = (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
+  const r = lib.find(x => x.id === id);
+  // Prefill duración sugerida si el campo está vacío
+  const durInput = document.getElementById('casa-duracion');
+  if (r && r.dur && !durInput.value) durInput.value = r.dur;
+  renderCasaLibrary();
+}
+
+function renderCasaHistorial() {
+  const wrap = document.getElementById('casa-historial');
+  if (!wrap) return;
+  const last = [...S.casa].sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,5);
+  if (!last.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="recetas-cat-title">Últimas veces</div>` +
+    last.map(c => {
+      const parts = [c.duracion_min ? `${c.duracion_min} min` : null, c.rutina || null, c.nota || null].filter(Boolean);
+      return `<div class="receta-card" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <div style="font-size:13px;font-weight:600">${fmtDateES(c.fecha)}</div>
+        <div style="font-size:12px;color:var(--muted)">${parts.join(' · ') || '—'}</div>
+      </div>`;
+    }).join('');
+}
+
+async function saveCasa() {
+  const fecha = document.getElementById('casa-fecha').value;
+  const durRaw = document.getElementById('casa-duracion').value;
+  const dur = durRaw ? +durRaw : null;
+  const nota = document.getElementById('casa-nota').value.trim();
+  const lib = (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
+  const rSel = lib.find(x => x.id === _casaRutinaSel);
+  const rutina = rSel ? rSel.nombre : '';
+
+  if (!fecha) { toast('Selecciona una fecha', 'error'); return; }
+  if (!rutina) { toast('Elige una rutina', 'error'); return; }
+  if (dur !== null && (isNaN(dur) || dur < 1)) { toast('Introduce una duración válida', 'error'); return; }
+
+  const resetForm = () => {
+    _casaRutinaSel = null;
+    document.getElementById('casa-duracion').value = '';
+    document.getElementById('casa-nota').value = '';
+    document.querySelector('#screen-casa .btn-primary').textContent = 'Guardar rutina en casa';
+    renderCasaLibrary();
+  };
+
+  if (_casaEditCtx) {
+    try {
+      const { date: editDate, nth } = _casaEditCtx;
+      const data = await api('GET', '/values/casa!A:A');
+      const sheetRows = data.values || [];
+      let count = -1, targetIdx = -1;
+      for (let i = 1; i < sheetRows.length; i++) {
+        if (sheetRows[i][0] === editDate) { count++; if (count === nth) { targetIdx = i; break; } }
+      }
+      if (targetIdx !== -1)
+        await api('PUT', `/values/casa!A${targetIdx+1}:D${targetIdx+1}`,
+          { values: [[fecha, dur !== null ? dur : '', rutina, nota]] }, 'valueInputOption=RAW');
+      _casaEditCtx = null;
+      await loadCasa();
+      renderCal();
+      toast('Rutina en casa actualizada ✓', 'success');
+      resetForm();
+      renderCasaHistorial();
+    } catch(e) { toast('Error al actualizar: ' + e.message, 'error'); }
+    return;
+  }
+
+  if (S.casa.some(c => c.fecha === fecha) && !confirm('Ya tienes una rutina en casa para esta fecha. ¿Añadir otra?')) return;
+
+  try {
+    await api('POST', '/values/casa!A:D:append',
+      { values: [[fecha, dur !== null ? dur : '', rutina, nota]] },
+      'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    S.casa.push({ fecha, duracion_min: dur, rutina, nota });
+    localStorage.setItem('gfit_casa', JSON.stringify(S.casa));
+    renderCal();
+    toast('Rutina en casa guardada ✓', 'success');
+    resetForm();
+    renderCasaHistorial();
   } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
 }
 
@@ -5190,7 +5470,7 @@ async function boot() {
 
   try {
     await ensureSheets();
-    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadSnacks()]);
+    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadCasa(), loadSnacks()]);
     if (S.pending.length) await syncQueue();
     renderDash();
     updateSyncBtn();
