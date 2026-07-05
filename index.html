@@ -1663,6 +1663,27 @@
       <div class="ci-block">
         <div class="ci-q">Rutina</div>
         <div id="casa-lib-grid" style="display:flex;flex-direction:column;gap:8px"></div>
+        <button id="casa-new-btn" onclick="toggleCasaNewForm(true)"
+          style="margin-top:8px;width:100%;padding:9px;border-radius:var(--rs);cursor:pointer;
+                 background:transparent;border:1px dashed var(--border2);color:#6366f1;
+                 font-family:inherit;font-size:13px;font-weight:600">➕ Nueva rutina</button>
+        <div id="casa-new-form" style="display:none;margin-top:8px;padding:12px;border-radius:var(--rs);
+             border:1px solid #6366f1;background:rgba(99,102,241,.06)">
+          <input id="casa-nr-nombre" class="receta-input" placeholder="Nombre (ej. Piernas y glúteo en casa)" style="margin-bottom:8px">
+          <input id="casa-nr-url" class="receta-input" placeholder="Enlace de YouTube" style="margin-bottom:8px">
+          <div style="display:flex;gap:8px;margin-bottom:8px">
+            <input id="casa-nr-dur" class="receta-input" type="number" min="5" max="180" step="5" placeholder="Min" style="margin-bottom:0;flex:1">
+            <input id="casa-nr-tipo" class="receta-input" placeholder="Tipo (Fuerza, Yoga…)" style="margin-bottom:0;flex:2">
+          </div>
+          <div style="display:flex;gap:8px">
+            <button onclick="saveCasaRutina()"
+              style="flex:1;padding:9px;border-radius:var(--rs);cursor:pointer;border:none;
+                     background:#6366f1;color:#fff;font-family:inherit;font-size:13px;font-weight:600">Guardar rutina</button>
+            <button onclick="toggleCasaNewForm(false)"
+              style="padding:9px 14px;border-radius:var(--rs);cursor:pointer;background:transparent;
+                     border:1px solid var(--border2);color:var(--muted);font-family:inherit;font-size:13px">Cancelar</button>
+          </div>
+        </div>
       </div>
       <div class="ci-block">
         <div class="ci-q">Fecha</div>
@@ -2451,6 +2472,13 @@ async function ensureSheets() {
     if (!exist.includes('casa'))
       await api('PUT', '/values/casa!A1:D1',
         { values:[['fecha','duracion_min','rutina','nota']] }, 'valueInputOption=RAW');
+    if (!exist.includes('casa_rutinas')) {
+      // Semilla inicial de la biblioteca a partir de config.js (CASA_RUTINAS)
+      const seed = (typeof CASA_RUTINAS !== 'undefined' ? CASA_RUTINAS : [])
+        .map(r => [r.nombre, r.url, r.dur || '', r.tipo || '']);
+      await api('PUT', `/values/casa_rutinas!A1:D${1 + seed.length}`,
+        { values:[['nombre','url','dur','tipo'], ...seed] }, 'valueInputOption=RAW');
+    }
     if (!exist.includes('snacks'))
       await api('PUT', '/values/snacks!A1:G1',
         { values:[['fecha','ejercicio','series','reps','peso_kg','nota','link']] }, 'valueInputOption=RAW');
