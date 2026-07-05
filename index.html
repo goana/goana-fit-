@@ -351,6 +351,10 @@
       font-size: 12px; border-radius: 50%;
     }
     .cal-day.empty { visibility: hidden; }
+    .cal-day.outside { color: var(--muted); opacity: .45; }
+    .cal-day.outside.trained, .cal-day.outside.snack, .cal-day.outside.yoga,
+    .cal-day.outside.pilates, .cal-day.outside.casa, .cal-day.outside.yoga-combo,
+    .cal-day.outside.pilates-combo, .cal-day.outside.casa-combo { opacity: .7; }
     .cal-day.today { border: 1.5px solid var(--accent); color: var(--accent); font-weight: 600; }
     .cal-day.trained { background: var(--accent); color: #0f0f0f; font-weight: 700; cursor: pointer; }
     .cal-day.trained:active { opacity: .75; }
@@ -1913,6 +1917,7 @@ const S = {
   yoga:         [],
   pilates:      [],
   casa:         [],
+  casaRutinas:  [],
   snacks:       [],
   bodyChart:    null,
   altura:       parseFloat(localStorage.getItem('gfit_altura') || '0'),
@@ -2420,7 +2425,7 @@ async function api(method, path, body, params) {
 async function ensureSheets() {
   const data  = await api('GET', '');
   const exist = (data.sheets||[]).map(s => s.properties.title);
-  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','casa','snacks'].filter(n => !exist.includes(n))
+  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','casa','casa_rutinas','snacks'].filter(n => !exist.includes(n))
                   .map(title => ({ addSheet: { properties: { title } } }));
   if (reqs.length) {
     await api('POST', ':batchUpdate', { requests: reqs });
@@ -2821,11 +2826,23 @@ function renderCal() {
   document.getElementById('cal-lbl').textContent = `${MONTHS[m]} ${y}`;
 
   const todayS = todayStr();
-  // Agrupar sesiones del mes por fecha → conjunto de ejercicios únicos
+
+  // Rango visible: semanas completas (lun-dom), incluyendo días de arrastre
+  // del mes anterior/siguiente para poder ver la semana entera aunque cambie el mes.
+  const fmt = dt => `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  const firstDay   = new Date(y,m,1).getDay();
+  const offset     = (firstDay+6)%7;           // días de arrastre al inicio (lunes = 0)
+  const daysInMon  = new Date(y,m+1,0).getDate();
+  const numCells   = Math.ceil((offset + daysInMon) / 7) * 7;
+  const gridStart  = new Date(y, m, 1 - offset);
+  const startStr   = fmt(gridStart);
+  const endStr     = fmt(new Date(y, m, 1 - offset + numCells - 1));
+  const inRange    = f => f >= startStr && f <= endStr;
+
+  // Agrupar sesiones del rango por fecha → conjunto de ejercicios únicos
   const byDate = {};
   S.sessions.forEach(s => {
-    const d = parseDate(s.fecha);
-    if (!d || d.getFullYear() !== y || d.getMonth() !== m) return;
+    if (!inRange(s.fecha)) return;
     if (!byDate[s.fecha]) byDate[s.fecha] = new Set();
     byDate[s.fecha].add(s.ejercicio);
   });
@@ -2839,42 +2856,28 @@ function renderCal() {
   });
   // Días con snacks dedicados (ejercicios libres)
   S.snacks.forEach(sn => {
-    const d = parseDate(sn.fecha);
-    if (d && d.getFullYear() === y && d.getMonth() === m && !fullDays.has(sn.fecha))
-      snackDays.add(sn.fecha);
+    if (inRange(sn.fecha) && !fullDays.has(sn.fecha)) snackDays.add(sn.fecha);
   });
 
   const yogaDays = new Set();
-  S.yoga.forEach(ys => {
-    const d = parseDate(ys.fecha);
-    if (d && d.getFullYear() === y && d.getMonth() === m) yogaDays.add(ys.fecha);
-  });
+  S.yoga.forEach(ys => { if (inRange(ys.fecha)) yogaDays.add(ys.fecha); });
 
   const pilatesDays = new Set();
-  S.pilates.forEach(ps => {
-    const d = parseDate(ps.fecha);
-    if (d && d.getFullYear() === y && d.getMonth() === m) pilatesDays.add(ps.fecha);
-  });
+  S.pilates.forEach(ps => { if (inRange(ps.fecha)) pilatesDays.add(ps.fecha); });
 
   const casaDays = new Set();
-  S.casa.forEach(cs => {
-    const d = parseDate(cs.fecha);
-    if (d && d.getFullYear() === y && d.getMonth() === m) casaDays.add(cs.fecha);
-  });
+  S.casa.forEach(cs => { if (inRange(cs.fecha)) casaDays.add(cs.fecha); });
 
   const grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
 
   WDAYS.forEach(d => { const e=document.createElement('div'); e.className='cal-dname'; e.textContent=d; grid.appendChild(e); });
 
-  const firstDay = new Date(y,m,1).getDay();
-  const offset   = (firstDay+6)%7;
-  for (let i=0;i<offset;i++) { const e=document.createElement('div'); e.className='cal-day empty'; e.textContent='·'; grid.appendChild(e); }
-
-  const days = new Date(y,m+1,0).getDate();
-  for (let d=1; d<=days; d++) {
-    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  for (let i=0; i<numCells; i++) {
+    const dt = new Date(y, m, 1 - offset + i);
+    const ds = fmt(dt);
     const e  = document.createElement('div');
+    const outside   = dt.getMonth() !== m;
     const isFull    = fullDays.has(ds);
     const isSnack   = snackDays.has(ds);
     const isYoga    = yogaDays.has(ds);
@@ -2883,6 +2886,7 @@ function renderCal() {
     const yogaCombo    = isYoga && (isFull || isSnack);
     const pilatesCombo = isPilates && (isFull || isSnack || isYoga);
     e.className = 'cal-day'
+      + (outside ? ' outside' : '')
       + (isFull  ? ' trained' : '')
       + (isSnack ? ' snack'   : '')
       + (isYoga    && !isFull && !isSnack && !isPilates ? ' yoga'    : '')
@@ -2893,7 +2897,7 @@ function renderCal() {
       + (isCasa && !isFull && !isSnack && !isYoga && !isPilates ? ' casa' : '')
       + (isCasa && (isFull || isSnack || isYoga || isPilates) ? ' casa-combo' : '')
       + (ds === todayS ? ' today' : '');
-    e.textContent = d;
+    e.textContent = dt.getDate();
     const hasContent = isFull || isSnack || isYoga || isPilates || isCasa;
     if (hasContent) e.onclick = () => openSessionSheet(ds);
     if (hasContent && !isFull && !isSnack) e.style.cursor = 'pointer';
@@ -3994,9 +3998,9 @@ async function editCasaEntry(date, nth) {
   _casaEditCtx = { date, nth };
   closeSessionSheet();
   showScreen('casa');
-  try { await loadCasa(); } catch(e) { console.warn('loadCasa:', e); }
-  const match = (typeof CASA_RUTINAS !== 'undefined' ? CASA_RUTINAS : []).find(r => r.nombre === entry.rutina);
-  _casaRutinaSel = match ? match.id : null;
+  try { await Promise.all([loadCasa(), loadCasaRutinas()]); } catch(e) { console.warn('loadCasa:', e); }
+  toggleCasaNewForm(false);
+  _casaRutinaSel = entry.rutina || null;
   renderCasaLibrary();
   document.getElementById('casa-fecha').value = entry.fecha;
   document.getElementById('casa-duracion').value = entry.duracion_min || '';
@@ -4624,11 +4628,32 @@ async function savePilates() {
 
 // ─── EN CASA (rutinas guiadas por vídeo) ──────────────────────
 
+// Biblioteca activa: la de tu Google Sheet; si aún no hay, la semilla de config.js
+function casaLib() {
+  if (S.casaRutinas && S.casaRutinas.length) return S.casaRutinas;
+  return (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
+}
+
 // Devuelve la URL del vídeo de una rutina de casa a partir de su nombre
 function casaUrlFor(nombre) {
-  const lib = (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
-  const r = lib.find(x => x.nombre === nombre);
+  const r = casaLib().find(x => x.nombre === nombre);
   return r ? r.url : null;
+}
+
+// Carga la biblioteca de rutinas (hoja casa_rutinas)
+async function loadCasaRutinas() {
+  try {
+    const d = await api('GET', '/values/casa_rutinas!A2:D');
+    S.casaRutinas = (d.values||[]).filter(r=>r[0]).map(r => ({
+      nombre: r[0], url: r[1]||'', dur: r[2] ? +r[2] : null, tipo: r[3]||''
+    }));
+    localStorage.setItem('gfit_casa_rutinas', JSON.stringify(S.casaRutinas));
+  } catch(e) {
+    if (e.code === 'offline') {
+      const c = localStorage.getItem('gfit_casa_rutinas');
+      if (c) S.casaRutinas = JSON.parse(c);
+    } else throw e;
+  }
 }
 
 async function loadCasa() {
@@ -4649,7 +4674,8 @@ async function loadCasa() {
 async function openCasaScreen() {
   showScreen('casa');
   document.getElementById('casa-fecha').value = todayStr();
-  try { await loadCasa(); } catch(e) { console.warn('loadCasa:', e); }
+  try { await Promise.all([loadCasa(), loadCasaRutinas()]); } catch(e) { console.warn('loadCasa:', e); }
+  toggleCasaNewForm(false);
 
   // Si ya hay rutina(s) en casa hoy, abrir la primera en modo edición
   const today = todayStr();
@@ -4670,16 +4696,12 @@ async function openCasaScreen() {
 function renderCasaLibrary() {
   const grid = document.getElementById('casa-lib-grid');
   if (!grid) return;
-  const lib = (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
-  if (!lib.length) {
-    grid.innerHTML = `<div style="font-size:12px;color:var(--muted)">Añade rutinas en <code>config.js</code> (CASA_RUTINAS).</div>`;
-    return;
-  }
-  grid.innerHTML = lib.map(r => {
-    const sel = r.id === _casaRutinaSel;
+  const lib = casaLib();
+  let html = lib.map((r, i) => {
+    const sel = r.nombre === _casaRutinaSel;
     const meta = [r.tipo || null, r.dur ? `~${r.dur} min` : null].filter(Boolean).join(' · ');
     return `<div style="display:flex;align-items:stretch;gap:6px">
-      <button onclick="selectCasaRutina('${r.id}')"
+      <button onclick="selectCasaRutina(${i})"
         style="flex:1;text-align:left;display:flex;flex-direction:column;gap:2px;padding:10px 12px;
                border-radius:var(--rs);cursor:pointer;font-family:inherit;
                background:${sel ? 'rgba(99,102,241,.15)' : 'var(--bg)'};
@@ -4688,21 +4710,90 @@ function renderCasaLibrary() {
         ${meta ? `<span style="font-size:12px;color:var(--muted)">${meta}</span>` : ''}
       </button>
       ${r.url ? `<a href="${r.url}" target="_blank" rel="noopener" title="Ver vídeo"
-        style="display:flex;align-items:center;justify-content:center;width:44px;
+        style="display:flex;align-items:center;justify-content:center;width:44px;flex-shrink:0;
                border-radius:var(--rs);border:1px solid var(--border2);
                background:var(--bg);color:#6366f1;font-size:16px;text-decoration:none">▶</a>` : ''}
+      <button onclick="deleteCasaRutina(${i})" title="Borrar rutina"
+        style="width:36px;flex-shrink:0;border-radius:var(--rs);border:1px solid var(--border2);
+               background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer">🗑</button>
     </div>`;
   }).join('');
+  if (!lib.length) html = `<div style="font-size:12px;color:var(--muted);padding:2px 0">Aún no tienes rutinas. Añade la primera 👇</div>`;
+  grid.innerHTML = html;
 }
 
-function selectCasaRutina(id) {
-  _casaRutinaSel = id;
-  const lib = (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
-  const r = lib.find(x => x.id === id);
+function selectCasaRutina(i) {
+  const r = casaLib()[i];
+  if (!r) return;
+  _casaRutinaSel = r.nombre;
   // Prefill duración sugerida si el campo está vacío
   const durInput = document.getElementById('casa-duracion');
-  if (r && r.dur && !durInput.value) durInput.value = r.dur;
+  if (r.dur && !durInput.value) durInput.value = r.dur;
   renderCasaLibrary();
+}
+
+// ── Alta / baja de rutinas en la biblioteca ──
+function toggleCasaNewForm(show) {
+  const f = document.getElementById('casa-new-form');
+  const b = document.getElementById('casa-new-btn');
+  if (!f) return;
+  if (show) {
+    f.style.display = '';
+    if (b) b.style.display = 'none';
+    document.getElementById('casa-nr-nombre').value = '';
+    document.getElementById('casa-nr-url').value = '';
+    document.getElementById('casa-nr-dur').value = '';
+    document.getElementById('casa-nr-tipo').value = '';
+  } else {
+    f.style.display = 'none';
+    if (b) b.style.display = '';
+  }
+}
+
+async function saveCasaRutina() {
+  const nombre = document.getElementById('casa-nr-nombre').value.trim();
+  const url    = document.getElementById('casa-nr-url').value.trim();
+  const durRaw = document.getElementById('casa-nr-dur').value;
+  const dur    = durRaw ? +durRaw : null;
+  const tipo   = document.getElementById('casa-nr-tipo').value.trim();
+
+  if (!nombre) { toast('Ponle un nombre a la rutina', 'error'); return; }
+  if (!url)    { toast('Pega el enlace del vídeo', 'error'); return; }
+  if (dur !== null && (isNaN(dur) || dur < 1)) { toast('Duración no válida', 'error'); return; }
+  if (casaLib().some(r => r.nombre === nombre)) { toast('Ya tienes una rutina con ese nombre', 'error'); return; }
+
+  try {
+    await api('POST', '/values/casa_rutinas!A:D:append',
+      { values: [[nombre, url, dur !== null ? dur : '', tipo]] },
+      'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    await loadCasaRutinas();
+    _casaRutinaSel = nombre;
+    const durInput = document.getElementById('casa-duracion');
+    if (dur && !durInput.value) durInput.value = dur;
+    toggleCasaNewForm(false);
+    renderCasaLibrary();
+    toast('Rutina añadida a tu biblioteca ✓', 'success');
+  } catch(e) { toast('Error al añadir: ' + e.message, 'error'); }
+}
+
+async function deleteCasaRutina(i) {
+  const r = casaLib()[i];
+  if (!r) return;
+  if (!confirm(`¿Quitar "${r.nombre}" de tu biblioteca?\n(No borra las sesiones que ya registraste con ella.)`)) return;
+  try {
+    const data = await api('GET', '/values/casa_rutinas!A:A');
+    const rows = data.values || [];
+    let targetIdx = -1;
+    for (let j = 1; j < rows.length; j++) { if (rows[j][0] === r.nombre) { targetIdx = j; break; } }
+    if (targetIdx === -1) { toast('No se encontró la rutina', 'error'); return; }
+    const meta = await api('GET', '');
+    const sheetId = meta.sheets.find(s => s.properties.title === 'casa_rutinas')?.properties.sheetId;
+    await api('POST', ':batchUpdate', { requests: [{ deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: targetIdx, endIndex: targetIdx + 1 } } }] });
+    await loadCasaRutinas();
+    if (_casaRutinaSel === r.nombre) _casaRutinaSel = null;
+    renderCasaLibrary();
+    toast('Rutina eliminada de la biblioteca ✓', 'success');
+  } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
 }
 
 function renderCasaHistorial() {
@@ -4725,9 +4816,7 @@ async function saveCasa() {
   const durRaw = document.getElementById('casa-duracion').value;
   const dur = durRaw ? +durRaw : null;
   const nota = document.getElementById('casa-nota').value.trim();
-  const lib = (typeof CASA_RUTINAS !== 'undefined') ? CASA_RUTINAS : [];
-  const rSel = lib.find(x => x.id === _casaRutinaSel);
-  const rutina = rSel ? rSel.nombre : '';
+  const rutina = _casaRutinaSel || '';
 
   if (!fecha) { toast('Selecciona una fecha', 'error'); return; }
   if (!rutina) { toast('Elige una rutina', 'error'); return; }
@@ -5470,7 +5559,7 @@ async function boot() {
 
   try {
     await ensureSheets();
-    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadCasa(), loadSnacks()]);
+    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadCasa(), loadCasaRutinas(), loadSnacks()]);
     if (S.pending.length) await syncQueue();
     renderDash();
     updateSyncBtn();
