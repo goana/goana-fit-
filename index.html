@@ -4677,10 +4677,14 @@ function casaUrlFor(nombre) {
 // Carga la biblioteca de rutinas (hoja casa_rutinas)
 async function loadCasaRutinas() {
   try {
-    const d = await api('GET', '/values/casa_rutinas!A2:D');
-    S.casaRutinas = (d.values||[]).filter(r=>r[0]).map(r => ({
-      nombre: r[0], url: r[1]||'', dur: r[2] ? +r[2] : null, tipo: r[3]||''
-    }));
+    // Leemos desde A1 y descartamos la cabecera por contenido (no por posición),
+    // así una rutina nunca queda "oculta" en la fila 1 si faltara la cabecera.
+    const d = await api('GET', '/values/casa_rutinas!A:D');
+    S.casaRutinas = (d.values||[])
+      .filter(r => r[0] && r[0].trim().toLowerCase() !== 'nombre')
+      .map(r => ({
+        nombre: r[0], url: r[1]||'', dur: r[2] ? +r[2] : null, tipo: r[3]||''
+      }));
     localStorage.setItem('gfit_casa_rutinas', JSON.stringify(S.casaRutinas));
   } catch(e) {
     if (e.code === 'offline') {
