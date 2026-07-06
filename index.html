@@ -5109,6 +5109,7 @@ function renderSnackEntries() {
   const wrap = document.getElementById('snack-entries');
   if (!wrap) return;
   const editableCount = _snackEntries.filter(en => en._src !== 'sess').length;
+  const hist = getExerciseHistory();
   let html = '';
   _snackEntries.forEach(function(e, i) {
     // Read-only display for Fuerza exercises from an incomplete strength session
@@ -5139,6 +5140,22 @@ function renderSnackEntries() {
       : '';
     const safeVal = (e.ejercicio || '').replace(/"/g, '&quot;');
     const safeLink = (e.link || '').replace(/"/g, '&quot;');
+
+    // Línea con la última y la mejor sesión del ejercicio elegido
+    const h = hist[(e.ejercicio || '').trim()];
+    let statsHtml = '';
+    if (h) {
+      const lastChips = fmtExChips(h);
+      const bestChips = h.best ? fmtExChips(h.best) : '';
+      const showBest = bestChips && bestChips !== lastChips;
+      const parts = [];
+      if (lastChips) parts.push('Última: ' + lastChips);
+      if (showBest)  parts.push('<span style="color:var(--accent)">🏆 Mejor: ' + bestChips + '</span>');
+      if (parts.length)
+        statsHtml = '<div style="font-size:11px;color:var(--muted);margin:-2px 0 8px;line-height:1.5">' +
+          parts.join(' &nbsp;·&nbsp; ') + '</div>';
+    }
+
     html +=
       '<div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--rs);' +
       'padding:10px 12px;margin-bottom:8px">' +
@@ -5155,6 +5172,7 @@ function renderSnackEntries() {
           '</div>' +
           rmBtn +
         '</div>' +
+        statsHtml +
         '<div style="display:flex;gap:8px">' +
           snackNumField(i, 'series',  e.series,  '3',  'Series') +
           snackNumField(i, 'reps',    e.reps,    '12', 'Reps') +
@@ -5245,6 +5263,11 @@ function getExerciseHistory() {
   return byName;
 }
 
+// Formatea una sesión como "3s × 10r × 25kg"
+function fmtExChips(x) {
+  return [x.series ? x.series + 's' : null, x.reps ? x.reps + 'r' : null, x.peso_kg ? x.peso_kg + 'kg' : null].filter(Boolean).join(' × ');
+}
+
 function onSnackNameInput(i, val) {
   updateSnackEntry(i, 'ejercicio', val);
   showSnackSuggestions(i, val);
@@ -5268,11 +5291,10 @@ function showSnackSuggestions(i, val) {
   const top = names.slice(0, 6);
   _snackSuggCache[i] = top;
   if (!top.length) { wrap.style.display = 'none'; return; }
-  const fmtChips = x => [x.series ? x.series + 's' : null, x.reps ? x.reps + 'r' : null, x.peso_kg ? x.peso_kg + 'kg' : null].filter(Boolean).join(' × ');
   wrap.innerHTML = top.map((n, idx) => {
     const h = hist[n];
-    const lastChips = fmtChips(h);
-    const bestChips = h.best ? fmtChips(h.best) : '';
+    const lastChips = fmtExChips(h);
+    const bestChips = h.best ? fmtExChips(h.best) : '';
     // Solo mostramos "Mejor" si de verdad supera a la última (si no, sería redundante)
     const showBest = bestChips && bestChips !== lastChips;
     return '<div class="snack-sugg-item" onmousedown="event.preventDefault();pickSnackSuggestion(' + i + ',' + idx + ')">' +
