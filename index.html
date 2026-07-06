@@ -997,6 +997,7 @@
     <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()"><span class="di-icon">☁</span>Sincronizar datos locales</button>
     <button class="drawer-item" onclick="closeDrawer();cleanEmptyRows()"><span class="di-icon">🧹</span>Limpiar filas vacías</button>
     <button class="drawer-item" onclick="closeDrawer();openRenameSnacksScreen()"><span class="di-icon">✏️</span>Editar ejercicios de fuerza</button>
+    <button class="drawer-item" onclick="closeDrawer();openCasaLibrary()"><span class="di-icon">🏠</span>Rutinas en casa</button>
     <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon">↩</span>Cerrar sesión</button>
     <div style="padding:12px 22px 6px;font-size:11px;color:var(--muted)">v2026-05-25b</div>
   </nav>
@@ -1656,12 +1657,12 @@
   <div id="screen-casa" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1>🏠 En casa</h1>
+      <h1 id="casa-title">🏠 En casa</h1>
       <div style="width:40px"></div>
     </div>
     <div class="ci-pad">
       <div class="ci-block">
-        <div class="ci-q">Rutina</div>
+        <div class="ci-q" id="casa-lib-label">Rutina</div>
         <div id="casa-lib-grid" style="display:flex;flex-direction:column;gap:8px"></div>
         <button id="casa-new-btn" onclick="toggleCasaNewForm(true)"
           style="margin-top:8px;width:100%;padding:9px;border-radius:var(--rs);cursor:pointer;
@@ -1685,23 +1686,25 @@
           </div>
         </div>
       </div>
-      <div class="ci-block">
-        <div class="ci-q">Fecha</div>
-        <input type="date" id="casa-fecha" class="receta-input" style="margin-bottom:0">
+      <div id="casa-log-section">
+        <div class="ci-block">
+          <div class="ci-q">Fecha</div>
+          <input type="date" id="casa-fecha" class="receta-input" style="margin-bottom:0">
+        </div>
+        <div class="ci-block">
+          <div class="ci-q">Duración (minutos)</div>
+          <input type="number" id="casa-duracion" class="receta-input" min="5" max="180" step="5" placeholder="30" style="margin-bottom:0">
+        </div>
+        <div class="ci-block">
+          <div class="ci-q">Nota <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
+          <textarea id="casa-nota" rows="2" placeholder="¿Cómo te has sentido? ¿Qué peso usaste?"
+            style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);
+                   color:var(--text);font-family:inherit;font-size:14px;padding:10px;
+                   resize:none;box-sizing:border-box"></textarea>
+        </div>
+        <div id="casa-historial" style="margin-top:6px"></div>
+        <button class="btn-primary" onclick="saveCasa()">Guardar rutina en casa</button>
       </div>
-      <div class="ci-block">
-        <div class="ci-q">Duración (minutos)</div>
-        <input type="number" id="casa-duracion" class="receta-input" min="5" max="180" step="5" placeholder="30" style="margin-bottom:0">
-      </div>
-      <div class="ci-block">
-        <div class="ci-q">Nota <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
-        <textarea id="casa-nota" rows="2" placeholder="¿Cómo te has sentido? ¿Qué peso usaste?"
-          style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);
-                 color:var(--text);font-family:inherit;font-size:14px;padding:10px;
-                 resize:none;box-sizing:border-box"></textarea>
-      </div>
-      <div id="casa-historial" style="margin-top:6px"></div>
-      <button class="btn-primary" onclick="saveCasa()">Guardar rutina en casa</button>
     </div>
   </div>
 
@@ -1952,7 +1955,8 @@ let _yogaEditCtx    = null;
 let _pilatesEditCtx = null;
 let _casaEditCtx    = null;
 let _snackEditCtx   = null;
-let _casaRutinaSel  = null; // id de la rutina de casa seleccionada
+let _casaRutinaSel  = null; // nombre de la rutina de casa seleccionada
+let _casaMode       = 'log'; // 'log' = registrar sesión · 'library' = solo gestionar biblioteca
 
 // ═══════════════════════════════════════════════════════════
 // PHASE LOGIC
@@ -4024,8 +4028,10 @@ async function editCasaEntry(date, nth) {
   const entry = S.casa.filter(c => c.fecha === date)[nth];
   if (!entry) return;
   _casaEditCtx = { date, nth };
+  _casaMode = 'log';
   closeSessionSheet();
   showScreen('casa');
+  applyCasaMode();
   try { await Promise.all([loadCasa(), loadCasaRutinas()]); } catch(e) { console.warn('loadCasa:', e); }
   toggleCasaNewForm(false);
   _casaRutinaSel = entry.rutina || null;
@@ -4699,7 +4705,32 @@ async function loadCasa() {
   }
 }
 
+// Toggle entre modo "registrar sesión" y "solo gestionar biblioteca"
+function applyCasaMode() {
+  const lib = _casaMode === 'library';
+  const logSec = document.getElementById('casa-log-section');
+  if (logSec) logSec.style.display = lib ? 'none' : '';
+  const title = document.getElementById('casa-title');
+  if (title) title.innerHTML = lib ? '🏠 Rutinas en casa' : '🏠 En casa';
+  const label = document.getElementById('casa-lib-label');
+  if (label) label.textContent = lib ? 'Tus rutinas guardadas' : 'Rutina';
+}
+
+// Abre la pantalla solo para guardar/borrar rutinas (sin registrar entreno de hoy)
+async function openCasaLibrary() {
+  _casaMode = 'library';
+  _casaEditCtx = null;
+  _casaRutinaSel = null;
+  showScreen('casa');
+  applyCasaMode();
+  toggleCasaNewForm(false);
+  try { await loadCasaRutinas(); } catch(e) { console.warn('loadCasaRutinas:', e); }
+  renderCasaLibrary();
+}
+
 async function openCasaScreen() {
+  _casaMode = 'log';
+  applyCasaMode();
   showScreen('casa');
   document.getElementById('casa-fecha').value = todayStr();
   try { await Promise.all([loadCasa(), loadCasaRutinas()]); } catch(e) { console.warn('loadCasa:', e); }
