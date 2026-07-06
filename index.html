@@ -1205,6 +1205,7 @@
         <div class="sel-wrap">
           <select id="ex-sel" onchange="renderHistExercise(this.value)"></select>
         </div>
+        <div id="prog-video" style="display:none;align-items:center;gap:10px;margin-bottom:12px"></div>
         <div id="prog-summary" style="display:none;gap:8px;margin-bottom:12px"></div>
         <div class="chart-card">
           <div class="chart-lbl">Peso máximo por sesión (kg)</div>
@@ -4097,6 +4098,8 @@ function renderHistExercise(name) {
     }
   });
 
+  renderProgVideo(name);
+
   const tbl = document.getElementById('hist-tbl');
   const summaryEl = document.getElementById('prog-summary');
   if (!rows.length) {
@@ -4128,15 +4131,45 @@ function renderHistExercise(name) {
     const pesoColor = dPeso > 0 ? '#4ade80' : dPeso < 0 ? '#f87171' : '#888';
     const repsColor = dReps > 0 ? '#4ade80' : dReps < 0 ? '#f87171' : '#888';
     const arrow = v => v > 0 ? '▲' : v < 0 ? '▼' : '→';
+
+    // Contexto real: en cuánto tiempo, cuántas sesiones, mejor marca y tendencia
+    const days = Math.round((new Date(dates[dates.length-1]) - new Date(dates[0])) / 86400000);
+    const periodo = days >= 14 ? `${Math.round(days/7)} semanas`
+                  : days >= 7  ? `1 semana`
+                  : `${days} día${days === 1 ? '' : 's'}`;
+    const nSes = dates.length;
+    const bestPeso = Math.max(...dates.map(d => byDate[d].maxPeso));
+    const bestReps = Math.max(...dates.map(d => byDate[d].totalReps));
+    const ritmo = (days > 0 && dPeso > 0) ? ` · ~${(dPeso / (days/7)).toFixed(1)} kg/semana` : '';
+
+    // Tendencia: última sesión frente a la anterior
+    const prev = byDate[dates[dates.length-2]];
+    const dpLast = +(last.maxPeso - prev.maxPeso).toFixed(1);
+    const drLast = last.totalReps - prev.totalReps;
+    let tendencia;
+    if (dpLast > 0)      tendencia = `📈 Subiendo: +${dpLast} kg en la última sesión`;
+    else if (dpLast < 0) tendencia = `📉 Última sesión: ${dpLast} kg respecto a la anterior`;
+    else if (drLast > 0) tendencia = `📈 Mismo peso y +${drLast} reps que la sesión anterior`;
+    else if (drLast < 0) tendencia = `⚠️ Estancada: mismo peso y ${drLast} reps que la anterior — toca subir carga o reps`;
+    else                 tendencia = `➡️ Estable: mantienes ${last.maxPeso} kg — buen momento para subir peso o reps`;
+
     summaryEl.style.display = 'flex';
+    summaryEl.style.flexDirection = 'column';
     summaryEl.innerHTML = `
-      <div style="flex:1;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px;text-align:center">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">PESO vs primera sesión</div>
-        <div style="font-size:20px;font-weight:700;color:${pesoColor}">${arrow(+dPeso)} ${dPeso > 0 ? '+' : ''}${dPeso} kg</div>
+      <div style="display:flex;gap:8px">
+        <div style="flex:1;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">PESO vs primera sesión</div>
+          <div style="font-size:20px;font-weight:700;color:${pesoColor}">${arrow(+dPeso)} ${dPeso > 0 ? '+' : ''}${dPeso} kg</div>
+        </div>
+        <div style="flex:1;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px;text-align:center">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">REPS vs primera sesión</div>
+          <div style="font-size:20px;font-weight:700;color:${repsColor}">${arrow(dReps)} ${dReps > 0 ? '+' : ''}${dReps} reps</div>
+        </div>
       </div>
-      <div style="flex:1;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:12px;text-align:center">
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">REPS vs primera sesión</div>
-        <div style="font-size:20px;font-weight:700;color:${repsColor}">${arrow(dReps)} ${dReps > 0 ? '+' : ''}${dReps} reps</div>
+      <div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6">
+        <div>📅 Progreso en <b style="color:var(--text)">${periodo}</b> · ${nSes} sesiones${ritmo}</div>
+        <div>🏅 Mejor marca: <b style="color:var(--text)">${bestPeso} kg</b> · hasta ${bestReps} reps totales en una sesión</div>
+        <div style="margin-top:2px">${tendencia}</div>
       </div>`;
   } else {
     summaryEl.style.display = 'none';
@@ -4157,6 +4190,43 @@ function renderHistExercise(name) {
           </tr>`).join('')}
       </tbody>
     </table>`;
+}
+
+// Muestra el enlace de vídeo del ejercicio seleccionado en Progreso y,
+// para los ejercicios de fuerza (snacks), un botón para editarlo.
+function renderProgVideo(name) {
+  const box = document.getElementById('prog-video');
+  if (!box) return;
+  const isRoutine = ALL_EX.some(e => e.name === name);
+  // Los vídeos de rutina viven en config.js (solo lectura); los de fuerza, en la hoja (editables)
+  const link = isRoutine
+    ? ((typeof VIDEO_URLS !== 'undefined' && VIDEO_URLS[name]) || '')
+    : (getSnackHistory()[name]?.link || '');
+  const editable = !isRoutine;
+
+  const hrefSafe = String(link).replace(/"/g, '&quot;');
+  let html = link
+    ? `<a href="${hrefSafe}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#6366f1;text-decoration:none;font-weight:600">🎬 Ver vídeo</a>`
+    : `<span style="font-size:13px;color:var(--muted)">Sin vídeo</span>`;
+  if (editable) {
+    const esc = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    html += `<button onclick="setProgLinkPrompt('${esc}')" style="background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text);cursor:pointer;font-size:12px;padding:5px 10px">${link ? '✏️ Editar enlace' : '＋ Añadir enlace'}</button>`;
+  }
+  box.innerHTML = html;
+  box.style.display = 'flex';
+}
+
+async function setProgLinkPrompt(name) {
+  const current = getSnackHistory()[name]?.link || '';
+  const url = prompt('Enlace de vídeo para "' + name + '" (deja vacío para quitarlo):', current);
+  if (url == null) return;
+  try {
+    const n = await setSnackExerciseLink(name, url.trim());
+    toast(url.trim() ? 'Enlace guardado en ' + n + ' fila' + (n === 1 ? '' : 's') + ' ✓' : 'Enlace quitado ✓', 'success');
+    renderProgVideo(name);
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
 }
 
 function renderChart(labels, data) {
