@@ -1677,7 +1677,7 @@
             <input id="casa-nr-tipo" class="receta-input" placeholder="Tipo (Fuerza, Yoga…)" style="margin-bottom:0;flex:2">
           </div>
           <div style="display:flex;gap:8px">
-            <button onclick="saveCasaRutina()"
+            <button id="casa-nr-save" onclick="saveCasaRutina()"
               style="flex:1;padding:9px;border-radius:var(--rs);cursor:pointer;border:none;
                      background:#6366f1;color:#fff;font-family:inherit;font-size:13px;font-weight:600">Guardar rutina</button>
             <button onclick="toggleCasaNewForm(false)"
@@ -1956,6 +1956,7 @@ let _pilatesEditCtx = null;
 let _casaEditCtx    = null;
 let _snackEditCtx   = null;
 let _casaRutinaSel  = null; // nombre de la rutina de casa seleccionada
+let _casaRutinaEdit = null; // nombre ORIGINAL de la rutina que se está editando (o null = alta nueva)
 let _casaMode       = 'log'; // 'log' = registrar sesión · 'library' = solo gestionar biblioteca
 
 // ═══════════════════════════════════════════════════════════
@@ -3701,8 +3702,22 @@ function skipTimer() {
 
 function openHistory() {
   const sel = document.getElementById('ex-sel');
-  sel.innerHTML = ALL_EX.map(ex => `<option value="${ex.name}">${ex.name}</option>`).join('');
-  renderHistExercise(ALL_EX[0].name);
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+  // Ejercicios del catálogo de rutinas
+  const routineNames = ALL_EX.map(ex => ex.name);
+  const seen = new Set(routineNames.map(n => n.toLowerCase()));
+  // Ejercicios de fuerza (snacks) que no estén ya en el catálogo
+  const snackNames = [];
+  (S.snacks || []).forEach(sn => {
+    const n = (sn.ejercicio || '').trim();
+    if (n && !seen.has(n.toLowerCase())) { seen.add(n.toLowerCase()); snackNames.push(n); }
+  });
+  snackNames.sort((a, b) => a.localeCompare(b, 'es'));
+  const opt = n => `<option value="${esc(n)}">${esc(n)}</option>`;
+  let html = `<optgroup label="Rutinas">${routineNames.map(opt).join('')}</optgroup>`;
+  if (snackNames.length) html += `<optgroup label="Fuerza">${snackNames.map(opt).join('')}</optgroup>`;
+  sel.innerHTML = html;
+  renderHistExercise(routineNames[0]);
   switchHistTab('ex');
   showScreen('history');
 }
@@ -4071,6 +4086,16 @@ function renderSessionDetail(date, rows) {
 
 function renderHistExercise(name) {
   const rows = S.sessions.filter(s => s.ejercicio === name);
+
+  // Incluye los ejercicios de fuerza (snacks) con el mismo nombre.
+  // Cada snack guarda una fila por día (series, reps, peso); la expandimos
+  // a una fila por serie para que encaje con el resto del progreso.
+  (S.snacks || []).filter(s => s.ejercicio === name).forEach(sn => {
+    const nSeries = sn.series > 0 ? sn.series : 1;
+    for (let i = 0; i < nSeries; i++) {
+      rows.push({ fecha: sn.fecha, serie: i + 1, peso_kg: sn.peso_kg || 0, reps: sn.reps || 0 });
+    }
+  });
 
   const tbl = document.getElementById('hist-tbl');
   const summaryEl = document.getElementById('prog-summary');
@@ -4773,9 +4798,12 @@ function renderCasaLibrary() {
         ${meta ? `<span style="font-size:12px;color:var(--muted)">${meta}</span>` : ''}
       </button>
       ${r.url ? `<a href="${r.url}" target="_blank" rel="noopener" title="Ver vídeo"
-        style="display:flex;align-items:center;justify-content:center;width:44px;flex-shrink:0;
+        style="display:flex;align-items:center;justify-content:center;width:40px;flex-shrink:0;
                border-radius:var(--rs);border:1px solid var(--border2);
                background:var(--bg);color:#6366f1;font-size:16px;text-decoration:none">▶</a>` : ''}
+      <button onclick="editCasaRutina(${i})" title="Editar rutina"
+        style="width:36px;flex-shrink:0;border-radius:var(--rs);border:1px solid var(--border2);
+               background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer">✏️</button>
       <button onclick="deleteCasaRutina(${i})" title="Borrar rutina"
         style="width:36px;flex-shrink:0;border-radius:var(--rs);border:1px solid var(--border2);
                background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer">🗑</button>
@@ -4795,11 +4823,13 @@ function selectCasaRutina(i) {
   renderCasaLibrary();
 }
 
-// ── Alta / baja de rutinas en la biblioteca ──
+// ── Alta / edición / baja de rutinas en la biblioteca ──
 function toggleCasaNewForm(show) {
   const f = document.getElementById('casa-new-form');
   const b = document.getElementById('casa-new-btn');
   if (!f) return;
+  _casaRutinaEdit = null; // salir del modo edición al abrir "nueva" o cerrar
+  const saveBtn = document.getElementById('casa-nr-save');
   if (show) {
     f.style.display = '';
     if (b) b.style.display = 'none';
@@ -4807,10 +4837,30 @@ function toggleCasaNewForm(show) {
     document.getElementById('casa-nr-url').value = '';
     document.getElementById('casa-nr-dur').value = '';
     document.getElementById('casa-nr-tipo').value = '';
+    if (saveBtn) saveBtn.textContent = 'Guardar rutina';
   } else {
     f.style.display = 'none';
     if (b) b.style.display = '';
   }
+}
+
+// Abre el formulario pre-rellenado para editar una rutina existente
+function editCasaRutina(i) {
+  const r = casaLib()[i];
+  if (!r) return;
+  const f = document.getElementById('casa-new-form');
+  const b = document.getElementById('casa-new-btn');
+  if (!f) return;
+  _casaRutinaEdit = r.nombre; // guardamos el nombre ORIGINAL para localizar la fila
+  f.style.display = '';
+  if (b) b.style.display = 'none';
+  document.getElementById('casa-nr-nombre').value = r.nombre || '';
+  document.getElementById('casa-nr-url').value    = r.url || '';
+  document.getElementById('casa-nr-dur').value    = r.dur || '';
+  document.getElementById('casa-nr-tipo').value   = r.tipo || '';
+  const saveBtn = document.getElementById('casa-nr-save');
+  if (saveBtn) saveBtn.textContent = 'Actualizar rutina';
+  f.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 async function saveCasaRutina() {
@@ -4819,24 +4869,44 @@ async function saveCasaRutina() {
   const durRaw = document.getElementById('casa-nr-dur').value;
   const dur    = durRaw ? +durRaw : null;
   const tipo   = document.getElementById('casa-nr-tipo').value.trim();
+  const editingName = _casaRutinaEdit; // nombre original (o null si es alta nueva)
 
   if (!nombre) { toast('Ponle un nombre a la rutina', 'error'); return; }
   if (!url)    { toast('Pega el enlace del vídeo', 'error'); return; }
   if (dur !== null && (isNaN(dur) || dur < 1)) { toast('Duración no válida', 'error'); return; }
-  if (casaLib().some(r => r.nombre === nombre)) { toast('Ya tienes una rutina con ese nombre', 'error'); return; }
+  // Bloquea nombres duplicados, salvo el de la propia rutina que estás editando
+  if (casaLib().some(r => r.nombre === nombre && r.nombre !== editingName)) {
+    toast('Ya tienes una rutina con ese nombre', 'error'); return;
+  }
 
+  const row = [nombre, url, dur !== null ? dur : '', tipo];
   try {
-    await api('POST', '/values/casa_rutinas!A:D:append',
-      { values: [[nombre, url, dur !== null ? dur : '', tipo]] },
-      'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    if (editingName) {
+      // Localiza la fila por el nombre original y la actualiza
+      const data = await api('GET', '/values/casa_rutinas!A:A');
+      const rows = data.values || [];
+      let targetIdx = -1;
+      for (let j = 1; j < rows.length; j++) { if (rows[j][0] === editingName) { targetIdx = j; break; } }
+      if (targetIdx !== -1) {
+        await api('PUT', `/values/casa_rutinas!A${targetIdx+1}:D${targetIdx+1}`,
+          { values: [row] }, 'valueInputOption=RAW');
+      } else {
+        // No estaba en la hoja (venía de la semilla de config): la añadimos
+        await api('POST', '/values/casa_rutinas!A:D:append',
+          { values: [row] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+      }
+    } else {
+      await api('POST', '/values/casa_rutinas!A:D:append',
+        { values: [row] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    }
     await loadCasaRutinas();
     _casaRutinaSel = nombre;
     const durInput = document.getElementById('casa-duracion');
     if (dur && !durInput.value) durInput.value = dur;
     toggleCasaNewForm(false);
     renderCasaLibrary();
-    toast('Rutina añadida a tu biblioteca ✓', 'success');
-  } catch(e) { toast('Error al añadir: ' + e.message, 'error'); }
+    toast(editingName ? 'Rutina actualizada ✓' : 'Rutina añadida a tu biblioteca ✓', 'success');
+  } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
 }
 
 async function deleteCasaRutina(i) {
