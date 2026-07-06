@@ -11,11 +11,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     /* ── Reset & Variables ─────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { -webkit-tap-highlight-color: transparent; }
+
+    /* Phosphor icons: alineación con el texto adyacente */
+    i.ph, i[class^="ph-"], i[class*=" ph-"] { vertical-align: -0.125em; line-height: 1; font-style: normal; }
 
     :root {
       --bg:          #0f0f0f;
@@ -964,7 +968,7 @@
 
   <!-- ═══ AUTH ══════════════════════════════════════════════ -->
   <div id="screen-auth" class="screen">
-    <div class="auth-logo">🏋️</div>
+    <div class="auth-logo"><i class="ph ph-barbell"></i></div>
     <h2 class="auth-title">goana<em>Fit</em></h2>
     <p class="auth-sub">Registra tus sesiones de hipertrofia y sigue tu progreso directamente en Google Sheets.</p>
     <div id="auth-error" class="auth-error hidden"></div>
@@ -984,21 +988,21 @@
   <div id="drawer-overlay" onclick="closeDrawer()"></div>
   <nav id="drawer">
     <div class="drawer-title">Navegación</div>
-    <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon">📈</span>Progreso</button>
-    <button class="drawer-item" onclick="closeDrawer();openYogaScreen()"><span class="di-icon">🧘</span>Yoga</button>
-    <button class="drawer-item" onclick="closeDrawer();openPilatesScreen()"><span class="di-icon">🤸</span>Pilates</button>
-    <button class="drawer-item" onclick="closeDrawer();openSnackScreen()"><span class="di-icon">⚡</span>Fuerza</button>
-    <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon">📏</span>Cuerpo</button>
-    <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon">🥗</span>Menú semanal</button>
-    <button class="drawer-item" onclick="closeDrawer();openRecetasScreen()"><span class="di-icon">📌</span>Ideas de recetas</button>
-    <button class="drawer-item" onclick="closeDrawer();showScreen('guia')"><span class="di-icon">📋</span>Mi Guía</button>
-    <a class="drawer-item" href="https://docs.google.com/spreadsheets/d/1ydSag5qwNyg32PWrsZFFNMI6oRs1HwH_rMOFCZ4U2Mc/edit?usp=sharing" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="di-icon">📊</span>Ver hoja de datos</a>
+    <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon"><i class="ph ph-chart-line-up"></i></span>Progreso</button>
+    <button class="drawer-item" onclick="closeDrawer();openYogaScreen()"><span class="di-icon"><i class="ph ph-flower-lotus"></i></span>Yoga</button>
+    <button class="drawer-item" onclick="closeDrawer();openPilatesScreen()"><span class="di-icon"><i class="ph ph-person-simple-tai-chi"></i></span>Pilates</button>
+    <button class="drawer-item" onclick="closeDrawer();openSnackScreen()"><span class="di-icon"><i class="ph ph-lightning"></i></span>Fuerza</button>
+    <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon"><i class="ph ph-ruler"></i></span>Cuerpo</button>
+    <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon"><i class="ph ph-bowl-food"></i></span>Menú semanal</button>
+    <button class="drawer-item" onclick="closeDrawer();openRecetasScreen()"><span class="di-icon"><i class="ph ph-push-pin"></i></span>Ideas de recetas</button>
+    <button class="drawer-item" onclick="closeDrawer();showScreen('guia')"><span class="di-icon"><i class="ph ph-clipboard-text"></i></span>Mi Guía</button>
+    <a class="drawer-item" href="https://docs.google.com/spreadsheets/d/1ydSag5qwNyg32PWrsZFFNMI6oRs1HwH_rMOFCZ4U2Mc/edit?usp=sharing" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><span class="di-icon"><i class="ph ph-chart-bar"></i></span>Ver hoja de datos</a>
     <div class="drawer-sep"></div>
-    <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()"><span class="di-icon">☁</span>Sincronizar datos locales</button>
-    <button class="drawer-item" onclick="closeDrawer();cleanEmptyRows()"><span class="di-icon">🧹</span>Limpiar filas vacías</button>
-    <button class="drawer-item" onclick="closeDrawer();openRenameSnacksScreen()"><span class="di-icon">✏️</span>Editar ejercicios de fuerza</button>
-    <button class="drawer-item" onclick="closeDrawer();openCasaLibrary()"><span class="di-icon">🏠</span>Rutinas en casa</button>
-    <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon">↩</span>Cerrar sesión</button>
+    <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()"><span class="di-icon"><i class="ph ph-cloud"></i></span>Sincronizar datos locales</button>
+    <button class="drawer-item" onclick="closeDrawer();cleanEmptyRows()"><span class="di-icon"><i class="ph ph-broom"></i></span>Limpiar filas vacías</button>
+    <button class="drawer-item" onclick="closeDrawer();openRenameSnacksScreen()"><span class="di-icon"><i class="ph ph-pencil-simple"></i></span>Editar ejercicios de fuerza</button>
+    <button class="drawer-item" onclick="closeDrawer();openCasaLibrary()"><span class="di-icon"><i class="ph ph-house"></i></span>Rutinas en casa</button>
+    <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon"><i class="ph ph-sign-out"></i></span>Cerrar sesión</button>
     <div style="padding:12px 22px 6px;font-size:11px;color:var(--muted)">v2026-05-25b</div>
   </nav>
 
@@ -1019,11 +1023,11 @@
       <div id="today-actions" class="hidden" style="display:flex;gap:8px;margin-top:10px;">
         <button onclick="editTodayWorkout()"
           style="flex:1;padding:13px 8px;background:var(--card);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;">
-          ✏️ Editar sesión
+          <i class="ph ph-pencil-simple"></i> Editar sesión
         </button>
         <button onclick="deleteTodayWorkout()"
           style="flex:1;padding:13px 8px;background:var(--card);border:1px solid rgba(239,68,68,.35);border-radius:var(--r);color:var(--danger);cursor:pointer;font-family:inherit;font-size:13px;font-weight:500;">
-          🗑 Borrar sesión
+          <i class="ph ph-trash"></i> Borrar sesión
         </button>
       </div>
 
@@ -1074,49 +1078,49 @@
     </div>
     <div class="dash-pad">
       <button class="mod-btn" onclick="pickMod('fuerza')">
-        <span class="mod-icon" style="color:var(--accent)">🏋️</span>
+        <span class="mod-icon" style="color:var(--accent)"><i class="ph ph-barbell"></i></span>
         <div class="mod-text">
           <div class="mod-title">Rutina completa</div>
           <div class="mod-sub">9 ejercicios · full body</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('inferior')">
-        <span class="mod-icon" style="color:#f59e0b">🦵</span>
+        <span class="mod-icon" style="color:#f59e0b"><i class="ph ph-sneaker-move"></i></span>
         <div class="mod-text">
           <div class="mod-title">Tren inferior</div>
           <div class="mod-sub">6 ejercicios · piernas y glúteo</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('superior')">
-        <span class="mod-icon" style="color:#ec4899">💪</span>
+        <span class="mod-icon" style="color:#ec4899"><i class="ph ph-hand-fist"></i></span>
         <div class="mod-text">
           <div class="mod-title">Tren superior</div>
           <div class="mod-sub">11 ejercicios · brazos, espalda y core</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('yoga')">
-        <span class="mod-icon" style="color:#a855f7">🧘</span>
+        <span class="mod-icon" style="color:#a855f7"><i class="ph ph-flower-lotus"></i></span>
         <div class="mod-text">
           <div class="mod-title">Yoga</div>
           <div class="mod-sub">Sesión libre</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('pilates')">
-        <span class="mod-icon" style="color:#06b6d4">🤸</span>
+        <span class="mod-icon" style="color:#06b6d4"><i class="ph ph-person-simple-tai-chi"></i></span>
         <div class="mod-text">
           <div class="mod-title">Pilates</div>
           <div class="mod-sub">Sesión libre</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('casa')">
-        <span class="mod-icon" style="color:#6366f1">🏠</span>
+        <span class="mod-icon" style="color:#6366f1"><i class="ph ph-house"></i></span>
         <div class="mod-text">
           <div class="mod-title">En casa</div>
           <div class="mod-sub">Rutinas guiadas por vídeo</div>
         </div>
       </button>
       <button class="mod-btn" onclick="pickMod('snacks')">
-        <span class="mod-icon" style="color:var(--warning)">⚡</span>
+        <span class="mod-icon" style="color:var(--warning)"><i class="ph ph-lightning"></i></span>
         <div class="mod-text">
           <div class="mod-title">Fuerza</div>
           <div class="mod-sub">Ejercicios libres / máquinas</div>
@@ -1172,7 +1176,7 @@
 
       <!-- Semana de descarga -->
       <div class="ci-block">
-        <div class="ci-q">🪶 Semana de descarga</div>
+        <div class="ci-q"><i class="ph ph-feather"></i> Semana de descarga</div>
         <div class="ci-hint">2 series y pesos rebajados (~35%). Mantenlo activo durante la semana de deload.</div>
         <button id="deload-toggle" class="pair-btn" style="margin-top:8px" onclick="toggleDeload()">Desactivada</button>
         <div id="deload-hint" style="font-size:12px;margin-top:8px;color:var(--muted)"></div>
@@ -1557,7 +1561,7 @@
   <div id="screen-yoga" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1>🧘 Yoga</h1>
+      <h1><i class="ph ph-flower-lotus"></i> Yoga</h1>
       <div style="width:40px"></div>
     </div>
     <div class="ci-pad">
@@ -1595,7 +1599,7 @@
   <div id="screen-pilates" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1>🤸 Pilates</h1>
+      <h1><i class="ph ph-person-simple-tai-chi"></i> Pilates</h1>
       <div style="width:40px"></div>
     </div>
     <div class="ci-pad">
@@ -1611,32 +1615,32 @@
         <div class="ci-q">Tipo <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px" id="pilates-tipo-grid">
           <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Mat" onclick="selectPilatesTipo('Mat')">
-            <span class="ptb-icon">🧘</span>
+            <span class="ptb-icon"><i class="ph ph-flower-lotus"></i></span>
             <span class="ptb-name">Mat</span>
             <span class="ptb-desc">En el suelo, sin aparatos</span>
           </button>
           <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Reformer" onclick="selectPilatesTipo('Reformer')">
-            <span class="ptb-icon">⚙️</span>
+            <span class="ptb-icon"><i class="ph ph-gear"></i></span>
             <span class="ptb-name">Reformer</span>
             <span class="ptb-desc">Máquina de resortes y poleas</span>
           </button>
           <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Suelo Pélvico" onclick="selectPilatesTipo('Suelo Pélvico')">
-            <span class="ptb-icon">🌸</span>
+            <span class="ptb-icon"><i class="ph ph-flower"></i></span>
             <span class="ptb-name">Suelo Pélvico</span>
             <span class="ptb-desc">Trabajo de suelo pélvico</span>
           </button>
           <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Rehabilitador" onclick="selectPilatesTipo('Rehabilitador')">
-            <span class="ptb-icon">🩹</span>
+            <span class="ptb-icon"><i class="ph ph-bandaids"></i></span>
             <span class="ptb-name">Rehabilitador</span>
             <span class="ptb-desc">Enfocado en recuperación</span>
           </button>
           <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Animal Flow" onclick="selectPilatesTipo('Animal Flow')">
-            <span class="ptb-icon">🐆</span>
+            <span class="ptb-icon"><i class="ph ph-paw-print"></i></span>
             <span class="ptb-name">Animal Flow</span>
             <span class="ptb-desc">Movimiento animal en el suelo</span>
           </button>
           <button class="receta-cat-btn pilates-tipo-btn" data-tipo="Otro" onclick="selectPilatesTipo('Otro')">
-            <span class="ptb-icon">✨</span>
+            <span class="ptb-icon"><i class="ph ph-sparkle"></i></span>
             <span class="ptb-name">Otro</span>
             <span class="ptb-desc">Otro tipo de pilates</span>
           </button>
@@ -1658,7 +1662,7 @@
   <div id="screen-casa" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1 id="casa-title">🏠 En casa</h1>
+      <h1 id="casa-title"><i class="ph ph-house"></i> En casa</h1>
       <div style="width:40px"></div>
     </div>
     <div class="ci-pad">
@@ -1668,7 +1672,7 @@
         <button id="casa-new-btn" onclick="toggleCasaNewForm(true)"
           style="margin-top:8px;width:100%;padding:9px;border-radius:var(--rs);cursor:pointer;
                  background:transparent;border:1px dashed var(--border2);color:#6366f1;
-                 font-family:inherit;font-size:13px;font-weight:600">➕ Nueva rutina</button>
+                 font-family:inherit;font-size:13px;font-weight:600"><i class="ph ph-plus"></i> Nueva rutina</button>
         <div id="casa-new-form" style="display:none;margin-top:8px;padding:12px;border-radius:var(--rs);
              border:1px solid #6366f1;background:rgba(99,102,241,.06)">
           <input id="casa-nr-nombre" class="receta-input" placeholder="Nombre (ej. Piernas y glúteo en casa)" style="margin-bottom:8px">
@@ -1713,7 +1717,7 @@
   <div id="screen-snack" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1>⚡ Fuerza</h1>
+      <h1><i class="ph ph-lightning"></i> Fuerza</h1>
       <div style="width:40px"></div>
     </div>
     <div class="ci-pad">
@@ -1753,7 +1757,7 @@
     </div>
     <div class="dash-pad">
       <div style="font-size:12px;color:var(--muted);margin-bottom:10px">
-        Toca un ejercicio para renombrarlo, o usa 🔗 para añadir/editar su enlace. Se actualizarán <strong>todas las filas</strong> que usen ese nombre.
+        Toca un ejercicio para renombrarlo, o usa <i class="ph ph-link"></i> para añadir/editar su enlace. Se actualizarán <strong>todas las filas</strong> que usen ese nombre.
       </div>
       <div id="rename-snacks-list"></div>
     </div>
@@ -1781,10 +1785,10 @@
   <input id="receta-nombre" class="receta-input" type="text" placeholder="Ej: Tostadas de aguacate con huevo">
   <div class="receta-field-lbl">Categoría</div>
   <div class="receta-cat-grid">
-    <button class="receta-cat-btn" data-cat="desayuno" onclick="selectRecetaCat('desayuno')">🌅 Desayuno</button>
-    <button class="receta-cat-btn" data-cat="comida"   onclick="selectRecetaCat('comida')">🍽️ Comida</button>
-    <button class="receta-cat-btn" data-cat="merienda" onclick="selectRecetaCat('merienda')">🍎 Merienda</button>
-    <button class="receta-cat-btn" data-cat="cena"     onclick="selectRecetaCat('cena')">🌙 Cena</button>
+    <button class="receta-cat-btn" data-cat="desayuno" onclick="selectRecetaCat('desayuno')"><i class="ph ph-sun-horizon"></i> Desayuno</button>
+    <button class="receta-cat-btn" data-cat="comida"   onclick="selectRecetaCat('comida')"><i class="ph ph-fork-knife"></i> Comida</button>
+    <button class="receta-cat-btn" data-cat="merienda" onclick="selectRecetaCat('merienda')"><i class="ph ph-orange"></i> Merienda</button>
+    <button class="receta-cat-btn" data-cat="cena"     onclick="selectRecetaCat('cena')"><i class="ph ph-moon"></i> Cena</button>
   </div>
   <div class="receta-field-lbl">Link (Instagram u otro)</div>
   <input id="receta-link" class="receta-input" type="url" placeholder="https://www.instagram.com/reel/...">
@@ -1794,7 +1798,7 @@
 <!-- POST-WORKOUT MODAL -->
 <div id="pw-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:210"></div>
 <div id="pw-modal" style="display:none;position:fixed;left:50%;bottom:0;transform:translateX(-50%);width:100%;max-width:480px;z-index:211;background:var(--card2);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom))">
-  <div style="font-size:17px;font-weight:700;margin-bottom:4px">¡Sesión completada! 🎉</div>
+  <div style="font-size:17px;font-weight:700;margin-bottom:4px">¡Sesión completada! <i class="ph ph-confetti"></i></div>
   <div style="font-size:13px;color:var(--muted);margin-bottom:20px">¿Cómo ha ido?</div>
 
   <div style="font-size:13px;font-weight:600;margin-bottom:10px">Nivel de cansancio</div>
@@ -1877,11 +1881,11 @@ const EX = {
 
 // Rutinas estructuradas seleccionables
 const ROUTINES = {
-  completa: { id: 'completa', name: 'Rutina completa', sub: '9 ejercicios · full body',          icon: '🏋️', color: 'var(--accent)',
+  completa: { id: 'completa', name: 'Rutina completa', sub: '9 ejercicios · full body',          icon: '<i class="ph ph-barbell"></i>', color: 'var(--accent)',
     exercises: [EX.goblet, EX.remo, EX.zancadas, EX.press, EX.curl, EX.triceps, EX.birddog, EX.plancha, EX.deadbug] },
-  inferior: { id: 'inferior', name: 'Tren inferior', sub: '6 ejercicios · piernas y glúteo',      icon: '🦵', color: '#f59e0b',
+  inferior: { id: 'inferior', name: 'Tren inferior', sub: '6 ejercicios · piernas y glúteo',      icon: '<i class="ph ph-sneaker-move"></i>', color: '#f59e0b',
     exercises: [EX.goblet, EX.zancadas, EX.pesomuerto, EX.puente, EX.gemelo, EX.plancha] },
-  superior: { id: 'superior', name: 'Tren superior', sub: '11 ejercicios · brazos, espalda y core', icon: '💪', color: '#ec4899',
+  superior: { id: 'superior', name: 'Tren superior', sub: '11 ejercicios · brazos, espalda y core', icon: '<i class="ph ph-hand-fist"></i>', color: '#ec4899',
     exercises: [EX.remo, EX.press, EX.lateral, EX.curl, EX.martillo, EX.triceps, EX.patada, EX.plancha, EX.planchalatI, EX.planchalatD, EX.deadbug] },
 };
 
@@ -2018,7 +2022,7 @@ function renderDeloadToggle() {
       const w = deloadWeeksSince();
       const due = w >= DELOAD_CADA_SEMANAS;
       hint.textContent = due
-        ? `⚠️ Llevas ${w} semanas sin descarga — buen momento para hacer una.`
+        ? `<i class="ph ph-warning"></i> Llevas ${w} semanas sin descarga — buen momento para hacer una.`
         : `Llevas ${w} semana${w === 1 ? '' : 's'} desde la última descarga (se sugiere cada ${DELOAD_CADA_SEMANAS}).`;
       hint.style.color = due ? 'var(--warning)' : 'var(--muted)';
     }
@@ -2103,26 +2107,26 @@ function updateAdaptation() {
   let warn = false;
 
   if (ci.radioHoy) {
-    lines.push('⚡ Hoy tienes radio → Esfuerzo moderado (RPE 5-6). Mantén el rango de movimiento del brazo izquierdo.');
+    lines.push('<i class="ph ph-lightning"></i> Hoy tienes radio → Esfuerzo moderado (RPE 5-6). Mantén el rango de movimiento del brazo izquierdo.');
     warn = true;
   }
   if (ci.energia < 5) {
-    lines.push('🔋 Energía baja → Considera hacer <strong>2 series</strong> de cada ejercicio en vez de 3, o bajar un 20% el peso.');
+    lines.push('<i class="ph ph-battery-low"></i> Energía baja → Considera hacer <strong>2 series</strong> de cada ejercicio en vez de 3, o bajar un 20% el peso.');
     warn = true;
   }
   if (ci.piel === 'Tirante' || ci.piel === 'Sensible') {
-    lines.push(`🩹 Piel ${ci.piel.toLowerCase()} → En el Press Militar, reduce el rango o cámbialo por elevaciones laterales.`);
+    lines.push(`<i class="ph ph-bandaids"></i> Piel ${ci.piel.toLowerCase()} → En el Press Militar, reduce el rango o cámbialo por elevaciones laterales.`);
     warn = true;
   }
   if (ci.molestia >= 4) {
-    lines.push('⚠️ Molestia alta → Evita el Press Militar hoy. Si molesta la zona de la cicatriz, para y descansa.');
+    lines.push('<i class="ph ph-warning"></i> Molestia alta → Evita el Press Militar hoy. Si molesta la zona de la cicatriz, para y descansa.');
     warn = true;
   }
   if (!lines.length) {
-    lines.push(`✅ Todo en orden. Objetivo de hoy: RPE ${f.rpe}. ${f.tip}`);
+    lines.push(`<i class="ph ph-check-circle"></i> Todo en orden. Objetivo de hoy: RPE ${f.rpe}. ${f.tip}`);
   }
 
-  msg.innerHTML = `<strong>${warn ? '⚠️ Adaptaciones sugeridas' : '✅ Lista para entrenar'}</strong>${lines.map(l=>`<br>· ${l}`).join('')}`;
+  msg.innerHTML = `<strong>${warn ? '<i class="ph ph-warning"></i> Adaptaciones sugeridas' : '<i class="ph ph-check-circle"></i> Lista para entrenar'}</strong>${lines.map(l=>`<br>· ${l}`).join('')}`;
   msg.className = 'adaptation-card' + (warn ? '' : ' ok');
   msg.classList.remove('hidden');
 }
@@ -2144,7 +2148,7 @@ async function saveCheckin() {
 function getWorkoutWarnings() {
   const ci = S.checkin;
   const warns = [];
-  if (S.deload) warns.push({ text:'🪶 Semana de descarga — 2 series y pesos rebajados. No falles, RPE 5-6.', type:'warn' });
+  if (S.deload) warns.push({ text:'<i class="ph ph-feather"></i> Semana de descarga — 2 series y pesos rebajados. No falles, RPE 5-6.', type:'warn' });
   if (ci.radioHoy) warns.push({ text:'Hoy hay radio — RPE 5-6. No fuerces el rango.', type:'warn' });
   if (ci.energia < 5) warns.push({ text:`Energía baja (${ci.energia}/10) — considera hacer solo 2 series hoy.`, type:'warn' });
   return warns;
@@ -2377,7 +2381,7 @@ function scheduleProactiveRefresh() {
 async function handleConnectGoogle() {
   if (!isConfigOk()) {
     const el = document.getElementById('auth-error');
-    el.innerHTML = `<strong>⚠️ Configuración incompleta</strong><br>
+    el.innerHTML = `<strong><i class="ph ph-warning"></i> Configuración incompleta</strong><br>
       Edita <code>config.js</code> y rellena <code>CLIENT_ID</code> y <code>SPREADSHEET_ID</code>.<br>
       Consulta <code>README.md</code> para instrucciones paso a paso.`;
     el.classList.remove('hidden');
@@ -2738,12 +2742,12 @@ function calcStreak() {
 
 function getRec() {
   const dates = [...new Set(S.sessions.map(s=>s.fecha))].sort();
-  if (!dates.length) return { icon:'💪', title:'¡Empieza hoy!', sub:'No tienes sesiones aún', train:true };
+  if (!dates.length) return { icon:'<i class="ph ph-hand-fist"></i>', title:'¡Empieza hoy!', sub:'No tienes sesiones aún', train:true };
   const since = diffDays(dates[dates.length-1], todayStr());
-  if (since===0) return { icon:'✅', title:'Ya entrenaste hoy', sub:'Descansa bien — ¡gran trabajo!', train:false };
-  if (since===1) return { icon:'😴', title:'Día de descanso',  sub:'Entrenaste ayer — recupérate', train:true };
-  if (since===2) return { icon:'🔥', title:'¡Toca entrenar!',  sub:'Llevas 2 días de descanso', train:true };
-  return { icon:'⚡', title:'¡Vuelve a la rutina!', sub:`Última sesión hace ${since} días`, train:true };
+  if (since===0) return { icon:'<i class="ph ph-check-circle"></i>', title:'Ya entrenaste hoy', sub:'Descansa bien — ¡gran trabajo!', train:false };
+  if (since===1) return { icon:'<i class="ph ph-bed"></i>', title:'Día de descanso',  sub:'Entrenaste ayer — recupérate', train:true };
+  if (since===2) return { icon:'<i class="ph ph-fire"></i>', title:'¡Toca entrenar!',  sub:'Llevas 2 días de descanso', train:true };
+  return { icon:'<i class="ph ph-lightning"></i>', title:'¡Vuelve a la rutina!', sub:`Última sesión hace ${since} días`, train:true };
 }
 
 function getLastWeights() {
@@ -2782,12 +2786,12 @@ function getLastSession() {
 
 // ── Plan de la semana (editable) ──
 const PLAN_TYPES = {
-  inferior: { label: 'Tren inferior',    icon: '🦵', color: '#f59e0b' },
-  superior: { label: 'Tren superior',    icon: '💪', color: '#ec4899' },
-  completa: { label: 'Rutina completa',  icon: '🏋️', color: 'var(--accent)' },
-  casa:     { label: 'En casa',          icon: '🏠', color: '#6366f1' },
-  caminar:  { label: 'Descanso activo',  icon: '🚶', color: '#10b981' },
-  descanso: { label: 'Descanso',         icon: '😴', color: 'var(--muted)' },
+  inferior: { label: 'Tren inferior',    icon: '<i class="ph ph-sneaker-move"></i>', color: '#f59e0b' },
+  superior: { label: 'Tren superior',    icon: '<i class="ph ph-hand-fist"></i>', color: '#ec4899' },
+  completa: { label: 'Rutina completa',  icon: '<i class="ph ph-barbell"></i>', color: 'var(--accent)' },
+  casa:     { label: 'En casa',          icon: '<i class="ph ph-house"></i>', color: '#6366f1' },
+  caminar:  { label: 'Descanso activo',  icon: '<i class="ph ph-person-simple-walk"></i>', color: '#10b981' },
+  descanso: { label: 'Descanso',         icon: '<i class="ph ph-bed"></i>', color: 'var(--muted)' },
 };
 const PLAN_ORDER = ['inferior', 'superior', 'completa', 'casa', 'caminar', 'descanso'];
 const DEFAULT_WEEK_PLAN = ['descanso', 'inferior', 'superior', 'caminar', 'inferior', 'superior', 'completa']; // Lun..Dom
@@ -3175,13 +3179,13 @@ function renderWorkout() {
         <span class="ex-num" id="enum-${ei}">${ei+1}</span>
         <span class="ex-name">${ex.name}</span>
         ${vUrl
-          ? `<a href="${vUrl}" target="_blank" rel="noopener" class="video-link" title="Ver vídeo técnico">🎬</a>`
-          : `<span class="video-link disabled" title="URL no configurada — edita config.js">🎬</span>`}
-        <button class="note-toggle" onclick="toggleNote(${ei})">📝</button>
+          ? `<a href="${vUrl}" target="_blank" rel="noopener" class="video-link" title="Ver vídeo técnico"><i class="ph ph-film-slate"></i></a>`
+          : `<span class="video-link disabled" title="URL no configurada — edita config.js"><i class="ph ph-film-slate"></i></span>`}
+        <button class="note-toggle" onclick="toggleNote(${ei})"><i class="ph ph-note"></i></button>
       </div>
       <div class="ex-note hidden" id="enote-${ei}">${def.note}</div>
       <div class="ex-prog${allDone?' all-done':''}" id="eprog-${ei}">
-        ${allDone ? '✅ Completado' : `Serie ${doneCnt} de ${ex.sets}`}
+        ${allDone ? '<i class="ph ph-check-circle"></i> Completado' : `Serie ${doneCnt} de ${ex.sets}`}
       </div>
       <div class="series-col-headers">
         <span class="col-spacer"></span>
@@ -3211,7 +3215,7 @@ function renderWorkout() {
               <span class="inp-unit">${ex.unit || 'rep'}</span>
             </div>
           </div>
-          ${ex.unit === 'seg' ? `<button class="plank-tmr-btn" id="ptmr-${ei}-${si}" onclick="togglePlankTimer(${ei},${si})" title="Iniciar temporizador">▶</button>` : ''}
+          ${ex.unit === 'seg' ? `<button class="plank-tmr-btn" id="ptmr-${ei}-${si}" onclick="togglePlankTimer(${ei},${si})" title="Iniciar temporizador"><i class="ph ph-play"></i></button>` : ''}
           <button class="s-check-btn${s.done?' checked':''}" id="schk-${ei}-${si}"
                   onclick="toggleSerie(${ei},${si})"
                   title="${s.done?'Desmarcar':'Marcar completada'}">
@@ -3281,7 +3285,7 @@ function toggleSerie(ei, si) {
   card.classList.toggle('done', all);
   enum_.style.background = all ? 'var(--accent)' : '';
   enum_.style.color      = all ? '#0f0f0f' : '';
-  prog.textContent = all ? '✅ Completado' : `Serie ${done} de ${ex.sets}`;
+  prog.innerHTML = all ? '<i class="ph ph-check-circle"></i> Completado' : `Serie ${done} de ${ex.sets}`;
   prog.className   = 'ex-prog' + (all?' all-done':'');
 
   if (s.done) try { startTimer(`${ex.name} · S${si+1}`); } catch(_) {}
@@ -3609,14 +3613,14 @@ function togglePlankTimer(ei, si) {
     clearInterval(PLANK_TMR.iv);
     PLANK_TMR.iv = null;
     const btn = document.getElementById(`ptmr-${ei}-${si}`);
-    btn.textContent = '▶'; btn.classList.remove('running');
+    btn.innerHTML = '<i class="ph ph-play"></i>'; btn.classList.remove('running');
     return;
   }
   // Cancelar cualquier timer de plancha en curso
   if (PLANK_TMR.iv) {
     clearInterval(PLANK_TMR.iv);
     const old = document.getElementById(`ptmr-${PLANK_TMR.ei}-${PLANK_TMR.si}`);
-    if (old) { old.textContent = '▶'; old.classList.remove('running'); }
+    if (old) { old.innerHTML = '<i class="ph ph-play"></i>'; old.classList.remove('running'); }
   }
   const rEl = document.getElementById(`r-${ei}-${si}`);
   const total = parseInt(rEl?.value) || S.workout.exercises[ei].targetReps;
@@ -3629,7 +3633,7 @@ function togglePlankTimer(ei, si) {
     PLANK_TMR.secs--;
     if (PLANK_TMR.secs <= 0) {
       clearInterval(PLANK_TMR.iv); PLANK_TMR.iv = null;
-      btn.textContent = '▶'; btn.classList.remove('running');
+      btn.innerHTML = '<i class="ph ph-play"></i>'; btn.classList.remove('running');
       playPlankDone();
       // Marcar la serie como hecha si no lo está ya
       const s = S.workout.exercises[ei].series[si];
@@ -3741,7 +3745,7 @@ function renderSessionList() {
   });
   const dates = Object.keys(byDate).sort().reverse();
   if (!dates.length) {
-    wrap.innerHTML = `<div class="empty-st"><div class="e-icon">🏋️</div><p>Sin sesiones registradas aún</p></div>`;
+    wrap.innerHTML = `<div class="empty-st"><div class="e-icon"><i class="ph ph-barbell"></i></div><p>Sin sesiones registradas aún</p></div>`;
     return;
   }
   wrap.innerHTML = `<div class="sess-list">${dates.map(date => {
@@ -3802,8 +3806,8 @@ function openSessionSheet(date) {
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 4px">
       <span style="font-size:13px;font-weight:700;color:var(--accent)">${_r.icon} ${_r.name}</span>
       <div style="display:flex;gap:6px">
-        ${iconBtn('✏️ Editar', `editSessionByDate('${date}')`, 'Editar')}
-        ${iconBtn('🗑 Eliminar', `deleteGymSession('${date}')`, 'Eliminar')}
+        ${iconBtn('<i class="ph ph-pencil-simple"></i> Editar', `editSessionByDate('${date}')`, 'Editar')}
+        ${iconBtn('<i class="ph ph-trash"></i> Eliminar', `deleteGymSession('${date}')`, 'Eliminar')}
       </div>
     </div>`;
     if (meta?.cansancio) {
@@ -3824,7 +3828,7 @@ function openSessionSheet(date) {
   if (yogaRows.length) {
     const sep = rows.length ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
-      <span style="font-size:13px;font-weight:700;color:#a855f7">🧘 Yoga</span>
+      <span style="font-size:13px;font-weight:700;color:#a855f7"><i class="ph ph-flower-lotus"></i> Yoga</span>
     </div>`;
     html += yogaRows.map((y, nth) => {
       const parts = [y.duracion_min ? `${y.duracion_min} min` : null, y.estilo || null].filter(Boolean);
@@ -3834,8 +3838,8 @@ function openSessionSheet(date) {
           ${y.nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic">"${linkify(y.nota)}"</div>` : ''}
         </div>
         <div style="display:flex;gap:4px">
-          ${iconBtn('✏️', `editYogaEntry('${date}', ${nth})`, 'Editar')}
-          ${iconBtn('🗑', `deleteYogaEntry('${date}', ${nth})`, 'Eliminar')}
+          ${iconBtn('<i class="ph ph-pencil-simple"></i>', `editYogaEntry('${date}', ${nth})`, 'Editar')}
+          ${iconBtn('<i class="ph ph-trash"></i>', `deleteYogaEntry('${date}', ${nth})`, 'Eliminar')}
         </div>
       </div>`;
     }).join('');
@@ -3844,7 +3848,7 @@ function openSessionSheet(date) {
   if (pilatesRows.length) {
     const sep = (rows.length || yogaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
-      <span style="font-size:13px;font-weight:700;color:#06b6d4">🤸 Pilates</span>
+      <span style="font-size:13px;font-weight:700;color:#06b6d4"><i class="ph ph-person-simple-tai-chi"></i> Pilates</span>
     </div>`;
     html += pilatesRows.map((p, nth) => {
       const parts = [p.duracion_min ? `${p.duracion_min} min` : null, p.tipo || null].filter(Boolean);
@@ -3854,8 +3858,8 @@ function openSessionSheet(date) {
           ${p.nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic">"${linkify(p.nota)}"</div>` : ''}
         </div>
         <div style="display:flex;gap:4px">
-          ${iconBtn('✏️', `editPilatesEntry('${date}', ${nth})`, 'Editar')}
-          ${iconBtn('🗑', `deletePilatesEntry('${date}', ${nth})`, 'Eliminar')}
+          ${iconBtn('<i class="ph ph-pencil-simple"></i>', `editPilatesEntry('${date}', ${nth})`, 'Editar')}
+          ${iconBtn('<i class="ph ph-trash"></i>', `deletePilatesEntry('${date}', ${nth})`, 'Eliminar')}
         </div>
       </div>`;
     }).join('');
@@ -3864,7 +3868,7 @@ function openSessionSheet(date) {
   if (casaRows.length) {
     const sep = (rows.length || yogaRows.length || pilatesRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
-      <span style="font-size:13px;font-weight:700;color:#6366f1">🏠 En casa</span>
+      <span style="font-size:13px;font-weight:700;color:#6366f1"><i class="ph ph-house"></i> En casa</span>
     </div>`;
     html += casaRows.map((c, nth) => {
       const parts = [c.duracion_min ? `${c.duracion_min} min` : null, c.rutina || null].filter(Boolean);
@@ -3872,12 +3876,12 @@ function openSessionSheet(date) {
       return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:2px 16px 8px;gap:8px">
         <div>
           <div style="font-size:13px;color:var(--text)">${parts.join(' · ') || '—'}</div>
-          ${vurl ? `<a href="${vurl}" target="_blank" rel="noopener" style="font-size:12px;color:#6366f1">▶ Ver vídeo</a>` : ''}
+          ${vurl ? `<a href="${vurl}" target="_blank" rel="noopener" style="font-size:12px;color:#6366f1"><i class="ph ph-play"></i> Ver vídeo</a>` : ''}
           ${c.nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic">"${linkify(c.nota)}"</div>` : ''}
         </div>
         <div style="display:flex;gap:4px">
-          ${iconBtn('✏️', `editCasaEntry('${date}', ${nth})`, 'Editar')}
-          ${iconBtn('🗑', `deleteCasaEntry('${date}', ${nth})`, 'Eliminar')}
+          ${iconBtn('<i class="ph ph-pencil-simple"></i>', `editCasaEntry('${date}', ${nth})`, 'Editar')}
+          ${iconBtn('<i class="ph ph-trash"></i>', `deleteCasaEntry('${date}', ${nth})`, 'Eliminar')}
         </div>
       </div>`;
     }).join('');
@@ -3886,10 +3890,10 @@ function openSessionSheet(date) {
   if (snackRows.length) {
     const sep = (rows.length || yogaRows.length || pilatesRows.length || casaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
-      <span style="font-size:13px;font-weight:700;color:var(--warning)">⚡ Fuerza</span>
+      <span style="font-size:13px;font-weight:700;color:var(--warning)"><i class="ph ph-lightning"></i> Fuerza</span>
       <div style="display:flex;gap:6px">
-        ${iconBtn('✏️ Editar', `editSnackEntry('${date}')`, 'Editar')}
-        ${iconBtn('🗑 Eliminar', `deleteSnackEntry('${date}')`, 'Eliminar')}
+        ${iconBtn('<i class="ph ph-pencil-simple"></i> Editar', `editSnackEntry('${date}')`, 'Editar')}
+        ${iconBtn('<i class="ph ph-trash"></i> Eliminar', `deleteSnackEntry('${date}')`, 'Eliminar')}
       </div>
     </div>`;
     const snackNota = snackRows[0]?.nota;
@@ -4103,7 +4107,7 @@ function renderHistExercise(name) {
   const tbl = document.getElementById('hist-tbl');
   const summaryEl = document.getElementById('prog-summary');
   if (!rows.length) {
-    tbl.innerHTML = `<div class="empty-st"><div class="e-icon">📊</div><p>Sin datos aún para este ejercicio</p></div>`;
+    tbl.innerHTML = `<div class="empty-st"><div class="e-icon"><i class="ph ph-chart-bar"></i></div><p>Sin datos aún para este ejercicio</p></div>`;
     summaryEl.style.display = 'none';
     renderChart([], []);
     renderRepsChart([], []);
@@ -4147,11 +4151,11 @@ function renderHistExercise(name) {
     const dpLast = +(last.maxPeso - prev.maxPeso).toFixed(1);
     const drLast = last.totalReps - prev.totalReps;
     let tendencia;
-    if (dpLast > 0)      tendencia = `📈 Subiendo: +${dpLast} kg en la última sesión`;
-    else if (dpLast < 0) tendencia = `📉 Última sesión: ${dpLast} kg respecto a la anterior`;
-    else if (drLast > 0) tendencia = `📈 Mismo peso y +${drLast} reps que la sesión anterior`;
-    else if (drLast < 0) tendencia = `⚠️ Estancada: mismo peso y ${drLast} reps que la anterior — toca subir carga o reps`;
-    else                 tendencia = `➡️ Estable: mantienes ${last.maxPeso} kg — buen momento para subir peso o reps`;
+    if (dpLast > 0)      tendencia = `<i class="ph ph-chart-line-up"></i> Subiendo: +${dpLast} kg en la última sesión`;
+    else if (dpLast < 0) tendencia = `<i class="ph ph-trend-down"></i> Última sesión: ${dpLast} kg respecto a la anterior`;
+    else if (drLast > 0) tendencia = `<i class="ph ph-chart-line-up"></i> Mismo peso y +${drLast} reps que la sesión anterior`;
+    else if (drLast < 0) tendencia = `<i class="ph ph-warning"></i> Estancada: mismo peso y ${drLast} reps que la anterior — toca subir carga o reps`;
+    else                 tendencia = `<i class="ph ph-arrow-right"></i> Estable: mantienes ${last.maxPeso} kg — buen momento para subir peso o reps`;
 
     summaryEl.style.display = 'flex';
     summaryEl.style.flexDirection = 'column';
@@ -4167,8 +4171,8 @@ function renderHistExercise(name) {
         </div>
       </div>
       <div style="background:var(--card);border:1px solid var(--border2);border-radius:var(--r);padding:10px 12px;font-size:12px;color:var(--muted);line-height:1.6">
-        <div>📅 Progreso en <b style="color:var(--text)">${periodo}</b> · ${nSes} sesiones${ritmo}</div>
-        <div>🏅 Mejor marca: <b style="color:var(--text)">${bestPeso} kg</b> · hasta ${bestReps} reps totales en una sesión</div>
+        <div><i class="ph ph-calendar"></i> Progreso en <b style="color:var(--text)">${periodo}</b> · ${nSes} sesiones${ritmo}</div>
+        <div><i class="ph ph-medal"></i> Mejor marca: <b style="color:var(--text)">${bestPeso} kg</b> · hasta ${bestReps} reps totales en una sesión</div>
         <div style="margin-top:2px">${tendencia}</div>
       </div>`;
   } else {
@@ -4206,11 +4210,11 @@ function renderProgVideo(name) {
 
   const hrefSafe = String(link).replace(/"/g, '&quot;');
   let html = link
-    ? `<a href="${hrefSafe}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#6366f1;text-decoration:none;font-weight:600">🎬 Ver vídeo</a>`
+    ? `<a href="${hrefSafe}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:13px;color:#6366f1;text-decoration:none;font-weight:600"><i class="ph ph-film-slate"></i> Ver vídeo</a>`
     : `<span style="font-size:13px;color:var(--muted)">Sin vídeo</span>`;
   if (editable) {
     const esc = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    html += `<button onclick="setProgLinkPrompt('${esc}')" style="background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text);cursor:pointer;font-size:12px;padding:5px 10px">${link ? '✏️ Editar enlace' : '＋ Añadir enlace'}</button>`;
+    html += `<button onclick="setProgLinkPrompt('${esc}')" style="background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text);cursor:pointer;font-size:12px;padding:5px 10px">${link ? '<i class="ph ph-pencil-simple"></i> Editar enlace' : '＋ Añadir enlace'}</button>`;
   }
   box.innerHTML = html;
   box.style.display = 'flex';
@@ -4462,8 +4466,8 @@ function renderMenuScreen() {
   const warn = document.getElementById('menu-warn');
   if (S.checkin.radioHoy || S.checkin.energia < 5) {
     warn.textContent = S.checkin.radioHoy
-      ? '⚡ Hoy tienes radio — prioriza caldos y platos ligeros. Hidrátate bien.'
-      : `⚡ Energía baja (${S.checkin.energia}/10) — come platos reconfortantes y de fácil digestión.`;
+      ? '<i class="ph ph-lightning"></i> Hoy tienes radio — prioriza caldos y platos ligeros. Hidrátate bien.'
+      : `<i class="ph ph-lightning"></i> Energía baja (${S.checkin.energia}/10) — come platos reconfortantes y de fácil digestión.`;
     warn.classList.remove('hidden');
   } else {
     warn.classList.add('hidden');
@@ -4810,7 +4814,7 @@ function applyCasaMode() {
   const logSec = document.getElementById('casa-log-section');
   if (logSec) logSec.style.display = lib ? 'none' : '';
   const title = document.getElementById('casa-title');
-  if (title) title.innerHTML = lib ? '🏠 Rutinas en casa' : '🏠 En casa';
+  if (title) title.innerHTML = lib ? '<i class="ph ph-house"></i> Rutinas en casa' : '<i class="ph ph-house"></i> En casa';
   const label = document.getElementById('casa-lib-label');
   if (label) label.textContent = lib ? 'Tus rutinas guardadas' : 'Rutina';
 }
@@ -4870,16 +4874,16 @@ function renderCasaLibrary() {
       ${r.url ? `<a href="${r.url}" target="_blank" rel="noopener" title="Ver vídeo"
         style="display:flex;align-items:center;justify-content:center;width:40px;flex-shrink:0;
                border-radius:var(--rs);border:1px solid var(--border2);
-               background:var(--bg);color:#6366f1;font-size:16px;text-decoration:none">▶</a>` : ''}
+               background:var(--bg);color:#6366f1;font-size:16px;text-decoration:none"><i class="ph ph-play"></i></a>` : ''}
       <button onclick="editCasaRutina(${i})" title="Editar rutina"
         style="width:36px;flex-shrink:0;border-radius:var(--rs);border:1px solid var(--border2);
-               background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer">✏️</button>
+               background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer"><i class="ph ph-pencil-simple"></i></button>
       <button onclick="deleteCasaRutina(${i})" title="Borrar rutina"
         style="width:36px;flex-shrink:0;border-radius:var(--rs);border:1px solid var(--border2);
-               background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer">🗑</button>
+               background:var(--bg);color:var(--muted);font-size:13px;cursor:pointer"><i class="ph ph-trash"></i></button>
     </div>`;
   }).join('');
-  if (!lib.length) html = `<div style="font-size:12px;color:var(--muted);padding:2px 0">Aún no tienes rutinas. Añade la primera 👇</div>`;
+  if (!lib.length) html = `<div style="font-size:12px;color:var(--muted);padding:2px 0">Aún no tienes rutinas. Añade la primera <i class="ph ph-hand-pointing"></i></div>`;
   grid.innerHTML = html;
 }
 
@@ -5150,7 +5154,7 @@ function renderSnackEntries() {
       const showBest = bestChips && bestChips !== lastChips;
       const parts = [];
       if (lastChips) parts.push('Última: ' + lastChips);
-      if (showBest)  parts.push('<span style="color:var(--accent)">🏆 Mejor: ' + bestChips + '</span>');
+      if (showBest)  parts.push('<span style="color:var(--accent)"><i class="ph ph-trophy"></i> Mejor: ' + bestChips + '</span>');
       if (parts.length)
         statsHtml = '<div style="font-size:11px;color:var(--muted);margin:-2px 0 8px;line-height:1.5">' +
           parts.join(' &nbsp;·&nbsp; ') + '</div>';
@@ -5179,7 +5183,7 @@ function renderSnackEntries() {
           snackNumField(i, 'peso_kg', e.peso_kg, '—',  'Kg (opc.)') +
         '</div>' +
         '<div style="margin-top:8px">' +
-          '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">🔗 Enlace (vídeo/referencia, opcional)</div>' +
+          '<div style="font-size:11px;color:var(--muted);margin-bottom:4px"><i class="ph ph-link"></i> Enlace (vídeo/referencia, opcional)</div>' +
           '<input type="url" value="' + safeLink + '" placeholder="https://…" autocomplete="off"' +
           ' oninput="updateSnackEntry(' + i + ',\'link\',this.value)"' +
           ' style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border2);border-radius:8px;' +
@@ -5300,7 +5304,7 @@ function showSnackSuggestions(i, val) {
     return '<div class="snack-sugg-item" onmousedown="event.preventDefault();pickSnackSuggestion(' + i + ',' + idx + ')">' +
       '<div class="snack-sugg-name">' + n + '</div>' +
       (lastChips ? '<div class="snack-sugg-meta">Última: ' + lastChips + '</div>' : '') +
-      (showBest ? '<div class="snack-sugg-meta" style="color:var(--accent)">🏆 Mejor: ' + bestChips + '</div>' : '') +
+      (showBest ? '<div class="snack-sugg-meta" style="color:var(--accent)"><i class="ph ph-trophy"></i> Mejor: ' + bestChips + '</div>' : '') +
       '</div>';
   }).join('');
   wrap.style.display = '';
@@ -5374,13 +5378,13 @@ function renderSnackHistorial() {
       const exLines = rows.map((r, idx) => {
         const parts = [r.series ? `${r.series}s` : null, r.reps ? `${r.reps}r` : null, r.peso_kg ? `${String(r.peso_kg).replace('.', ',')}kg` : null].filter(Boolean);
         const url = (r.link || hist[(r.ejercicio || '').trim()]?.link || '').trim();
-        const linkIcon = url ? ` <a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Ver enlace" style="text-decoration:none">🎬</a>` : '';
+        const linkIcon = url ? ` <a href="${url.replace(/"/g, '&quot;')}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Ver enlace" style="text-decoration:none"><i class="ph ph-film-slate"></i></a>` : '';
         return `${idx + 1}. ${r.ejercicio}${parts.length ? ' · ' + parts.join(' × ') : ''}${linkIcon}`;
       }).join('<br>');
       return `<div class="receta-card" style="flex-direction:column;align-items:flex-start;gap:2px">
         <div style="font-size:13px;font-weight:600">${fmtDateES(fecha)} · ${rows.length} ${rows.length === 1 ? 'ejercicio' : 'ejercicios'}</div>
         <div style="font-size:12px;color:var(--muted);line-height:1.7">${exLines || '—'}</div>
-        ${nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:2px">📝 ${nota}</div>` : ''}
+        ${nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic;margin-top:2px"><i class="ph ph-note"></i> ${nota}</div>` : ''}
       </div>`;
     }).join('');
 }
@@ -5444,10 +5448,10 @@ function renderRenameSnacksList() {
     return '<div class="mod-btn" style="padding:12px 14px;margin-bottom:8px">' +
       '<div class="mod-text" onclick="renameSnackPrompt(\'' + esc + '\')" style="cursor:pointer;flex:1">' +
         '<div class="mod-title" style="font-size:14px">' + safe + '</div>' +
-        '<div class="mod-sub">' + counts[n] + ' fila' + (counts[n] === 1 ? '' : 's') + (hasLink ? ' · 🔗 con enlace' : '') + '</div>' +
+        '<div class="mod-sub">' + counts[n] + ' fila' + (counts[n] === 1 ? '' : 's') + (hasLink ? ' · <i class="ph ph-link"></i> con enlace' : '') + '</div>' +
       '</div>' +
-      '<button onclick="renameSnackPrompt(\'' + esc + '\')" title="Renombrar" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 6px">✏️</button>' +
-      '<button onclick="setSnackLinkPrompt(\'' + esc + '\')" title="Editar enlace" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 6px;opacity:' + (hasLink ? '1' : '.45') + '">🔗</button>' +
+      '<button onclick="renameSnackPrompt(\'' + esc + '\')" title="Renombrar" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 6px"><i class="ph ph-pencil-simple"></i></button>' +
+      '<button onclick="setSnackLinkPrompt(\'' + esc + '\')" title="Editar enlace" style="background:none;border:none;cursor:pointer;font-size:16px;padding:0 6px;opacity:' + (hasLink ? '1' : '.45') + '"><i class="ph ph-link"></i></button>' +
       '</div>';
   }).join('');
 }
@@ -5794,7 +5798,7 @@ function renderBodyChart(metric) {
 function renderBodyTable() {
   const tbl = document.getElementById('body-hist-tbl');
   if (!S.medidas.length) {
-    tbl.innerHTML = `<div class="empty-st"><div class="e-icon">📏</div><p>Sin registros aún</p></div>`;
+    tbl.innerHTML = `<div class="empty-st"><div class="e-icon"><i class="ph ph-ruler"></i></div><p>Sin registros aún</p></div>`;
     return;
   }
   // Agrupa por fecha, fusiona campos
@@ -5862,20 +5866,20 @@ async function boot() {
     const msg   = e.message || '';
     let html;
     if (msg.includes('not been used') || msg.includes('disabled') || msg.includes('accessNotConfigured')) {
-      html = `<strong>⚠️ Google Sheets API no activada</strong><br>
+      html = `<strong><i class="ph ph-warning"></i> Google Sheets API no activada</strong><br>
         Ve a <strong>Google Cloud Console → APIs y servicios → Biblioteca</strong>,
         busca <em>Google Sheets API</em> y pulsa <strong>Habilitar</strong>.
         Luego vuelve aquí y conecta de nuevo.`;
     } else if (msg.includes('404') || msg.includes('not found') || msg.includes('NOT_FOUND')) {
-      html = `<strong>⚠️ Spreadsheet no encontrado</strong><br>
+      html = `<strong><i class="ph ph-warning"></i> Spreadsheet no encontrado</strong><br>
         Verifica que el <code>SPREADSHEET_ID</code> en <code>config.js</code> sea correcto
         y que la hoja esté en tu Google Drive.`;
     } else if (msg.includes('403') || msg.includes('forbidden') || msg.includes('PERMISSION_DENIED')) {
-      html = `<strong>⚠️ Sin permisos</strong><br>
+      html = `<strong><i class="ph ph-warning"></i> Sin permisos</strong><br>
         Asegúrate de que tu cuenta tiene acceso a la hoja de cálculo
         y de que la Google Sheets API está habilitada en tu proyecto.`;
     } else {
-      html = `<strong>⚠️ Error al conectar con Google Sheets</strong><br>
+      html = `<strong><i class="ph ph-warning"></i> Error al conectar con Google Sheets</strong><br>
         <code>${msg || 'Error desconocido'}</code><br><br>
         Revisa que la <strong>Google Sheets API</strong> esté habilitada en Google Cloud Console.`;
     }
@@ -5893,10 +5897,10 @@ async function boot() {
 // ═══════════════════════════════════════════════════════════
 
 const RECETAS_CATS = [
-  { id: 'desayuno', label: '🌅 Desayuno' },
-  { id: 'comida',   label: '🍽️ Comida'   },
-  { id: 'merienda', label: '🍎 Merienda' },
-  { id: 'cena',     label: '🌙 Cena'     },
+  { id: 'desayuno', label: '<i class="ph ph-sun-horizon"></i> Desayuno' },
+  { id: 'comida',   label: '<i class="ph ph-fork-knife"></i> Comida'   },
+  { id: 'merienda', label: '<i class="ph ph-orange"></i> Merienda' },
+  { id: 'cena',     label: '<i class="ph ph-moon"></i> Cena'     },
 ];
 
 let _recetaCatSel = null;
@@ -5971,7 +5975,7 @@ function renderRecetas(recetas) {
     } else {
       for (const r of items) {
         const isInsta = r.link && r.link.includes('instagram.com');
-        const icon = isInsta ? '📸' : (r.link ? '🔗' : '');
+        const icon = isInsta ? '<i class="ph ph-camera"></i>' : (r.link ? '<i class="ph ph-link"></i>' : '');
         const nameDisplay = r.nombre || r.link || '(sin nombre)';
         html += `<div class="receta-card">`;
         if (icon) html += `<span class="receta-link-icon">${icon}</span>`;
@@ -6062,7 +6066,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (!isConfigOk()) {
     showScreen('auth');
     const el = document.getElementById('auth-error');
-    el.innerHTML = `<strong>⚠️ Configuración incompleta</strong><br>
+    el.innerHTML = `<strong><i class="ph ph-warning"></i> Configuración incompleta</strong><br>
       Edita <code>config.js</code> y rellena <code>CLIENT_ID</code> y <code>SPREADSHEET_ID</code>.<br>
       Consulta <code>README.md</code> para las instrucciones paso a paso.`;
     el.classList.remove('hidden');
