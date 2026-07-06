@@ -5196,6 +5196,55 @@ function getSnackHistory() {
   return byName;
 }
 
+// Historial combinado: ejercicios de fuerza (snacks) + los que se han hecho
+// en las rutinas de fuerza (S.sessions), agregados por fecha, mismo formato.
+function getExerciseHistory() {
+  const byName = getSnackHistory();
+
+  // Agrupa las series de rutina por ejercicio y fecha
+  const byNameDate = {};
+  S.sessions.forEach(s => {
+    const name = (s.ejercicio || '').trim();
+    if (!name) return;
+    const dates = byNameDate[name] = byNameDate[name] || {};
+    const agg = dates[s.fecha] = dates[s.fecha] || { series: 0, reps: 0, peso_kg: 0 };
+    agg.series += 1;
+    agg.reps    = Math.max(agg.reps, s.reps || 0);
+    agg.peso_kg = Math.max(agg.peso_kg, s.peso_kg || 0);
+  });
+
+  const isBetter = (a, b) => !b
+    || a.peso_kg > b.peso_kg
+    || (a.peso_kg === b.peso_kg && a.reps > b.reps)
+    || (a.peso_kg === b.peso_kg && a.reps === b.reps && a.series > b.series);
+
+  Object.keys(byNameDate).forEach(name => {
+    const dates = Object.keys(byNameDate[name]).sort();
+    const lastDate = dates[dates.length - 1];
+    const lastAgg = byNameDate[name][lastDate];
+    let best = null;
+    dates.forEach(dt => {
+      const a = { fecha: dt, ...byNameDate[name][dt] };
+      if (isBetter(a, best)) best = a;
+    });
+
+    const ex = byName[name];
+    if (!ex) {
+      byName[name] = {
+        lastDate, series: lastAgg.series, reps: lastAgg.reps, peso_kg: lastAgg.peso_kg,
+        link: (typeof VIDEO_URLS !== 'undefined' && VIDEO_URLS[name]) || '', best
+      };
+    } else {
+      // Ya existe como snack: fusiona (última por fecha, mejor por comparación)
+      if (lastDate > ex.lastDate) { ex.lastDate = lastDate; ex.series = lastAgg.series; ex.reps = lastAgg.reps; ex.peso_kg = lastAgg.peso_kg; }
+      if (isBetter(best, ex.best)) ex.best = best;
+      if (!ex.link && typeof VIDEO_URLS !== 'undefined' && VIDEO_URLS[name]) ex.link = VIDEO_URLS[name];
+    }
+  });
+
+  return byName;
+}
+
 function onSnackNameInput(i, val) {
   updateSnackEntry(i, 'ejercicio', val);
   showSnackSuggestions(i, val);
@@ -5204,7 +5253,7 @@ function onSnackNameInput(i, val) {
 function showSnackSuggestions(i, val) {
   const wrap = document.getElementById('snack-sugg-' + i);
   if (!wrap) return;
-  const hist = getSnackHistory();
+  const hist = getExerciseHistory();
   const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const q = norm((val || '').trim());
   const used = new Set(_snackEntries.filter((_, idx) => idx !== i).map(e => (e.ejercicio || '').trim().toLowerCase()).filter(Boolean));
@@ -5245,7 +5294,7 @@ function hideSnackSuggestions(i) {
 function pickSnackSuggestion(i, idx) {
   const name = _snackSuggCache[i]?.[idx];
   if (!name || !_snackEntries[i]) return;
-  const h = getSnackHistory()[name];
+  const h = getExerciseHistory()[name];
   _snackEntries[i].ejercicio = name;
   if (h) {
     if (_snackEntries[i].series  == null) _snackEntries[i].series  = h.series;
