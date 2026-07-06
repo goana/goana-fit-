@@ -5176,14 +5176,22 @@ function renderSnackEntries() {
 let _snackSuggCache = []; // per-entry-index → array of suggested names currently shown
 
 function getSnackHistory() {
-  // Returns { exerciseName: { lastDate, series, reps, peso_kg } } using most-recent entry per name.
+  // Returns { exerciseName: { lastDate, series, reps, peso_kg, link, best } } por nombre.
+  // `best` = mejor sesión registrada (prioriza peso, luego reps, luego series).
   const byName = {};
   const sorted = [...S.snacks].sort((a, b) => b.fecha.localeCompare(a.fecha));
   sorted.forEach(s => {
     const key = (s.ejercicio || '').trim();
     if (!key) return;
-    if (!byName[key]) byName[key] = { lastDate: s.fecha, series: s.series, reps: s.reps, peso_kg: s.peso_kg, link: s.link || '' };
+    if (!byName[key]) byName[key] = { lastDate: s.fecha, series: s.series, reps: s.reps, peso_kg: s.peso_kg, link: s.link || '', best: null };
     else if (!byName[key].link && s.link) byName[key].link = s.link; // recupera el enlace de filas anteriores
+    // Mejor sesión: más peso; a igualdad de peso, más reps; luego más series
+    const b = byName[key].best;
+    const better = !b
+      || (s.peso_kg || 0) > (b.peso_kg || 0)
+      || ((s.peso_kg || 0) === (b.peso_kg || 0) && (s.reps || 0) > (b.reps || 0))
+      || ((s.peso_kg || 0) === (b.peso_kg || 0) && (s.reps || 0) === (b.reps || 0) && (s.series || 0) > (b.series || 0));
+    if (better) byName[key].best = { fecha: s.fecha, series: s.series, reps: s.reps, peso_kg: s.peso_kg };
   });
   return byName;
 }
@@ -5211,12 +5219,17 @@ function showSnackSuggestions(i, val) {
   const top = names.slice(0, 6);
   _snackSuggCache[i] = top;
   if (!top.length) { wrap.style.display = 'none'; return; }
+  const fmtChips = x => [x.series ? x.series + 's' : null, x.reps ? x.reps + 'r' : null, x.peso_kg ? x.peso_kg + 'kg' : null].filter(Boolean).join(' × ');
   wrap.innerHTML = top.map((n, idx) => {
     const h = hist[n];
-    const chips = [h.series ? h.series + 's' : null, h.reps ? h.reps + 'r' : null, h.peso_kg ? h.peso_kg + 'kg' : null].filter(Boolean).join(' × ');
+    const lastChips = fmtChips(h);
+    const bestChips = h.best ? fmtChips(h.best) : '';
+    // Solo mostramos "Mejor" si de verdad supera a la última (si no, sería redundante)
+    const showBest = bestChips && bestChips !== lastChips;
     return '<div class="snack-sugg-item" onmousedown="event.preventDefault();pickSnackSuggestion(' + i + ',' + idx + ')">' +
       '<div class="snack-sugg-name">' + n + '</div>' +
-      (chips ? '<div class="snack-sugg-meta">' + chips + '</div>' : '') +
+      (lastChips ? '<div class="snack-sugg-meta">Última: ' + lastChips + '</div>' : '') +
+      (showBest ? '<div class="snack-sugg-meta" style="color:var(--accent)">🏆 Mejor: ' + bestChips + '</div>' : '') +
       '</div>';
   }).join('');
   wrap.style.display = '';
