@@ -1098,6 +1098,13 @@
           <div class="mod-sub">11 ejercicios · brazos, espalda y core</div>
         </div>
       </button>
+      <button class="mod-btn" onclick="pickMod('descendente')">
+        <span class="mod-icon" style="color:#14b8a6"><i class="ph ph-stairs"></i></span>
+        <div class="mod-text">
+          <div class="mod-title">Rutina descendente</div>
+          <div class="mod-sub">15 ejercicios · peso descendente por bloques</div>
+        </div>
+      </button>
       <button class="mod-btn" onclick="pickMod('yoga')">
         <span class="mod-icon" style="color:#a855f7"><i class="ph ph-flower-lotus"></i></span>
         <div class="mod-text">
@@ -1887,6 +1894,9 @@ const ROUTINES = {
     exercises: [EX.goblet, EX.zancadas, EX.pesomuerto, EX.puente, EX.gemelo, EX.plancha] },
   superior: { id: 'superior', name: 'Tren superior', sub: '11 ejercicios · brazos, espalda y core', icon: '<i class="ph ph-hand-fist"></i>', color: '#ec4899',
     exercises: [EX.remo, EX.press, EX.lateral, EX.curl, EX.martillo, EX.triceps, EX.patada, EX.plancha, EX.planchalatI, EX.planchalatD, EX.deadbug] },
+  descendente: { id: 'descendente', name: 'Rutina descendente', sub: '15 ejercicios · peso descendente por bloques', icon: '<i class="ph ph-stairs"></i>', color: '#14b8a6',
+    // Bloques A→F bajando la mancuerna sin recargar: A 16kg · B 8kg · C 6kg · D 4kg · E 2kg · F sin peso (core)
+    exercises: [EX.pesomuerto, EX.zancadas, EX.puente, EX.remo, EX.gemelo, EX.goblet, EX.press, EX.triceps, EX.curl, EX.martillo, EX.lateral, EX.patada, EX.birddog, EX.plancha, EX.deadbug] },
 };
 
 const ALL_EX = Object.values(EX);
@@ -2843,7 +2853,7 @@ function openPickModality() {
 }
 
 function pickMod(mod) {
-  if (mod === 'fuerza' || mod === 'inferior' || mod === 'superior') {
+  if (mod === 'fuerza' || mod === 'inferior' || mod === 'superior' || mod === 'descendente') {
     const rid = mod === 'fuerza' ? 'completa' : mod;
     setRoutine(rid);
     // ¿Ya hay ejercicios de ESTA rutina registrados hoy? → reanudar/editar.
