@@ -6,7 +6,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>goanaFit</title>
+  <title>Bitácora</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -969,7 +969,7 @@
   <!-- ═══ AUTH ══════════════════════════════════════════════ -->
   <div id="screen-auth" class="screen">
     <div class="auth-logo"><i class="ph ph-barbell"></i></div>
-    <h2 class="auth-title">goana<em>Fit</em></h2>
+    <h2 class="auth-title">Bitácora</h2>
     <p class="auth-sub">Registra tus sesiones de hipertrofia y sigue tu progreso directamente en Google Sheets.</p>
     <div id="auth-error" class="auth-error hidden"></div>
     <button class="btn-google" onclick="handleConnectGoogle()">
@@ -1008,7 +1008,7 @@
 
   <div id="screen-dashboard" class="screen">
     <div class="app-header">
-      <h1>goana<em>Fit</em> <span style="font-size:10px;opacity:.4;font-weight:400">v10apr</span></h1>
+      <h1>Bitácora <span style="font-size:10px;opacity:.4;font-weight:400">v10apr</span></h1>
       <button class="hamburger-btn" onclick="openDrawer()" aria-label="Menú">
         <span></span><span></span><span></span>
       </button>
@@ -3584,7 +3584,7 @@ function downloadWorkoutPNG() {
 
   ctx.fillStyle = ACCENT;
   ctx.font = 'bold 22px system-ui, sans-serif';
-  ctx.fillText('goana·fit', PAD, 38);
+  ctx.fillText('Bitácora', PAD, 38);
 
   ctx.fillStyle = MUTED;
   ctx.font = '13px system-ui, sans-serif';
@@ -3623,7 +3623,7 @@ function downloadWorkoutPNG() {
   // Footer branding
   ctx.fillStyle = '#333';
   ctx.font = '11px system-ui, sans-serif';
-  const foot = 'goana.fit';
+  const foot = 'bitácora';
   ctx.fillText(foot, W / 2 - ctx.measureText(foot).width / 2, height - 14);
 
   // Download
