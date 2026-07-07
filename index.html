@@ -1912,10 +1912,35 @@ function setRoutine(id) {
   localStorage.setItem('gfit_routine', id);
 }
 
-// Infiere qué rutina se entrenó un día a partir de los ejercicios registrados
+// Rutina elegida explícitamente para una fecha (señal fuerte frente a la inferencia)
+function rememberRoutineForDate(date, id) {
+  if (!ROUTINES[id]) return;
+  let map = {};
+  try { map = JSON.parse(localStorage.getItem('gfit_routine_day') || '{}'); } catch {}
+  map[date] = id;
+  localStorage.setItem('gfit_routine_day', JSON.stringify(map));
+}
+function storedRoutineForDate(date) {
+  try { return JSON.parse(localStorage.getItem('gfit_routine_day') || '{}')[date] || null; }
+  catch { return null; }
+}
+
+// Averigua qué rutina se entrenó un día. Prioridad: elección explícita guardada >
+// rutina activa hoy (si lo hecho encaja) > inferencia por los ejercicios registrados.
 function routineForDate(date) {
+  const stored = storedRoutineForDate(date);
+  if (stored && ROUTINES[stored]) return stored;
+
   const done = new Set(S.sessions.filter(s => s.fecha === date).map(s => s.ejercicio));
   if (!done.size) return activeRoutine;
+
+  // Si es HOY y todo lo registrado cabe en la rutina activa, respeta esa elección:
+  // una sesión a medias no debe "parecer" una rutina más corta que comparte ejercicios.
+  if (date === todayStr()) {
+    const activeNames = new Set(ROUTINES[activeRoutine].exercises.map(e => e.name));
+    if ([...done].every(n => activeNames.has(n))) return activeRoutine;
+  }
+
   let best = activeRoutine, bestScore = -1;
   for (const r of Object.values(ROUTINES)) {
     const names = r.exercises.map(e => e.name);
@@ -2866,6 +2891,7 @@ function pickMod(mod) {
   if (mod === 'fuerza' || mod === 'inferior' || mod === 'superior' || mod === 'descendente') {
     const rid = mod === 'fuerza' ? 'completa' : mod;
     setRoutine(rid);
+    rememberRoutineForDate(todayStr(), rid); // fija la elección del día para editar/inferir luego
     // ¿Ya hay ejercicios de ESTA rutina registrados hoy? → reanudar/editar.
     // Si no, es una rutina adicional para hoy → check-in y sesión nueva.
     const todays = new Set(S.sessions.filter(s => s.fecha === todayStr()).map(s => s.ejercicio));
