@@ -2003,10 +2003,17 @@ const FASE_INFO = {
 const DELOAD_CADA_SEMANAS = 6; // sugerir descarga cada ~6 semanas
 function _deloadKg(w) { return w ? Math.round(w * 0.65 * 2) / 2 : 0; } // ~35% menos, redondeo a 0,5
 function deloadWeeksSince() {
-  let anchor = localStorage.getItem('gfit_last_deload');
+  // Fuente de verdad: la fecha en el Sheet (config), que sobrevive entre
+  // dispositivos y a que se limpie el navegador. Fallbacks: localStorage y,
+  // en última instancia, una sesión cuya nota mencione "descarga"; si no hay
+  // nada, la primera sesión registrada.
+  let anchor = (S.config && S.config.last_deload) || localStorage.getItem('gfit_last_deload');
   if (!anchor) {
+    const deloadNote = (S.sessions || [])
+      .filter(s => s.fecha && /descarga/i.test(s.nota || ''))
+      .map(s => s.fecha).sort().pop();
     const dates = (S.sessions || []).map(s => s.fecha).filter(Boolean).sort();
-    anchor = dates[0] || todayStr(); // 1ª vez: cuenta desde la primera sesión registrada
+    anchor = deloadNote || dates[0] || todayStr();
   }
   const ms = new Date(todayStr()) - new Date(anchor);
   return Math.max(0, Math.floor(ms / (7 * 24 * 3600 * 1000)));
@@ -2014,7 +2021,10 @@ function deloadWeeksSince() {
 function toggleDeload() {
   S.deload = !S.deload;
   localStorage.setItem('gfit_deload', S.deload ? '1' : '0');
-  if (S.deload) localStorage.setItem('gfit_last_deload', todayStr()); // marca el inicio de la descarga
+  if (S.deload) {
+    localStorage.setItem('gfit_last_deload', todayStr()); // marca el inicio de la descarga
+    setCfg('last_deload', todayStr());                    // …y lo persiste en el Sheet
+  }
   renderDeloadToggle();
 }
 function renderDeloadToggle() {
@@ -2026,12 +2036,12 @@ function renderDeloadToggle() {
   const hint = document.getElementById('deload-hint');
   if (hint) {
     if (S.deload) {
-      hint.textContent = '✓ Descarga activa. Acuérdate de apagarla al terminar la semana.';
+      hint.innerHTML = '<i class="ph ph-check-circle"></i> Descarga activa. Acuérdate de apagarla al terminar la semana.';
       hint.style.color = 'var(--accent)';
     } else {
       const w = deloadWeeksSince();
       const due = w >= DELOAD_CADA_SEMANAS;
-      hint.textContent = due
+      hint.innerHTML = due
         ? `<i class="ph ph-warning"></i> Llevas ${w} semanas sin descarga — buen momento para hacer una.`
         : `Llevas ${w} semana${w === 1 ? '' : 's'} desde la última descarga (se sugiere cada ${DELOAD_CADA_SEMANAS}).`;
       hint.style.color = due ? 'var(--warning)' : 'var(--muted)';
