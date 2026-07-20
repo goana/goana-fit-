@@ -1955,8 +1955,8 @@ const EX = {
   curl:       { name: 'Curl de Bíceps',        sets: 3, reps: 12, note: 'Codos pegados al cuerpo, sin balanceo.' },
   triceps:    { name: 'Extensión de Tríceps',  sets: 3, reps: 12, note: 'Tras nuca si no molesta; si hay tirantez, sustituir por kickback.' },
   birddog:    { name: 'Bird-Dog',              sets: 3, reps: 12, unit: 'x lado', weight: true, note: 'En cuadrupedia, sin presión en el pecho; trabaja core y espalda baja.' },
-  plancha:    { name: 'Plancha Frontal',       sets: 3, reps: 30, unit: 'seg', note: 'Sobre antebrazos, cuerpo recto. Si la piel izquierda tira, apoya rodillas.' },
-  deadbug:    { name: 'Deadbug',               sets: 3, reps: 10, unit: 'x lado', note: 'Boca arriba, baja pierna y brazo contrario sin despegar la espalda. Trabaja el transverso sin tensión en la cicatriz.' },
+  plancha:    { name: 'Plancha Frontal',       sets: 3, reps: 30, unit: 'seg', weight: true, note: 'Sobre antebrazos, cuerpo recto. Si la piel izquierda tira, apoya rodillas. Disco o mancuerna en la espalda alta para añadir carga.' },
+  deadbug:    { name: 'Deadbug',               sets: 3, reps: 10, unit: 'x lado', weight: true, note: 'Boca arriba, baja pierna y brazo contrario sin despegar la espalda. Trabaja el transverso sin tensión en la cicatriz. Mancuerna ligera en las manos para añadir carga.' },
   // Nuevos — tren inferior
   pesomuerto: { name: 'Peso muerto rumano',    sets: 3, reps: 12, weight: true, note: 'Bisagra de cadera con la espalda recta y las mancuernas pegadas a la pierna. Femoral y glúteo. Con una sola mancuerna: a dos manos o alternando lados.' },
   puente:     { name: 'Puente de glúteo',      sets: 3, reps: 15, weight: true, note: 'Boca arriba, sube la cadera y aprieta el glúteo 1 s arriba. Apoya la mancuerna sobre la cadera para añadir carga, sin presión en el pecho.' },
@@ -3300,6 +3300,10 @@ function renderWorkout() {
     if (prev) {
       const dateLabel = fmtDateES(prev.date);
       const seriesTxt = prev.series.map(s => {
+        if (ex.unit && ex.weight) {
+          const kg = s.peso_kg > 0 ? String(s.peso_kg).replace('.', ',')+'kg·' : '';
+          return `S${s.serie}:${kg}${ex.unit === 'seg' ? s.reps+'s' : s.reps+'×lado'}`;
+        }
         if (ex.unit === 'seg') return `S${s.serie}:${s.reps}s`;
         if (ex.unit)           return `S${s.serie}:${s.reps}×lado`;
         return `S${s.serie}:${s.peso_kg > 0 ? String(s.peso_kg).replace('.', ',')+'kg·' : ''}${s.reps}r`;
@@ -3645,8 +3649,8 @@ function downloadWorkoutPNG() {
   const exLines = S.workout.exercises.map(ex => {
     const doneSeries = ex.series.map((s, i) => {
       if (!s.done) return null;
-      if (ex.unit === 'seg')        return `S${i+1}: ${s.reps} seg`;
       if (ex.unit && ex.weight)    return `S${i+1}: ${s.weight > 0 ? s.weight+'kg · ' : ''}${s.reps} ${ex.unit}`;
+      if (ex.unit === 'seg')        return `S${i+1}: ${s.reps} seg`;
       if (ex.unit)                 return `S${i+1}: ${s.reps} ${ex.unit}`;
       return `S${i+1}: ${s.weight}kg × ${s.reps} rep`;
     }).filter(Boolean);
@@ -4211,8 +4215,13 @@ function renderSessionDetail(date, rows) {
     const sorted = Object.values(seriesMap).sort((a,b) => a.serie - b.serie);
     const chips = sorted.map(s => {
       let inner;
-      if (ex.unit === 'seg')        inner = `${s.reps}s`;
-      else if (ex.unit && ex.weight) inner = `<span class="chip-kg">${s.peso_kg > 0 ? s.peso_kg+'kg' : '—'}</span>·${s.reps}×lado`;
+      // El caso con peso va primero: si no, un ejercicio por segundos con carga
+      // (plancha lastrada) perdería los kg al pintarse.
+      if (ex.unit && ex.weight) {
+        const val = ex.unit === 'seg' ? `${s.reps}s` : `${s.reps}×lado`;
+        inner = `<span class="chip-kg">${s.peso_kg > 0 ? s.peso_kg+'kg' : '—'}</span>·${val}`;
+      }
+      else if (ex.unit === 'seg')   inner = `${s.reps}s`;
       else if (ex.unit)             inner = `${s.reps}×lado`;
       else if (s.peso_kg > 0) inner = `<span class="chip-kg">${s.peso_kg}kg</span>·${s.reps}r`;
       else                    inner = `${s.reps}r`;
