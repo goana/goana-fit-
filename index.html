@@ -1105,6 +1105,13 @@
           <div class="mod-sub">15 ejercicios · peso descendente por bloques</div>
         </div>
       </button>
+      <button class="mod-btn" onclick="openCalentamiento('pick-modality')">
+        <span class="mod-icon" style="color:#ef4444"><i class="ph ph-fire"></i></span>
+        <div class="mod-text">
+          <div class="mod-title">Calentamiento</div>
+          <div class="mod-sub">8-10 min · antes de la fuerza</div>
+        </div>
+      </button>
       <button class="mod-btn" onclick="pickMod('yoga')">
         <span class="mod-icon" style="color:#a855f7"><i class="ph ph-flower-lotus"></i></span>
         <div class="mod-text">
@@ -1195,6 +1202,82 @@
       <button class="btn-primary" id="ci-start-btn" onclick="startWorkoutFromCheckin()">
         COMENZAR ENTRENAMIENTO
       </button>
+      <button class="btn-secondary" style="margin-top:10px" onclick="openCalentamiento('checkin')">
+        <i class="ph ph-fire"></i> Ver calentamiento (8-10 min)
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══ CALENTAMIENTO ═══════════════════════════════════════ -->
+  <div id="screen-calentamiento" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen(_calBack)">←</button>
+      <h1>Calentamiento</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="guia-pad">
+
+      <p style="font-size:13px;color:var(--muted);margin-bottom:16px">
+        8-10 minutos antes de la sesión de fuerza. De menos a más: subir temperatura,
+        mover articulaciones y activar. No se registra: es solo la guía.
+      </p>
+
+      <div class="guia-section">
+        <div class="guia-section-title">1 · Subir pulsaciones · 3 min</div>
+        <div class="guia-card">
+          <p>Caminar rápido, marcha en el sitio, bici o subir y bajar un escalón.
+          Hasta notar el cuerpo caliente y la respiración algo más alta, nada más.</p>
+        </div>
+      </div>
+
+      <div class="guia-section">
+        <div class="guia-section-title">2 · Movilidad de abajo arriba · 4 min</div>
+        <div class="guia-card">
+          <ul>
+            <li><b>Círculos de tobillo</b> — 10 por lado. Sentadilla y zancadas.</li>
+            <li><b>Balanceo de pierna adelante-atrás</b> — 10 por lado. Cadera, prepara los lunges.</li>
+            <li><b>Sentadilla sin peso</b>, rango parcial → completo — 10. Ensayo del goblet.</li>
+            <li><b>Gato-vaca</b> — 8 lentas. Columna, prepara bird-dog y deadbug.</li>
+            <li><b>Retracción de escápulas</b> (juntar omóplatos) — 10. Remo, sin cargar el hombro.</li>
+            <li><b>Círculos de brazo</b>, pequeños → grandes — 10 en cada sentido.</li>
+            <li><b>Wall slides</b> (brazos en la pared, subir y bajar) — 8. Prepara el press militar.</li>
+          </ul>
+        </div>
+        <div class="guia-card guia-card-warn">
+          <div class="guia-card-title">Con el brazo izquierdo</div>
+          <p>Llega solo hasta donde no tire la cicatriz. Si un día llegas menos que ayer,
+          no pasa nada: se trabaja en el rango que haya. Sin rebotes y sin buscar el estirón.</p>
+        </div>
+      </div>
+
+      <div class="guia-section">
+        <div class="guia-section-title">3 · Activación · 2 min</div>
+        <div class="guia-card">
+          <ul>
+            <li><b>Bird-dog lento</b> — 6 por lado, sin peso. Enciende el core para plancha y deadbug.</li>
+            <li><b>Serie de aproximación</b> — el primer ejercicio del día con la mitad del peso, 10 reps.
+            Es la que más cambia la primera serie real.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="guia-section">
+        <div class="guia-section-title">Ajustes</div>
+        <div class="guia-card">
+          <ul>
+            <li><b>Día de radio o energía baja:</b> quédate en los pasos 1 y 2, salta la serie de
+            aproximación y empieza con menos peso.</li>
+            <li><b>Piel tirante:</b> wall slides y círculos de brazo con recorrido corto, o sáltalos
+            si hoy cambias el press militar por elevaciones laterales.</li>
+          </ul>
+        </div>
+        <div class="guia-card guia-card-warn">
+          <div class="guia-card-title">Cuándo parar</div>
+          <p>Si aparece <b>dolor nuevo</b> en la cicatriz o en el brazo (no tirantez, dolor),
+          para y coméntalo con tu equipo médico antes de seguir.</p>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -2885,6 +2968,14 @@ function renderDash() {
 
 function openPickModality() {
   showScreen('pick-modality');
+}
+
+// Guía de calentamiento: solo lectura, no se registra como sesión.
+// Recuerda desde dónde se abrió para que el botón "←" vuelva ahí.
+let _calBack = 'pick-modality';
+function openCalentamiento(from) {
+  _calBack = from || 'dashboard';
+  showScreen('calentamiento');
 }
 
 function pickMod(mod) {
