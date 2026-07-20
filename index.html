@@ -2900,9 +2900,13 @@ function getLastSession() {
     const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha !== today && s.completada);
     if (!rows.length) { result[ex.name] = null; return; }
     const lastDate = rows.map(r => r.fecha).sort().reverse()[0];
+    // Deduplica por nº de serie: si la hoja tiene filas repetidas de ese día,
+    // la referencia "Anterior" mostraba S1, S1, S2, S2…
+    const bySerie = {};
+    rows.filter(r => r.fecha === lastDate).forEach(r => { bySerie[r.serie] = r; });
     result[ex.name] = {
       date: lastDate,
-      series: rows.filter(r => r.fecha === lastDate).sort((a,b) => a.serie - b.serie),
+      series: Object.values(bySerie).sort((a,b) => a.serie - b.serie),
     };
   });
   return result;
@@ -4139,7 +4143,7 @@ function editSessionByDate(date) {
   S.workout = {
     date, editing: true, dirty: false, _pwShown: true,
     exercises: EXERCISES.map(ex => ({
-      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit,
+      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit, weight: ex.weight,
       series: Array.from({length: ex.sets}, (_, i) => {
         const row = saved.find(s => s.ejercicio === ex.name && s.serie === i + 1);
         return {
