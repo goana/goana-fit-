@@ -2012,23 +2012,24 @@ function storedRoutineForDate(date) {
 // rutina activa hoy (si lo hecho encaja) > inferencia por los ejercicios registrados.
 function routineForDate(date) {
   const stored = storedRoutineForDate(date);
-  if (stored && ROUTINES[stored]) return stored;
-
   const done = new Set(S.sessions.filter(s => s.fecha === date).map(s => s.ejercicio));
-  if (!done.size) return activeRoutine;
+  if (!done.size) return (stored && ROUTINES[stored]) ? stored : activeRoutine;
 
-  // Si es HOY y todo lo registrado cabe en la rutina activa, respeta esa elección:
-  // una sesión a medias no debe "parecer" una rutina más corta que comparte ejercicios.
-  if (date === todayStr()) {
-    const activeNames = new Set(ROUTINES[activeRoutine].exercises.map(e => e.name));
-    if ([...done].every(n => activeNames.has(n))) return activeRoutine;
-  }
+  // Una rutina "explica" el día si contiene TODO lo que se entrenó. La elección
+  // guardada (o la abierta ahora mismo) solo manda si explica el día: así una
+  // sesión a medias respeta la rutina elegida, pero asomarse a otra rutina cuya
+  // lista no cubre lo registrado nunca reescribe lo que se entrenó de verdad.
+  const explains = id => ROUTINES[id] &&
+    [...done].every(n => ROUTINES[id].exercises.some(e => e.name === n));
+  if (explains(stored)) return stored;
+  if (date === todayStr() && explains(activeRoutine)) return activeRoutine;
 
+  // Sin señal fiable: la rutina que mejor cuadra (cubre lo hecho, penaliza huecos).
   let best = activeRoutine, bestScore = -1;
   for (const r of Object.values(ROUTINES)) {
     const names = r.exercises.map(e => e.name);
     const hit = names.filter(n => done.has(n)).length;
-    const score = hit - (names.length - hit) * 0.1; // cubre la rutina, penaliza huecos
+    const score = hit - (names.length - hit) * 0.1;
     if (hit > 0 && score > bestScore) { bestScore = score; best = r.id; }
   }
   return best;
@@ -2986,7 +2987,8 @@ function pickMod(mod) {
   if (mod === 'fuerza' || mod === 'inferior' || mod === 'superior' || mod === 'descendente') {
     const rid = mod === 'fuerza' ? 'completa' : mod;
     setRoutine(rid);
-    rememberRoutineForDate(todayStr(), rid); // fija la elección del día para editar/inferir luego
+    // Ojo: aquí NO se fija la rutina del día. Abrir una rutina para mirarla no
+    // debe pisar la que se entrenó de verdad; eso se marca al guardar (handleSave).
     // ¿Ya hay ejercicios de ESTA rutina registrados hoy? → reanudar/editar.
     // Si no, es una rutina adicional para hoy → check-in y sesión nueva.
     const todays = new Set(S.sessions.filter(s => s.fecha === todayStr()).map(s => s.ejercicio));
@@ -3550,6 +3552,10 @@ async function handleSave(silent = false) {
       idx === 0 ? (S.workout._pwFatigue ?? '') : '',  // cansancio
       idx === 0 ? (S.workout._pwNote    ?? '') : '',  // nota
     ]);
+
+  // La rutina del día se fija al guardar, no al elegirla en el menú: así solo la
+  // reclama una rutina que se ha entrenado de verdad.
+  if (rows.length) rememberRoutineForDate(S.workout.date, activeRoutine);
 
   if (S.offline) {
     // ── OFFLINE path: queue everything and update local cache ──
