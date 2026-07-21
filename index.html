@@ -670,6 +670,17 @@
       text-align: center; padding: 7px; font-size: 12px; font-weight: 600; z-index: 400;
     }
 
+    /* ── Update Banner (versión nueva) ─────────────────────── */
+    #update-banner {
+      position: fixed; left: 12px; right: 12px; bottom: 12px;
+      background: var(--accent); color: #0f0f0f;
+      border-radius: var(--rs); padding: 13px 16px;
+      font-size: 13px; font-weight: 700; text-align: center;
+      z-index: 600; cursor: pointer; box-shadow: 0 6px 20px rgba(0,0,0,.5);
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      animation: tSlide .25s ease;
+    }
+
     /* ── Success Overlay ───────────────────────────────────── */
     #success-overlay {
       position: fixed; inset: 0; z-index: 500;
@@ -2541,11 +2552,35 @@ async function refreshToken() {
 function maybeRefreshOnFocus() {
   if (!S.token) return;
   if (!S.tokenExpiry || Date.now() > S.tokenExpiry - 120000) refreshToken();
+  checkForUpdate();
 }
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') maybeRefreshOnFocus();
 });
 window.addEventListener('focus', maybeRefreshOnFocus);
+
+// Aviso de versión nueva: compara la fecha del index.html publicado con la que
+// se cargó. Si cambió, muestra una barra para recargar de un toque. Así no hay
+// que cerrar y abrir la app a ciegas cada vez que se publica un cambio.
+let _appLastMod = null;
+async function checkForUpdate() {
+  if (S.offline || document.getElementById('update-banner')) return;
+  try {
+    const r = await fetch(location.pathname + '?v=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+    const tag = r.headers.get('last-modified') || r.headers.get('etag');
+    if (!tag) return;
+    if (_appLastMod === null) { _appLastMod = tag; return; } // baseline al primer chequeo
+    if (tag !== _appLastMod) showUpdateBanner();
+  } catch {}
+}
+function showUpdateBanner() {
+  if (document.getElementById('update-banner')) return;
+  const b = document.createElement('div');
+  b.id = 'update-banner';
+  b.innerHTML = '<i class="ph ph-arrows-clockwise"></i> Hay una versión nueva · toca para actualizar';
+  b.onclick = () => location.reload();
+  document.body.appendChild(b);
+}
 
 function logout() {
   if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
@@ -3519,7 +3554,29 @@ function confirmExit() {
   skipTimer(); showScreen('dashboard');
 }
 
+// Cerrojo de guardado: el autoguardado (cada 2 s), el manual y el del temporizador
+// pueden solaparse. Como cada guardado lee la hoja → calcula qué falta → lo añade,
+// dos a la vez leen el mismo estado y ambos hacen append de las mismas filas
+// (de ahí los duplicados). Serializamos: solo corre uno; los que lleguen mientras
+// se funden en un único guardado posterior (manual gana a silencioso).
+let _saving = false;
+let _pendingSave = null; // null | { silent: bool }
 async function handleSave(silent = false) {
+  if (_saving) {
+    _pendingSave = { silent: _pendingSave ? (_pendingSave.silent && silent) : silent };
+    return;
+  }
+  _saving = true;
+  try {
+    await _doSave(silent);
+  } finally {
+    _saving = false;
+    const p = _pendingSave; _pendingSave = null;
+    if (p) await handleSave(p.silent);
+  }
+}
+
+async function _doSave(silent = false) {
   const btn = document.getElementById('save-btn');
   if (!silent) { btn.disabled = true; btn.textContent = 'GUARDANDO...'; }
 
@@ -6003,6 +6060,8 @@ async function boot() {
     toast('Modo sin conexión — datos en caché', 'warning');
     renderDash(); showScreen('dashboard'); return;
   }
+
+  checkForUpdate(); // fija la versión base para detectar despliegues posteriores
 
   try {
     await ensureSheets();
