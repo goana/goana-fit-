@@ -1067,6 +1067,9 @@
             <span style="width:10px;height:10px;border-radius:50%;background:#6366f1;display:inline-block"></span>En casa
           </span>
         </div>
+        <div style="font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+          Toca cualquier día para ver lo que hiciste o apuntar un entreno de ese día.
+        </div>
       </div>
 
       <div class="section-lbl">Plan de la semana</div>
@@ -1088,6 +1091,14 @@
       <div style="width:40px"></div>
     </div>
     <div class="dash-pad">
+      <div id="pick-date-banner" style="display:none;margin-bottom:12px;padding:10px 12px;
+           border:1px solid var(--accent);border-radius:var(--r);background:var(--surface);
+           font-size:13px;color:var(--text);align-items:center;gap:8px">
+        <i class="ph ph-calendar-plus" style="color:var(--accent)"></i>
+        <span id="pick-date-txt" style="flex:1"></span>
+        <button onclick="showScreen('dashboard')" style="background:none;border:none;
+          color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline">Cancelar</button>
+      </div>
       <button class="mod-btn" onclick="pickMod('fuerza')">
         <span class="mod-icon" style="color:var(--accent)"><i class="ph ph-barbell"></i></span>
         <div class="mod-text">
@@ -1165,9 +1176,16 @@
       <div class="workout-date-lbl" id="workout-date-lbl"></div>
       <div style="display:flex;align-items:center;justify-content:space-between">
         <div class="workout-hint" id="workout-hint">9 ejercicios · 3 series · descansa 90 s entre series</div>
-        <div style="display:flex;align-items:center;gap:6px">
+        <div id="timer-wrap" style="display:flex;align-items:center;gap:6px">
           <button class="stmr-ctrl-btn" id="stmr-ctrl-btn" onclick="toggleSessionTimer()"><svg width="10" height="10" viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9" fill="currentColor"/></svg></button>
           <div class="session-timer" id="session-timer">00:00</div>
+        </div>
+        <div id="manual-dur-wrap" style="display:none;align-items:center;gap:6px">
+          <input type="number" id="manual-dur" min="0" max="300" step="1" inputmode="numeric" placeholder="—"
+            oninput="onManualDurInput()"
+            style="width:58px;padding:4px 6px;border-radius:8px;border:1px solid var(--border2);
+                   background:var(--bg);color:var(--text);font-size:14px;text-align:center">
+          <span style="font-size:12px;color:var(--muted)">min</span>
         </div>
       </div>
     </div>
@@ -2064,6 +2082,7 @@ const S = {
   sessions:     [],
   config:       {},
   calDate:      new Date(),
+  logDate:      null,   // día al que se está registrando (null = hoy)
   workout:      null,
   chart:        null,
   repsChart:    null,
@@ -2317,6 +2336,11 @@ function getExerciseWarn(exerciseName) {
 
 const todayStr = () => fmtDate(new Date());
 
+// Día al que se está registrando ahora mismo. Por defecto hoy; se cambia al
+// entrar desde un día del calendario para apuntar un entreno pasado.
+function logDateStr() { return S.logDate || todayStr(); }
+function isToday(date) { return date === todayStr(); }
+
 function fmtDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
@@ -2431,6 +2455,7 @@ function closeDrawer() {
 }
 
 function showScreen(name) {
+  if (name === 'dashboard') S.logDate = null; // salir del flujo de "día pasado"
   document.querySelectorAll('.screen').forEach(s => {
     s.style.display = 'none'; s.classList.remove('active');
   });
@@ -2914,11 +2939,11 @@ function getRec() {
   return { icon:'<i class="ph ph-lightning"></i>', title:'¡Vuelve a la rutina!', sub:`Última sesión hace ${since} días`, train:true };
 }
 
-function getLastWeights() {
-  const today = todayStr();
+function getLastWeights(refDate) {
+  const ref = refDate || todayStr();
   const w = {};
   ALL_EX.forEach(ex => {
-    const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha !== today);
+    const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha < ref);
     if (!rows.length) { w[ex.name] = {}; return; }
     const lastDate = rows.map(r => r.fecha).sort().reverse()[0];
     w[ex.name] = {};
@@ -2929,11 +2954,11 @@ function getLastWeights() {
   return w;
 }
 
-function getLastSession() {
-  const today = todayStr();
+function getLastSession(refDate) {
+  const ref = refDate || todayStr();
   const result = {};
   ALL_EX.forEach(ex => {
-    const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha !== today && s.completada);
+    const rows = S.sessions.filter(s => s.ejercicio === ex.name && s.fecha < ref && s.completada);
     if (!rows.length) { result[ex.name] = null; return; }
     const lastDate = rows.map(r => r.fecha).sort().reverse()[0];
     // Deduplica por nº de serie: si la hoja tiene filas repetidas de ese día,
@@ -3007,7 +3032,33 @@ function renderDash() {
 }
 
 function openPickModality() {
+  S.logDate = null;
   showScreen('pick-modality');
+  renderPickDateBanner();
+}
+
+// Apuntar un entreno en un día concreto (normalmente pasado), desde el calendario
+function addToDate(date) {
+  S.logDate = isToday(date) ? null : date;
+  closeSessionSheet();
+  showScreen('pick-modality');
+  renderPickDateBanner();
+}
+
+function renderPickDateBanner() {
+  const b = document.getElementById('pick-date-banner');
+  if (!b) return;
+  if (!S.logDate) { b.style.display = 'none'; return; }
+  document.getElementById('pick-date-txt').textContent =
+    'Apuntando en ' + fmtDateLarga(S.logDate);
+  b.style.display = 'flex';
+}
+
+// "2026-08-12" → "miércoles 12 de agosto"
+function fmtDateLarga(iso) {
+  const d = parseDate(iso);
+  const dn = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+  return `${dn[d.getDay()]} ${d.getDate()} de ${MONTHS[d.getMonth()].toLowerCase()}`;
 }
 
 // Guía de calentamiento: solo lectura, no se registra como sesión.
@@ -3019,22 +3070,25 @@ function openCalentamiento(from) {
 }
 
 function pickMod(mod) {
+  const date = logDateStr();
   if (mod === 'fuerza' || mod === 'inferior' || mod === 'superior' || mod === 'descendente') {
     const rid = mod === 'fuerza' ? 'completa' : mod;
     setRoutine(rid);
     // Ojo: aquí NO se fija la rutina del día. Abrir una rutina para mirarla no
     // debe pisar la que se entrenó de verdad; eso se marca al guardar (handleSave).
-    // ¿Ya hay ejercicios de ESTA rutina registrados hoy? → reanudar/editar.
-    // Si no, es una rutina adicional para hoy → check-in y sesión nueva.
-    const todays = new Set(S.sessions.filter(s => s.fecha === todayStr()).map(s => s.ejercicio));
-    const alreadyThis = ROUTINES[rid].exercises.some(e => todays.has(e.name));
-    if (alreadyThis) editTodayWorkout(rid);
+    // ¿Ya hay ejercicios de ESTA rutina registrados ese día? → reanudar/editar.
+    // Si no, es una rutina nueva para ese día.
+    const dayEx = new Set(S.sessions.filter(s => s.fecha === date).map(s => s.ejercicio));
+    const alreadyThis = ROUTINES[rid].exercises.some(e => dayEx.has(e.name));
+    if (alreadyThis) editWorkoutForDate(date, rid);
+    // El check-in pregunta cómo estás HOY: en un día pasado no tiene sentido.
+    else if (!isToday(date)) { S.workout = null; startWorkout(date); }
     else { S.workout = null; buildCheckinUI(); showScreen('checkin'); }
   }
-  else if (mod === 'yoga')    openYogaScreen();
-  else if (mod === 'pilates') openPilatesScreen();
-  else if (mod === 'casa')    openCasaScreen();
-  else if (mod === 'snacks')  openSnackScreen();
+  else if (mod === 'yoga')    openYogaScreen(date);
+  else if (mod === 'pilates') openPilatesScreen(date);
+  else if (mod === 'casa')    openCasaScreen(date);
+  else if (mod === 'snacks')  openSnackScreen(date);
 }
 
 function renderCal() {
@@ -3115,8 +3169,8 @@ function renderCal() {
       + (ds === todayS ? ' today' : '');
     e.textContent = dt.getDate();
     const hasContent = isFull || isSnack || isYoga || isPilates || isCasa;
-    if (hasContent) e.onclick = () => openSessionSheet(ds);
-    if (hasContent && !isFull && !isSnack) e.style.cursor = 'pointer';
+    // Días pasados y hoy: se abren siempre, para poder apuntar un entreno de ese día
+    if (hasContent || ds <= todayS) { e.onclick = () => openSessionSheet(ds); e.style.cursor = 'pointer'; }
     grid.appendChild(e);
   }
 }
@@ -3128,14 +3182,23 @@ function navCal(dir) { S.calDate.setMonth(S.calDate.getMonth()+dir); renderCal()
 // ═══════════════════════════════════════════════════════════
 
 function editTodayWorkout(forceRoutine) {
-  const date = todayStr();
+  editWorkoutForDate(todayStr(), forceRoutine);
+}
+
+function editWorkoutForDate(date, forceRoutine) {
   setRoutine(forceRoutine || routineForDate(date)); // rutina indicada, o la inferida del día
   const saved = S.sessions.filter(s => s.fecha === date);
-  const lw = getLastWeights(); // fallback: previous session weights
+  const lw = getLastWeights(date); // fallback: pesos de la sesión anterior a ese día
   const pwDone = localStorage.getItem('gfit_pw_done') === date;
+  // Conservar cansancio, nota y duración ya guardados: si no, al reguardar se borran
+  const metaRow = saved.find(r => r.cansancio || r.nota) || {};
+  const durRow  = saved.find(r => r.duracion_min > 0);
   S.workout = {
     date, editing: true, dirty: false,
-    _pwShown: pwDone, // don't re-show modal if already submitted today
+    _pwShown: pwDone || !isToday(date), // en un día pasado no salta el modal solo
+    _pwFatigue: metaRow.cansancio ?? '',
+    _pwNote:    metaRow.nota      ?? '',
+    durMin: durRow ? durRow.duracion_min : 0,
     exercises: EXERCISES.map(ex => ({
       name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit, weight: ex.weight,
       series: Array.from({length: ex.sets}, (_, i) => {
@@ -3152,7 +3215,7 @@ function editTodayWorkout(forceRoutine) {
   };
   renderWorkout();
   showScreen('workout');
-  resumeSessionTimerIfToday();
+  if (isToday(date)) resumeSessionTimerIfToday();
   updateSessionTimerBtn();
 }
 
@@ -3177,16 +3240,23 @@ async function deleteTodayWorkout() {
   } catch(e) { toast('Error al borrar: ' + e.message, 'error'); }
 }
 
-function startWorkout() {
-  const dayHasThisRoutine = S.sessions.some(s => s.fecha === todayStr()
+function startWorkout(forDate) {
+  const date = forDate || logDateStr();
+  const dayHasThisRoutine = S.sessions.some(s => s.fecha === date
       && ROUTINES[activeRoutine].exercises.some(e => e.name === s.ejercicio));
-  if (!S.workout?.editing && dayHasThisRoutine) { toast('Ya hiciste esta rutina hoy — ¡descansa!','info'); return; }
-  const lw = getLastWeights();
-  const dl = S.deload;
+  if (!S.workout?.editing && dayHasThisRoutine) {
+    toast(isToday(date) ? 'Ya hiciste esta rutina hoy — ¡descansa!'
+                        : 'Ese día ya tienes esta rutina apuntada', 'info');
+    return;
+  }
+  const lw = getLastWeights(date);
+  // La descarga es una decisión de hoy: no se aplica a un día pasado
+  const dl = isToday(date) ? S.deload : false;
   if (!S.workout?.editing) S.workout = {
-    date: todayStr(),
+    date,
     editing: false, dirty: false, deload: dl,
-    _pwShown: localStorage.getItem('gfit_pw_done') === todayStr(),
+    _pwShown: localStorage.getItem('gfit_pw_done') === date,
+    durMin: 0,
     exercises: EXERCISES.map(ex => {
       const sets = dl ? Math.min(2, ex.sets) : ex.sets; // descarga: 2 series
       return {
@@ -3201,7 +3271,7 @@ function startWorkout() {
   };
   renderWorkout();
   showScreen('workout');
-  resumeSessionTimerIfToday();
+  if (isToday(S.workout.date)) resumeSessionTimerIfToday();
   updateSessionTimerBtn();
 }
 
@@ -3290,21 +3360,35 @@ function resumeSessionTimerIfToday() {
   return false;
 }
 
+// Minutos escritos a mano en una sesión de otro día (no hay cronómetro)
+function onManualDurInput() {
+  if (!S.workout) return;
+  const mi = document.getElementById('manual-dur');
+  S.workout.durMin = mi && mi.value !== '' ? Math.max(0, parseInt(mi.value) || 0) : 0;
+  S.workout.dirty = true;
+}
+
 function sessionElapsedMin() {
   const secs = STMR.offset + (STMR.start ? Math.floor((Date.now() - STMR.start) / 1000) : 0);
   return Math.round(secs / 60);
 }
 
 function renderWorkout() {
-  const d = parseDate(S.workout.date);
-  const dn = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  document.getElementById('workout-date-lbl').textContent =
-    `${dn[d.getDay()]} ${d.getDate()} de ${MONTHS[d.getMonth()].toLowerCase()}`;
+  const hoy = isToday(S.workout.date);
+  document.getElementById('workout-date-lbl').textContent = fmtDateLarga(S.workout.date);
   updateSessionTimerBtn();
+
+  // El cronómetro solo tiene sentido hoy; en un día pasado se escriben los minutos
+  const tw = document.getElementById('timer-wrap');
+  const mw = document.getElementById('manual-dur-wrap');
+  const mi = document.getElementById('manual-dur');
+  if (tw) tw.style.display = hoy ? 'flex' : 'none';
+  if (mw) mw.style.display = hoy ? 'none' : 'flex';
+  if (mi && !hoy) mi.value = S.workout.durMin ? String(S.workout.durMin) : '';
 
   // Header title: editing vs new
   document.querySelector('#screen-workout .app-header h1').textContent =
-    S.workout.editing ? 'Editando sesión' : 'Sesión de hoy';
+    S.workout.editing ? 'Editando sesión' : (hoy ? 'Sesión de hoy' : 'Sesión pasada');
 
   // Hint dinámico según la rutina activa
   const hintEl = document.getElementById('workout-hint');
@@ -3316,7 +3400,8 @@ function renderWorkout() {
   // Workout-level warnings (energy, radio)
   const existingWarn = document.getElementById('workout-global-warn');
   if (existingWarn) existingWarn.remove();
-  const warns = getWorkoutWarnings();
+  // Los avisos hablan de cómo estás hoy: en una sesión de otro día no pintan nada
+  const warns = hoy ? getWorkoutWarnings() : [];
   if (warns.length) {
     const div = document.createElement('div');
     div.id = 'workout-global-warn';
@@ -3327,7 +3412,7 @@ function renderWorkout() {
 
   const list = document.getElementById('ex-list');
   list.innerHTML = '';
-  const lastSess = getLastSession();
+  const lastSess = getLastSession(S.workout.date);
 
   S.workout.exercises.forEach((ex, ei) => {
     const def = ALL_EX.find(e => e.name === ex.name) || {};
@@ -3533,7 +3618,7 @@ async function submitPostWorkout() {
     S.workout._pwFatigue = _pwFatigue ?? '';
     S.workout._pwNote    = (document.getElementById('pw-note').value || '').trim();
   }
-  localStorage.setItem('gfit_pw_done', todayStr());
+  if (isToday(S.workout?.date || '')) localStorage.setItem('gfit_pw_done', todayStr());
   await handleSave();
 }
 
@@ -3580,8 +3665,16 @@ async function _doSave(silent = false) {
   const btn = document.getElementById('save-btn');
   if (!silent) { btn.disabled = true; btn.textContent = 'GUARDANDO...'; }
 
-  // Capture duration — timer keeps running, only stops when user presses ⏸
-  const durMin = sessionElapsedMin();
+  // Capture duration — timer keeps running, only stops when user presses ⏸.
+  // En una sesión de otro día no hay cronómetro: valen los minutos escritos.
+  let durMin;
+  if (isToday(S.workout.date)) {
+    durMin = sessionElapsedMin();
+  } else {
+    const mi = document.getElementById('manual-dur');
+    durMin = mi && mi.value !== '' ? Math.max(0, parseInt(mi.value) || 0) : (S.workout.durMin || 0);
+    S.workout.durMin = durMin;
+  }
 
   // Sync all inputs from DOM
   S.workout.exercises.forEach((ex,ei) => {
@@ -3620,7 +3713,8 @@ async function _doSave(silent = false) {
     const {cur,rec} = calcStreak();
     queueAction({ type:'cfg', key:'streak_actual', value: String(cur) });
     queueAction({ type:'cfg', key:'streak_record', value: String(Math.max(rec, +(S.config.streak_record||0))) });
-    queueAction({ type:'cfg', key:'ultimo_entrenamiento', value: S.workout.date });
+    if (S.workout.date >= (S.config.ultimo_entrenamiento || ''))
+      queueAction({ type:'cfg', key:'ultimo_entrenamiento', value: S.workout.date });
   } else {
     // ── ONLINE path: API calls ──
     try {
@@ -3647,7 +3741,9 @@ async function _doSave(silent = false) {
       const {cur,rec} = calcStreak();
       await setCfg('streak_actual', cur);
       await setCfg('streak_record', Math.max(rec, +(S.config.streak_record||0)));
-      await setCfg('ultimo_entrenamiento', S.workout.date);
+      // Apuntar un día pasado no debe mover hacia atrás la última sesión
+      const ultimo = S.config.ultimo_entrenamiento || '';
+      if (S.workout.date >= ultimo) await setCfg('ultimo_entrenamiento', S.workout.date);
     } catch(e) {
       const errMsg = `ERROR al guardar (${new Date().toLocaleTimeString()})\n${e.message}\noffline:${S.offline} token:${!!S.token} rows:${rows.length}`;
       console.error('[handleSave]', errMsg, e);
@@ -3995,7 +4091,8 @@ function openSessionSheet(date) {
   const pilatesRows = S.pilates.filter(p => p.fecha === date);
   const casaRows    = S.casa.filter(c => c.fecha === date);
   const snackRows   = S.snacks.filter(s => s.fecha === date);
-  if (!rows.length && !yogaRows.length && !pilatesRows.length && !casaRows.length && !snackRows.length) { closeSessionSheet(); return; }
+  const vacio = !rows.length && !yogaRows.length && !pilatesRows.length && !casaRows.length && !snackRows.length;
+  if (vacio && date > todayStr()) { closeSessionSheet(); return; }
 
   const dur    = rows.find(r => r.duracion_min > 0);
   const meta   = rows.find(r => r.cansancio || r.nota);
@@ -4118,6 +4215,19 @@ function openSessionSheet(date) {
     if (snackNota) html += `<div style="padding:2px 16px 10px;font-size:12px;color:var(--muted);font-style:italic">"${linkify(snackNota)}"</div>`;
   }
 
+  if (vacio) {
+    html += `<div style="padding:14px 16px 4px;font-size:13px;color:var(--muted)">
+      Ese día no tienes nada apuntado.</div>`;
+  }
+
+  if (date <= todayStr()) {
+    const sep = vacio ? '' : 'border-top:1px solid var(--border);margin-top:6px;';
+    html += `<div style="padding:12px 16px 16px;${sep}">
+      <button onclick="addToDate('${date}')" class="btn-secondary"
+        style="width:100%"><i class="ph ph-plus"></i> Añadir entreno a este día</button>
+    </div>`;
+  }
+
   document.getElementById('session-sheet-body').innerHTML = html;
   document.getElementById('session-sheet-overlay').style.display = '';
   document.getElementById('session-sheet').style.display = '';
@@ -4200,26 +4310,8 @@ async function deleteCasaEntry(date, nth) {
 }
 
 function editSessionByDate(date) {
-  setRoutine(routineForDate(date)); // edita con la rutina que se entrenó ese día
-  const saved = S.sessions.filter(s => s.fecha === date);
-  const lw = getLastWeights();
-  S.workout = {
-    date, editing: true, dirty: false, _pwShown: true,
-    exercises: EXERCISES.map(ex => ({
-      name: ex.name, sets: ex.sets, targetReps: ex.reps, unit: ex.unit, weight: ex.weight,
-      series: Array.from({length: ex.sets}, (_, i) => {
-        const row = saved.find(s => s.ejercicio === ex.name && s.serie === i + 1);
-        return {
-          weight: row ? row.peso_kg : (lw[ex.name]?.[i+1]?.peso || 0),
-          reps:   row ? row.reps   : (lw[ex.name]?.[i+1]?.reps || ex.reps),
-          done:   !!row,
-        };
-      }),
-    })),
-  };
   closeSessionSheet();
-  renderWorkout();
-  showScreen('workout');
+  editWorkoutForDate(date); // edita con la rutina que se entrenó ese día
 }
 
 async function editYogaEntry(date, nth) {
@@ -4767,15 +4859,15 @@ async function loadYoga() {
   }
 }
 
-async function openYogaScreen() {
+async function openYogaScreen(forDate) {
+  const date = forDate || logDateStr();
   showScreen('yoga');
-  document.getElementById('yoga-fecha').value = todayStr();
+  document.getElementById('yoga-fecha').value = date;
   try { await loadYoga(); } catch(e) { console.warn('loadYoga:', e); }
 
-  // Si ya hay sesión(es) de yoga hoy, abrir la primera en modo edición
-  const today = todayStr();
-  if (S.yoga.some(y => y.fecha === today)) {
-    await editYogaEntry(today, 0);
+  // Si ya hay sesión(es) de yoga ese día, abrir la primera en modo edición
+  if (S.yoga.some(y => y.fecha === date)) {
+    await editYogaEntry(date, 0);
     return;
   }
 
@@ -4877,15 +4969,15 @@ async function loadPilates() {
   }
 }
 
-async function openPilatesScreen() {
+async function openPilatesScreen(forDate) {
+  const date = forDate || logDateStr();
   showScreen('pilates');
-  document.getElementById('pilates-fecha').value = todayStr();
+  document.getElementById('pilates-fecha').value = date;
   try { await loadPilates(); } catch(e) { console.warn('loadPilates:', e); }
 
-  // Si ya hay sesión(es) de pilates hoy, abrir la primera en modo edición
-  const today = todayStr();
-  if (S.pilates.some(p => p.fecha === today)) {
-    await editPilatesEntry(today, 0);
+  // Si ya hay sesión(es) de pilates ese día, abrir la primera en modo edición
+  if (S.pilates.some(p => p.fecha === date)) {
+    await editPilatesEntry(date, 0);
     return;
   }
 
@@ -5044,18 +5136,18 @@ async function openCasaLibrary() {
   renderCasaLibrary();
 }
 
-async function openCasaScreen() {
+async function openCasaScreen(forDate) {
+  const date = forDate || logDateStr();
   _casaMode = 'log';
   applyCasaMode();
   showScreen('casa');
-  document.getElementById('casa-fecha').value = todayStr();
+  document.getElementById('casa-fecha').value = date;
   try { await Promise.all([loadCasa(), loadCasaRutinas()]); } catch(e) { console.warn('loadCasa:', e); }
   toggleCasaNewForm(false);
 
-  // Si ya hay rutina(s) en casa hoy, abrir la primera en modo edición
-  const today = todayStr();
-  if (S.casa.some(c => c.fecha === today)) {
-    await editCasaEntry(today, 0);
+  // Si ya hay rutina(s) en casa ese día, abrir la primera en modo edición
+  if (S.casa.some(c => c.fecha === date)) {
+    await editCasaEntry(date, 0);
     return;
   }
 
@@ -5554,15 +5646,15 @@ function removeSnackEntry(i) {
   renderSnackEntries();
 }
 
-async function openSnackScreen() {
+async function openSnackScreen(forDate) {
+  const date = forDate || logDateStr();
   showScreen('snack');
-  document.getElementById('snack-fecha').value = todayStr();
+  document.getElementById('snack-fecha').value = date;
   try { await loadSnacks(); } catch(e) { console.warn('loadSnacks:', e); }
 
-  // Si ya hay snacks de hoy, abrir en modo edición para verlos/modificarlos
-  const today = todayStr();
-  if (S.snacks.some(s => s.fecha === today)) {
-    await editSnackEntry(today);
+  // Si ya hay ejercicios libres ese día, abrir en modo edición para verlos/modificarlos
+  if (S.snacks.some(s => s.fecha === date)) {
+    await editSnackEntry(date);
     return;
   }
 
