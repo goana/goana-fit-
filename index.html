@@ -4053,7 +4053,14 @@ function openSessionSheet(date) {
 
   let html = '';
 
-  if (rows.length) {
+  // Rutina a medias: sus ejercicios se enseñan dentro de Fuerza, como en el calendario
+  const exsDia = new Set(rows.map(r => r.ejercicio));
+  const rutinaIncompleta = rows.length > 0 &&
+    !Object.values(ROUTINES).some(r => r.exercises.every(e => exsDia.has(e.name)));
+  const rutinaRows = rutinaIncompleta ? [] : rows;
+  const fuerzaSess = rutinaIncompleta ? rows : [];
+
+  if (rutinaRows.length) {
     const _r = ROUTINES[routineForDate(date)] || ROUTINES.completa;
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px 4px">
       <span style="font-size:13px;font-weight:700;color:var(--accent)">${_r.icon} ${_r.name}</span>
@@ -4078,7 +4085,7 @@ function openSessionSheet(date) {
   }
 
   if (yogaRows.length) {
-    const sep = rows.length ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    const sep = rutinaRows.length ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
       <span style="font-size:13px;font-weight:700;color:#a855f7"><i class="ph ph-flower-lotus"></i> Yoga</span>
     </div>`;
@@ -4098,7 +4105,7 @@ function openSessionSheet(date) {
   }
 
   if (pilatesRows.length) {
-    const sep = (rows.length || yogaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    const sep = (rutinaRows.length || yogaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
       <span style="font-size:13px;font-weight:700;color:#06b6d4"><i class="ph ph-person-simple-tai-chi"></i> Pilates</span>
     </div>`;
@@ -4118,7 +4125,7 @@ function openSessionSheet(date) {
   }
 
   if (casaRows.length) {
-    const sep = (rows.length || yogaRows.length || pilatesRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    const sep = (rutinaRows.length || yogaRows.length || pilatesRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
       <span style="font-size:13px;font-weight:700;color:#6366f1"><i class="ph ph-house"></i> En casa</span>
     </div>`;
@@ -4139,16 +4146,19 @@ function openSessionSheet(date) {
     }).join('');
   }
 
-  if (snackRows.length) {
-    const sep = (rows.length || yogaRows.length || pilatesRows.length || casaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+  if (snackRows.length || fuerzaSess.length) {
+    const sep = (rutinaRows.length || yogaRows.length || pilatesRows.length || casaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
       <span style="font-size:13px;font-weight:700;color:var(--warning)"><i class="ph ph-lightning"></i> Fuerza</span>
       <div style="display:flex;gap:6px">
-        ${iconBtn('<i class="ph ph-pencil-simple"></i> Editar', `editSnackEntry('${date}')`, 'Editar')}
-        ${iconBtn('<i class="ph ph-trash"></i> Eliminar', `deleteSnackEntry('${date}')`, 'Eliminar')}
+        ${iconBtn('<i class="ph ph-pencil-simple"></i> Editar', snackRows.length ? `editSnackEntry('${date}')` : `editSessionByDate('${date}')`, 'Editar')}
+        ${iconBtn('<i class="ph ph-trash"></i> Eliminar', fuerzaSess.length ? `deleteFuerzaDay('${date}')` : `deleteSnackEntry('${date}')`, 'Eliminar')}
       </div>
     </div>`;
     const snackNota = snackRows[0]?.nota;
+    html += fuerzaSessLines(fuerzaSess);
+    const sessNota = fuerzaSess.find(r => r.nota)?.nota;
+    if (sessNota) html += `<div style="padding:2px 16px 10px;font-size:12px;color:var(--muted);font-style:italic">"${linkify(sessNota)}"</div>`;
     html += snackRows.map(sn => {
       const chips = [
         sn.series ? `${sn.series}s` : null,
@@ -4183,6 +4193,38 @@ function openSessionSheet(date) {
 function closeSessionSheet() {
   document.getElementById('session-sheet-overlay').style.display = 'none';
   document.getElementById('session-sheet').style.display = 'none';
+}
+
+// Ejercicios de una rutina a medias, con el mismo formato que los de Fuerza
+function fuerzaSessLines(rows) {
+  const byEx = {};
+  rows.forEach(r => { (byEx[r.ejercicio] ||= {})[r.serie] = r; });
+  return Object.entries(byEx).map(([name, seriesMap]) => {
+    const ex = ALL_EX.find(e => e.name === name) || {};
+    const series = Object.values(seriesMap);
+    const reps = series[0]?.reps;
+    const kg = Math.max(0, ...series.map(x => x.peso_kg || 0));
+    const chips = [
+      `${series.length}s`,
+      reps ? (ex.unit === 'seg' ? `${reps} seg` : ex.unit ? `${reps}×lado` : `${reps}r`) : null,
+      kg ? `${kg}kg` : null,
+    ].filter(Boolean).join(' × ');
+    return `<div style="padding:2px 16px 4px;font-size:13px;color:var(--text)">
+        ${name}<span style="color:var(--muted);margin-left:6px">${chips}</span>
+      </div>`;
+  }).join('');
+}
+
+async function deleteFuerzaDay(date) {
+  if (!confirm('¿Eliminar todos los ejercicios de fuerza de este día?')) return;
+  try {
+    await deleteSessionsByDate(date);
+    S.sessions = S.sessions.filter(s => s.fecha !== date);
+    if (S.snacks.some(sn => sn.fecha === date)) { await deleteSnacksByDate(date); await loadSnacks(); }
+    renderCal();
+    toast('Eliminado ✓', 'success');
+    openSessionSheet(date);
+  } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
 }
 
 async function deleteGymSession(date) {
