@@ -11,18 +11,25 @@ function doPost(e) {
   const clave = PropertiesService.getScriptProperties().getProperty('CLAVE');
   if (!clave || req.key !== clave) return responder({ status: 401, text: '' });
 
-  const url = 'https://sheets.googleapis.com/v4/spreadsheets/' + SPREADSHEET_ID
-    + (req.path || '') + (req.params ? '?' + req.params : '');
-  const opciones = {
-    method: String(req.method || 'GET').toLowerCase(),
-    headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
-    contentType: 'application/json',
-    muteHttpExceptions: true,
-  };
-  if (req.body !== null && req.body !== undefined) opciones.payload = JSON.stringify(req.body);
+  const lista = req.batch || [req];
+  const token = ScriptApp.getOAuthToken();
+  const peticiones = lista.map(function (r) {
+    const p = {
+      url: 'https://sheets.googleapis.com/v4/spreadsheets/' + SPREADSHEET_ID
+        + (r.path || '') + (r.params ? '?' + r.params : ''),
+      method: String(r.method || 'GET').toLowerCase(),
+      headers: { Authorization: 'Bearer ' + token },
+      contentType: 'application/json',
+      muteHttpExceptions: true,
+    };
+    if (r.body !== null && r.body !== undefined) p.payload = JSON.stringify(r.body);
+    return p;
+  });
 
-  const r = UrlFetchApp.fetch(url, opciones);
-  return responder({ status: r.getResponseCode(), text: r.getContentText() });
+  const respuestas = UrlFetchApp.fetchAll(peticiones).map(function (r) {
+    return { status: r.getResponseCode(), text: r.getContentText() };
+  });
+  return responder(req.batch ? { status: 200, batch: respuestas } : respuestas[0]);
 }
 
 function responder(obj) {

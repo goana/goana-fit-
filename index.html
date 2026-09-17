@@ -2519,28 +2519,63 @@ function logout() {
 // SHEETS API
 // ═══════════════════════════════════════════════════════════
 
-async function api(method, path, body, params) {
-  if (S.offline) throw Object.assign(new Error('offline'), {code:'offline'});
-  const key = getClave();
-  if (!key) throw Object.assign(new Error('no-token'), {code:'no-token'});
+// Apps Script falla si le llegan varias peticiones a la vez: las llamadas se
+// encolan y se mandan juntas en una sola petición, de una en una.
+const apiQueue = [];
+let apiBusy = false;
 
-  // text/plain evita la petición previa de CORS, que Apps Script no admite
-  const res = await fetch(SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ key, method, path, body: body ?? null, params: params || '' }),
+function api(method, path, body, params) {
+  if (S.offline) return Promise.reject(Object.assign(new Error('offline'), {code:'offline'}));
+  if (!getClave()) return Promise.reject(Object.assign(new Error('no-token'), {code:'no-token'}));
+  return new Promise((resolve, reject) => {
+    apiQueue.push({ req: { method, path, body: body ?? null, params: params || '' }, resolve, reject });
+    if (!apiBusy) setTimeout(pumpApi, 0);
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const out = await res.json();
-  if (out.status === 401) {
-    localStorage.removeItem('gfit_clave');
-    throw Object.assign(new Error('auth-expired'), {code:'auth-expired'});
+}
+
+async function postBridge(payload) {
+  for (let intento = 0; ; intento++) {
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
+    } catch (e) {
+      if (intento >= 2) throw e;
+      await new Promise(r => setTimeout(r, 800));
+    }
   }
-  if (out.status < 200 || out.status >= 300) {
-    const e = (() => { try { return JSON.parse(out.text); } catch(_) { return {}; } })();
-    throw new Error(e.error?.message || `HTTP ${out.status}`);
+}
+
+async function pumpApi() {
+  if (apiBusy || !apiQueue.length) return;
+  apiBusy = true;
+  const lote = apiQueue.splice(0, 20);
+  try {
+    const out = await postBridge({ key: getClave(), batch: lote.map(x => x.req) });
+    if (out.status === 401) {
+      localStorage.removeItem('gfit_clave');
+      const err = Object.assign(new Error('auth-expired'), {code:'auth-expired'});
+      lote.forEach(x => x.reject(err));
+    } else {
+      lote.forEach((x, i) => {
+        const r = (out.batch || [])[i] || { status: 500, text: '' };
+        if (r.status < 200 || r.status >= 300) {
+          const e = (() => { try { return JSON.parse(r.text); } catch(_) { return {}; } })();
+          x.reject(new Error(e.error?.message || `HTTP ${r.status}`));
+        } else {
+          try { x.resolve(r.text ? JSON.parse(r.text) : {}); } catch (e) { x.reject(e); }
+        }
+      });
+    }
+  } catch (e) {
+    lote.forEach(x => x.reject(e));
   }
-  return out.text ? JSON.parse(out.text) : {};
+  apiBusy = false;
+  if (apiQueue.length) pumpApi();
 }
 
 async function ensureSheets() {
