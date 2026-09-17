@@ -983,15 +983,10 @@
     <h2 class="auth-title">Bitácora</h2>
     <p class="auth-sub">Registra tus sesiones de hipertrofia y sigue tu progreso directamente en Google Sheets.</p>
     <div id="auth-error" class="auth-error hidden"></div>
-    <button class="btn-google" onclick="handleConnectGoogle()">
-      <svg width="18" height="18" viewBox="0 0 24 24">
-        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
-        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-      </svg>
-      Conectar con Google
-    </button>
+    <input id="auth-clave" type="password" placeholder="Clave" autocomplete="current-password"
+      onkeydown="if(event.key==='Enter')handleConnect()"
+      style="width:100%;max-width:280px;padding:12px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);color:inherit;font:inherit;font-size:16px;margin-bottom:12px">
+    <button class="btn-google" onclick="handleConnect()">Entrar</button>
   </div>
 
   <!-- ═══ DASHBOARD ═════════════════════════════════════════ -->
@@ -1966,8 +1961,7 @@
 <div id="toast-root"></div>
 
 <!-- SCRIPTS -->
-<script src="config.js?v=20260705a"></script>
-<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="config.js?v=20260917a"></script>
 <script>
 'use strict';
 
@@ -2064,8 +2058,6 @@ function routineForDate(date) {
   return best;
 }
 
-const SCOPES    = 'https://www.googleapis.com/auth/spreadsheets';
-const SHTS_BASE = 'https://sheets.googleapis.com/v4/spreadsheets';
 const CIRC      = 2 * Math.PI * 22; // 138.23 — svg timer circumference
 
 const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
@@ -2077,8 +2069,6 @@ const WDAYS  = ['L','M','X','J','V','S','D'];
 // ═══════════════════════════════════════════════════════════
 
 const S = {
-  token:        null,
-  tokenExpiry:  null,
   sessions:     [],
   config:       {},
   calDate:      new Date(),
@@ -2436,8 +2426,7 @@ function playPlankDone() {
 
 function isConfigOk() {
   try {
-    return CLIENT_ID    && !CLIENT_ID.startsWith('TU_')
-        && SPREADSHEET_ID && !SPREADSHEET_ID.startsWith('TU_');
+    return !!SCRIPT_URL;
   } catch(_) { return false; }
 }
 
@@ -2471,118 +2460,31 @@ function showScreen(name) {
 // AUTH
 // ═══════════════════════════════════════════════════════════
 
-let tokenClient = null;
+// La app habla con la hoja a través de un Apps Script publicado como web app
+// (apps-script/Codigo.gs). No hay login de Google: basta con la clave, que se
+// escribe una vez y queda guardada en este dispositivo.
+function getClave() { return localStorage.getItem('gfit_clave') || ''; }
 
-function waitGIS() {
-  return new Promise(ok => {
-    if (window.google?.accounts) { ok(); return; }
-    const id = setInterval(() => { if (window.google?.accounts) { clearInterval(id); ok(); } }, 120);
-  });
-}
-
-// Un único callback para TODAS las peticiones de token (conexión inicial y
-// refrescos). Quien pida un token deja un "waiter" que se resuelve aquí; así
-// nunca se queda un callback obsoleto bloqueando futuros logins.
-let tokenWaiter  = null;   // { resolve, timer }
-let refreshTimer = null;   // refresco proactivo programado
-
-function initTokenClient() {
-  if (tokenClient) return;
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: SCOPES,
-    callback: onTokenResponse,
-    error_callback: () => settleToken(false),
-  });
-}
-
-function settleToken(ok) {
-  if (!tokenWaiter) return;
-  clearTimeout(tokenWaiter.timer);
-  const resolve = tokenWaiter.resolve;
-  tokenWaiter = null;
-  resolve(ok);
-}
-
-function onTokenResponse(resp) {
-  if (resp && !resp.error && resp.access_token) {
-    S.token = resp.access_token;
-    S.tokenExpiry = Date.now() + resp.expires_in * 1000;
-    localStorage.setItem('gfit_tok', S.token);
-    localStorage.setItem('gfit_exp', S.tokenExpiry);
-    scheduleProactiveRefresh();
-    settleToken(true);
-  } else {
-    settleToken(false);
-  }
-}
-
-// Pide un token a Google. interactive=true muestra el consentimiento (login
-// manual); interactive=false intenta refrescar en silencio (sin pop-up).
-function requestToken(interactive) {
-  return new Promise(resolve => {
-    initTokenClient();
-    if (!tokenClient) { resolve(false); return; }
-    settleToken(false); // descarta cualquier petición anterior a medias
-    const timer = setTimeout(() => settleToken(false), interactive ? 120000 : 12000);
-    tokenWaiter = { resolve, timer };
-    try {
-      tokenClient.requestAccessToken({ prompt: interactive ? 'consent' : '' });
-    } catch (e) {
-      settleToken(false);
-    }
-  });
-}
-
-// Refresca el token un poco antes de que caduque, para que Ana no se quede
-// "bloqueada" tras un rato de inactividad.
-function scheduleProactiveRefresh() {
-  if (refreshTimer) clearTimeout(refreshTimer);
-  if (!S.tokenExpiry) return;
-  const delay = Math.max(5000, S.tokenExpiry - Date.now() - 120000); // 2 min antes
-  refreshTimer = setTimeout(() => { if (S.token) requestToken(false); }, delay);
-}
-
-async function handleConnectGoogle() {
+async function handleConnect() {
+  const el = document.getElementById('auth-error');
   if (!isConfigOk()) {
-    const el = document.getElementById('auth-error');
     el.innerHTML = `<strong><i class="ph ph-warning"></i> Configuración incompleta</strong><br>
-      Edita <code>config.js</code> y rellena <code>CLIENT_ID</code> y <code>SPREADSHEET_ID</code>.<br>
-      Consulta <code>README.md</code> para instrucciones paso a paso.`;
+      Rellena <code>SCRIPT_URL</code> en <code>config.js</code>.`;
     el.classList.remove('hidden');
     return;
   }
-  await waitGIS();
-  const ok = await requestToken(true);
-  if (ok) await boot();
+  const clave = document.getElementById('auth-clave').value.trim();
+  if (!clave) return;
+  localStorage.setItem('gfit_clave', clave);
+  el.classList.add('hidden');
+  showScreen('loading');
+  await boot();
 }
 
-function checkStoredToken() {
-  const tok = localStorage.getItem('gfit_tok');
-  const exp = +localStorage.getItem('gfit_exp');
-  if (tok && exp && Date.now() < exp - 60000) {
-    S.token = tok; S.tokenExpiry = exp; return true;
-  }
-  return false;
-}
-
-async function refreshToken() {
-  if (S.token && S.tokenExpiry && Date.now() < S.tokenExpiry - 60000) return true;
-  await waitGIS();
-  return requestToken(false);
-}
-
-// Al volver a la pestaña/app tras un rato, refresca en silencio si el token
-// está a punto de caducar (o ya caducó) antes de que Ana toque nada.
-function maybeRefreshOnFocus() {
-  if (!S.token) return;
-  if (!S.tokenExpiry || Date.now() > S.tokenExpiry - 120000) refreshToken();
-  checkForUpdate();
-}
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') maybeRefreshOnFocus();
+  if (document.visibilityState === 'visible') checkForUpdate();
 });
-window.addEventListener('focus', maybeRefreshOnFocus);
+window.addEventListener('focus', checkForUpdate);
 
 // Aviso de versión nueva: compara la fecha del index.html publicado con la que
 // se cargó. Si cambió, muestra una barra para recargar de un toque. Así no hay
@@ -2608,9 +2510,7 @@ function showUpdateBanner() {
 }
 
 function logout() {
-  if (refreshTimer) { clearTimeout(refreshTimer); refreshTimer = null; }
-  localStorage.removeItem('gfit_tok'); localStorage.removeItem('gfit_exp');
-  S.token = null; S.tokenExpiry = null;
+  localStorage.removeItem('gfit_clave');
   skipTimer();
   showScreen('auth');
 }
@@ -2621,25 +2521,26 @@ function logout() {
 
 async function api(method, path, body, params) {
   if (S.offline) throw Object.assign(new Error('offline'), {code:'offline'});
-  if (!S.token)  throw Object.assign(new Error('no-token'), {code:'no-token'});
+  const key = getClave();
+  if (!key) throw Object.assign(new Error('no-token'), {code:'no-token'});
 
-  const url = `${SHTS_BASE}/${SPREADSHEET_ID}${path}${params ? '?'+params : ''}`;
-  const opt = { method, headers: { Authorization: `Bearer ${S.token}`, 'Content-Type': 'application/json' } };
-  if (body) opt.body = JSON.stringify(body);
-
-  let res = await fetch(url, opt);
-  if (res.status === 401) {
-    const ok = await refreshToken();
-    if (!ok) { logout(); throw Object.assign(new Error('auth-expired'), {code:'auth-expired'}); }
-    opt.headers.Authorization = `Bearer ${S.token}`;
-    res = await fetch(url, opt);
+  // text/plain evita la petición previa de CORS, que Apps Script no admite
+  const res = await fetch(SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ key, method, path, body: body ?? null, params: params || '' }),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const out = await res.json();
+  if (out.status === 401) {
+    localStorage.removeItem('gfit_clave');
+    throw Object.assign(new Error('auth-expired'), {code:'auth-expired'});
   }
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e.error?.message || `HTTP ${res.status}`);
+  if (out.status < 200 || out.status >= 300) {
+    const e = (() => { try { return JSON.parse(out.text); } catch(_) { return {}; } })();
+    throw new Error(e.error?.message || `HTTP ${out.status}`);
   }
-  const txt = await res.text();
-  return txt ? JSON.parse(txt) : {};
+  return out.text ? JSON.parse(out.text) : {};
 }
 
 async function ensureSheets() {
@@ -3745,7 +3646,7 @@ async function _doSave(silent = false) {
       const ultimo = S.config.ultimo_entrenamiento || '';
       if (S.workout.date >= ultimo) await setCfg('ultimo_entrenamiento', S.workout.date);
     } catch(e) {
-      const errMsg = `ERROR al guardar (${new Date().toLocaleTimeString()})\n${e.message}\noffline:${S.offline} token:${!!S.token} rows:${rows.length}`;
+      const errMsg = `ERROR al guardar (${new Date().toLocaleTimeString()})\n${e.message}\noffline:${S.offline} clave:${!!getClave()} rows:${rows.length}`;
       console.error('[handleSave]', errMsg, e);
       const statusEl = document.getElementById('save-status');
       if (statusEl) { statusEl.style.display=''; statusEl.style.background='#3b1212'; statusEl.style.color='#f87171'; statusEl.textContent = errMsg; }
@@ -6165,7 +6066,13 @@ async function boot() {
   } catch(e) {
     console.error('boot:', e);
     if (e.code==='auth-expired' || e.code==='no-token') {
-      showScreen('auth'); return;
+      showScreen('auth');
+      if (e.code==='auth-expired') {
+        const el = document.getElementById('auth-error');
+        el.innerHTML = '<strong><i class="ph ph-warning"></i> Clave incorrecta</strong>';
+        el.classList.remove('hidden');
+      }
+      return;
     }
     // Show actionable error on auth screen
     showScreen('auth');
@@ -6374,14 +6281,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     showScreen('auth');
     const el = document.getElementById('auth-error');
     el.innerHTML = `<strong><i class="ph ph-warning"></i> Configuración incompleta</strong><br>
-      Edita <code>config.js</code> y rellena <code>CLIENT_ID</code> y <code>SPREADSHEET_ID</code>.<br>
-      Consulta <code>README.md</code> para las instrucciones paso a paso.`;
+      Rellena <code>SCRIPT_URL</code> en <code>config.js</code>.`;
     el.classList.remove('hidden');
     return;
   }
 
-  if (checkStoredToken()) {
-    waitGIS().then(() => { initTokenClient(); scheduleProactiveRefresh(); }); // refrescos futuros
+  if (getClave()) {
     await boot();
   } else {
     showScreen('auth');

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pbcopy)",
+      "Bash(curl -sL -H 'Content-Type: text/plain' -d '{\"key\":\"prueba-incorrecta\",\"method\":\"GET\",\"path\":\"\",\"params\":\"\"}' 'https://script.google.com/macros/s/AKfycbz7mwPUHnpjG7Lt7eGiUmYUAV0QE_BEfHaEgk4p9qZT0IS4VD09UnitZXBGs7Cl4GnKXg/exec')",
+      "Bash(curl -s -o /dev/null -w '%{http_code} %{redirect_url}\\\\n' -H 'Content-Type: text/plain' -d '{\"key\":\"x\",\"method\":\"GET\"}' 'https://script.google.com/macros/s/AKfycbz7mwPUHnpjG7Lt7eGiUmYUAV0QE_BEfHaEgk4p9qZT0IS4VD09UnitZXBGs7Cl4GnKXg/exec')",
+      "Bash(curl -sL -H 'Content-Type: text/plain' -d '{\"key\":\"x\",\"method\":\"GET\"}' 'https://script.google.com/macros/s/AKfycbz7mwPUHnpjG7Lt7eGiUmYUAV0QE_BEfHaEgk4p9qZT0IS4VD09UnitZXBGs7Cl4GnKXg/exec')",
+      "Bash(grep -o '<title>[^<]*</title>\\\\|accounts.google.com[^\"]\\\\{0,60\\\\}\\\\|Error[^<]\\\\{0,120\\\\}')"
+    ]
+  }
+}

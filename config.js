@@ -3,9 +3,9 @@
 // Lee README.md para instrucciones paso a paso
 // =============================================================
 
-// 1. ID de cliente OAuth 2.0 de Google Cloud Console
-//    Formato: 123456789-xxxx.apps.googleusercontent.com
-const CLIENT_ID = '612809897673-ajl5njc448c70e3t7vvh52jdkptt5blc.apps.googleusercontent.com';
+// 1. URL de la web app de Apps Script (apps-script/Codigo.gs)
+//    Formato: https://script.google.com/macros/s/XXXX/exec
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz7mwPUHnpjG7Lt7eGiUmYUAV0QE_BEfHaEgk4p9qZT0IS4VD09UnitZXBGs7Cl4GnKXg/exec';
 
 // 3. API Key de Anthropic (para importar datos desde foto de báscula)
 //    Obtén la tuya en: platform.anthropic.com/api-keys
