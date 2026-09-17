@@ -2533,7 +2533,9 @@ function api(method, path, body, params) {
   });
 }
 
+// Solo se reintenta si el lote es de lectura: repetir una escritura duplica filas.
 async function postBridge(payload) {
+  const soloLectura = payload.batch.every(r => r.method === 'GET');
   for (let intento = 0; ; intento++) {
     try {
       const res = await fetch(SCRIPT_URL, {
@@ -2544,7 +2546,7 @@ async function postBridge(payload) {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (e) {
-      if (intento >= 2) throw e;
+      if (!soloLectura || intento >= 2) throw e;
       await new Promise(r => setTimeout(r, 800));
     }
   }
