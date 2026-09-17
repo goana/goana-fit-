@@ -1067,6 +1067,7 @@
             <span style="width:10px;height:10px;border-radius:50%;background:#6366f1;display:inline-block"></span>En casa
           </span>
         </div>
+        <div id="cal-lugares" style="font-size:12px;color:var(--text);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)"></div>
         <div style="font-size:11px;color:var(--muted);margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
           Toca cualquier día para ver lo que hiciste o apuntar un entreno de ese día.
         </div>
@@ -1936,6 +1937,18 @@
   <div id="session-sheet-body" style="padding:0 0 8px"></div>
 </div>
 
+<!-- ¿GYM O CASA? -->
+<div id="lugar-ask-overlay" onclick="closeAskLugar()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300"></div>
+<div id="lugar-ask" style="display:none;position:fixed;left:0;right:0;bottom:0;z-index:301;background:var(--card2);border-radius:16px 16px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+  <input type="hidden" id="lugar-ask-date">
+  <div style="font-size:16px;font-weight:700;margin-bottom:4px">¿Dónde has entrenado?</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Así ves cuántas veces vas al gym.</div>
+  <div style="display:flex;gap:10px">
+    <button onclick="pickLugar('gym')" class="btn-secondary" style="flex:1"><i class="ph ph-barbell"></i> En el gym</button>
+    <button onclick="pickLugar('casa')" class="btn-secondary" style="flex:1"><i class="ph ph-house"></i> En casa</button>
+  </div>
+</div>
+
 <!-- FLOATING TIMER -->
 <div id="floating-timer" class="hidden">
   <div class="tmr-svg-wrap">
@@ -2072,6 +2085,7 @@ const S = {
   token:        null,
   tokenExpiry:  null,
   sessions:     [],
+  lugares:      {},
   config:       {},
   calDate:      new Date(),
   logDate:      null,   // día al que se está registrando (null = hoy)
@@ -2637,7 +2651,7 @@ async function api(method, path, body, params) {
 async function ensureSheets() {
   const data  = await api('GET', '');
   const exist = (data.sheets||[]).map(s => s.properties.title);
-  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','casa','casa_rutinas','snacks'].filter(n => !exist.includes(n))
+  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','casa','casa_rutinas','snacks','lugares'].filter(n => !exist.includes(n))
                   .map(title => ({ addSheet: { properties: { title } } }));
   if (reqs.length) {
     await api('POST', ':batchUpdate', { requests: reqs });
@@ -2670,6 +2684,9 @@ async function ensureSheets() {
       await api('PUT', `/values/casa_rutinas!A1:D${1 + seed.length}`,
         { values:[['nombre','url','dur','tipo'], ...seed] }, 'valueInputOption=RAW');
     }
+    if (!exist.includes('lugares'))
+      await api('PUT', '/values/lugares!A1:B1',
+        { values:[['fecha','lugar']] }, 'valueInputOption=RAW');
     if (!exist.includes('snacks'))
       await api('PUT', '/values/snacks!A1:G1',
         { values:[['fecha','ejercicio','series','reps','peso_kg','nota','link']] }, 'valueInputOption=RAW');
@@ -3084,6 +3101,18 @@ function renderCal() {
 
   const casaDays = new Set();
   S.casa.forEach(cs => { if (inRange(cs.fecha)) casaDays.add(cs.fecha); });
+
+  // Cuántas veces se ha ido al gym este mes (solo días del mes que se mira)
+  const mesPrefijo = `${y}-${String(m+1).padStart(2,'0')}-`;
+  let nGym = 0, nCasa = 0;
+  Object.entries(S.lugares || {}).forEach(([f, l]) => {
+    if (!f.startsWith(mesPrefijo)) return;
+    if (l === 'gym') nGym++; else if (l === 'casa') nCasa++;
+  });
+  const lugEl = document.getElementById('cal-lugares');
+  if (lugEl) lugEl.innerHTML =
+    `<span style="color:var(--accent);font-weight:700"><i class="ph ph-barbell"></i> Gym: ${nGym}</span>`
+    + `<span style="color:var(--muted);margin-left:14px"><i class="ph ph-house"></i> Casa: ${nCasa}</span>`;
 
   const grid = document.getElementById('cal-grid');
   grid.innerHTML = '';
@@ -3745,6 +3774,7 @@ async function _doSave(silent = false) {
     const durMsg = durMin > 0 ? ` · ${durMin} min` : '';
     const offlineMsg = S.offline ? ' (sin conexión)' : '';
     toast('Sesión guardada' + (durMsg||'') + ' ' + rowsMsg + offlineMsg, S.offline ? 'warning' : 'success');
+    if (!S.offline) askLugar(S.workout.date);
   } else {
     document.getElementById('share-btn').style.display = '';
   }
@@ -4052,6 +4082,18 @@ function openSessionSheet(date) {
               font-size:12px;cursor:pointer;padding:2px 8px;line-height:1.4">${icon}</button>`;
 
   let html = '';
+
+  if (!vacio) {
+    const lug = S.lugares[date];
+    const opt = (val, icon, txt) => `<button onclick="setLugar('${date}','${val}')"
+        style="flex:1;padding:7px 8px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;
+               background:${lug === val ? 'var(--accent)' : 'transparent'};color:${lug === val ? '#000' : 'var(--muted)'};
+               border:1px solid ${lug === val ? 'var(--accent)' : 'var(--border)'};font-weight:${lug === val ? '700' : '400'}">
+        <i class="ph ph-${icon}"></i> ${txt}</button>`;
+    html += `<div style="display:flex;gap:8px;padding:0 16px 10px">
+      ${opt('gym', 'barbell', 'En el gym')}${opt('casa', 'house', 'En casa')}
+    </div>`;
+  }
 
   // Rutina a medias: sus ejercicios se enseñan dentro de Fuerza, como en el calendario
   const exsDia = new Set(rows.map(r => r.ejercicio));
@@ -5087,6 +5129,60 @@ async function loadCasaRutinas() {
   }
 }
 
+// Dónde se entrenó cada día: 'gym' o 'casa'. Pestaña aparte, una fila por fecha.
+async function loadLugares() {
+  try {
+    const d = await api('GET', '/values/lugares!A2:B');
+    S.lugares = {};
+    (d.values||[]).forEach(r => { if (r[0] && r[1]) S.lugares[r[0]] = r[1]; });
+    localStorage.setItem('gfit_lugares', JSON.stringify(S.lugares));
+  } catch(e) {
+    // Si la pestaña aún no existe, se sigue sin ella (se crea al guardar)
+    const c = localStorage.getItem('gfit_lugares');
+    if (c) S.lugares = JSON.parse(c);
+    if (e.code !== 'offline') console.warn('loadLugares:', e.message);
+  }
+}
+
+async function setLugar(date, lugar) {
+  const previo = S.lugares[date];
+  S.lugares[date] = lugar;
+  localStorage.setItem('gfit_lugares', JSON.stringify(S.lugares));
+  renderCal();
+  if (document.getElementById('session-sheet').style.display !== 'none') openSessionSheet(date);
+  try {
+    const d = await api('GET', '/values/lugares!A:A');
+    const rows = d.values || [];
+    let fila = -1;
+    for (let i = 1; i < rows.length; i++) if (rows[i][0] === date) { fila = i + 1; break; }
+    if (fila > 0) await api('PUT', `/values/lugares!A${fila}:B${fila}`, { values: [[date, lugar]] }, 'valueInputOption=RAW');
+    else await api('POST', '/values/lugares!A:B:append', { values: [[date, lugar]] }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+  } catch(e) {
+    if (previo) S.lugares[date] = previo; else delete S.lugares[date];
+    localStorage.setItem('gfit_lugares', JSON.stringify(S.lugares));
+    renderCal();
+    if (document.getElementById('session-sheet').style.display !== 'none') openSessionSheet(date);
+    toast('No se pudo guardar dónde entrenaste: ' + e.message, 'error');
+  }
+}
+
+// Tras guardar un entreno, si ese día no tiene sitio todavía, se pregunta.
+function askLugar(date) {
+  if (S.lugares[date]) return;
+  document.getElementById('lugar-ask-date').value = date;
+  document.getElementById('lugar-ask-overlay').style.display = '';
+  document.getElementById('lugar-ask').style.display = '';
+}
+function closeAskLugar() {
+  document.getElementById('lugar-ask-overlay').style.display = 'none';
+  document.getElementById('lugar-ask').style.display = 'none';
+}
+async function pickLugar(lugar) {
+  const date = document.getElementById('lugar-ask-date').value;
+  closeAskLugar();
+  await setLugar(date, lugar);
+}
+
 async function loadCasa() {
   try {
     const d = await api('GET', '/values/casa!A2:D');
@@ -5713,6 +5809,7 @@ async function saveSnack() {
       { values: sheetRows }, 'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
     await loadSnacks(); renderCal();
     toast('Guardado ✓', 'success');
+    askLugar(fecha);
     await editSnackEntry(fecha); // mantiene los ejercicios guardados visibles en el formulario
   } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
 }
@@ -6146,7 +6243,7 @@ async function boot() {
 
   try {
     await ensureSheets();
-    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadCasa(), loadCasaRutinas(), loadSnacks()]);
+    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadCasa(), loadCasaRutinas(), loadSnacks(), loadLugares()]);
     if (S.pending.length) await syncQueue();
     renderDash();
     updateSyncBtn();
