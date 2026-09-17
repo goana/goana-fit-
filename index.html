@@ -1002,7 +1002,7 @@
     <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon"><i class="ph ph-chart-line-up"></i></span>Progreso</button>
     <button class="drawer-item" onclick="closeDrawer();openYogaScreen()"><span class="di-icon"><i class="ph ph-flower-lotus"></i></span>Yoga</button>
     <button class="drawer-item" onclick="closeDrawer();openPilatesScreen()"><span class="di-icon"><i class="ph ph-person-simple-tai-chi"></i></span>Pilates</button>
-    <button class="drawer-item" onclick="closeDrawer();openSnackScreen()"><span class="di-icon"><i class="ph ph-lightning"></i></span>Fuerza</button>
+    <button class="drawer-item" onclick="closeDrawer();openSnackScreen()"><span class="di-icon"><i class="ph ph-lightning"></i></span>Libre</button>
     <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon"><i class="ph ph-ruler"></i></span>Cuerpo</button>
     <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon"><i class="ph ph-bowl-food"></i></span>Menú semanal</button>
     <button class="drawer-item" onclick="closeDrawer();openRecetasScreen()"><span class="di-icon"><i class="ph ph-push-pin"></i></span>Ideas de recetas</button>
@@ -1011,7 +1011,7 @@
     <div class="drawer-sep"></div>
     <button class="drawer-item" id="sync-btn" onclick="closeDrawer();forceSyncCache()"><span class="di-icon"><i class="ph ph-cloud"></i></span>Sincronizar datos locales</button>
     <button class="drawer-item" onclick="closeDrawer();cleanEmptyRows()"><span class="di-icon"><i class="ph ph-broom"></i></span>Limpiar filas vacías</button>
-    <button class="drawer-item" onclick="closeDrawer();openRenameSnacksScreen()"><span class="di-icon"><i class="ph ph-pencil-simple"></i></span>Editar ejercicios de fuerza</button>
+    <button class="drawer-item" onclick="closeDrawer();openRenameSnacksScreen()"><span class="di-icon"><i class="ph ph-pencil-simple"></i></span>Editar ejercicios libres</button>
     <button class="drawer-item" onclick="closeDrawer();openCasaLibrary()"><span class="di-icon"><i class="ph ph-house"></i></span>Rutinas en casa</button>
     <button class="drawer-item danger" onclick="closeDrawer();logout()"><span class="di-icon"><i class="ph ph-sign-out"></i></span>Cerrar sesión</button>
     <div style="padding:12px 22px 6px;font-size:11px;color:var(--muted)">v2026-05-25b</div>
@@ -1052,10 +1052,10 @@
         <div class="cal-grid" id="cal-grid"></div>
         <div style="display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span>Rutina de fuerza
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span>Rutina
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--warning);display:inline-block"></span>Fuerza
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--warning);display:inline-block"></span>Libre
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
             <span style="width:10px;height:10px;border-radius:50%;background:#a855f7;display:inline-block"></span>Yoga
@@ -1150,7 +1150,7 @@
       <button class="mod-btn" onclick="pickMod('snacks')">
         <span class="mod-icon" style="color:var(--warning)"><i class="ph ph-lightning"></i></span>
         <div class="mod-text">
-          <div class="mod-title">Fuerza</div>
+          <div class="mod-title">Libre</div>
           <div class="mod-sub">Ejercicios libres / máquinas</div>
         </div>
       </button>
@@ -1828,7 +1828,7 @@
   <div id="screen-snack" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1><i class="ph ph-lightning"></i> Fuerza</h1>
+      <h1><i class="ph ph-lightning"></i> Libre</h1>
       <div style="width:40px"></div>
     </div>
     <div class="ci-pad">
@@ -1863,7 +1863,7 @@
   <div id="screen-rename-snacks" class="screen">
     <div class="app-header">
       <button class="back-btn" onclick="showScreen('dashboard')">←</button>
-      <h1>Editar ejercicios de fuerza</h1>
+      <h1>Editar ejercicios libres</h1>
       <div style="width:40px"></div>
     </div>
     <div class="dash-pad">
@@ -3971,7 +3971,7 @@ function openHistory() {
   snackNames.sort((a, b) => a.localeCompare(b, 'es'));
   const opt = n => `<option value="${esc(n)}">${esc(n)}</option>`;
   let html = `<optgroup label="Rutinas">${routineNames.map(opt).join('')}</optgroup>`;
-  if (snackNames.length) html += `<optgroup label="Fuerza">${snackNames.map(opt).join('')}</optgroup>`;
+  if (snackNames.length) html += `<optgroup label="Libre">${snackNames.map(opt).join('')}</optgroup>`;
   sel.innerHTML = html;
   renderHistExercise(routineNames[0]);
   switchHistTab('ex');
@@ -4149,7 +4149,7 @@ function openSessionSheet(date) {
   if (snackRows.length || fuerzaSess.length) {
     const sep = (rutinaRows.length || yogaRows.length || pilatesRows.length || casaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
-      <span style="font-size:13px;font-weight:700;color:var(--warning)"><i class="ph ph-lightning"></i> Fuerza</span>
+      <span style="font-size:13px;font-weight:700;color:var(--warning)"><i class="ph ph-lightning"></i> Libre</span>
       <div style="display:flex;gap:6px">
         ${iconBtn('<i class="ph ph-pencil-simple"></i> Editar', snackRows.length ? `editSnackEntry('${date}')` : `editSessionByDate('${date}')`, 'Editar')}
         ${iconBtn('<i class="ph ph-trash"></i> Eliminar', fuerzaSess.length ? `deleteFuerzaDay('${date}')` : `deleteSnackEntry('${date}')`, 'Eliminar')}
@@ -4216,7 +4216,7 @@ function fuerzaSessLines(rows) {
 }
 
 async function deleteFuerzaDay(date) {
-  if (!confirm('¿Eliminar todos los ejercicios de fuerza de este día?')) return;
+  if (!confirm('¿Eliminar todos los ejercicios libres de este día?')) return;
   try {
     await deleteSessionsByDate(date);
     S.sessions = S.sessions.filter(s => s.fecha !== date);
@@ -4233,7 +4233,7 @@ async function deleteGymSession(date) {
     await deleteSessionsByDate(date);
     S.sessions = S.sessions.filter(s => s.fecha !== date);
     renderCal();
-    toast('Sesión de fuerza eliminada ✓', 'success');
+    toast('Rutina eliminada ✓', 'success');
     openSessionSheet(date);
   } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
 }
@@ -5862,7 +5862,7 @@ async function editSnackEntry(date) {
 }
 
 async function deleteSnackEntry(date) {
-  if (!confirm('¿Eliminar todos los ejercicios de fuerza de este día?')) return;
+  if (!confirm('¿Eliminar todos los ejercicios libres de este día?')) return;
   try {
     await deleteSnacksByDate(date);
     await loadSnacks(); renderCal();
