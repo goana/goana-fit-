@@ -2721,6 +2721,9 @@ async function deleteSessionsByDate(date) {
   // No modificamos S.sessions aquí — lo hace handleSave solo tras un append exitoso
 }
 
+// La hoja está en español: los decimales llegan como "7,5" y +"7,5" da NaN.
+const num = v => parseFloat(String(v ?? '').replace(',', '.'));
+
 async function loadSessions() {
   try {
     const d = await api('GET', '/values/sesiones!A2:K');
@@ -2730,7 +2733,7 @@ async function loadSessions() {
       // Detect format: old format has true/false in col F (index 5)
       if (r[5] === 'true' || r[5] === 'false') {
         // OLD format: fecha|ejercicio|serie|peso_kg|reps|completada
-        S.sessions.push({ fecha:r[0], ejercicio:r[1], serie:+r[2]||0, peso_kg:+r[3]||0, reps:+r[4]||0, completada:r[5]==='true' });
+        S.sessions.push({ fecha:r[0], ejercicio:r[1], serie:+r[2]||0, peso_kg:num(r[3])||0, reps:+r[4]||0, completada:r[5]==='true' });
       } else {
         // NEW format: fecha|ejercicio|reps_1..3|peso_1..3|duracion_min|cansancio|nota
         const durMin    = r[8] ? +r[8] : 0;
@@ -2740,7 +2743,7 @@ async function loadSessions() {
           if (r[2+i] === '' || r[2+i] === undefined) return;
           S.sessions.push({
             fecha:r[0], ejercicio:r[1], serie:i+1,
-            reps:+r[2+i]||0, peso_kg:+r[5+i]||0, completada:true,
+            reps:+r[2+i]||0, peso_kg:num(r[5+i])||0, completada:true,
             duracion_min: i === 0 ? durMin    : 0,
             cansancio:    i === 0 ? cansancio : null,
             nota:         i === 0 ? nota      : '',
@@ -4864,14 +4867,14 @@ async function loadMedidas() {
   const d = await api('GET', '/values/medidas!A2:I');
   S.medidas = (d.values||[]).filter(r=>r[0]).map(r => ({
     fecha:       r[0].includes('.') ? fromDateES(r[0]) : r[0],
-    peso:        r[1] ? parseFloat(r[1]) : null,
-    cintura:     r[2] ? parseFloat(r[2]) : null,
-    cadera:      r[3] ? parseFloat(r[3]) : null,
-    pantorrilla: r[4] ? parseFloat(r[4]) : null,
-    grasa_pct:   r[5] ? parseFloat(r[5]) : null,
-    musculo_kg:  r[6] ? parseFloat(r[6]) : null,
-    grasa_visc:  r[7] ? parseFloat(r[7]) : null,
-    metab:       r[8] ? parseFloat(r[8]) : null,
+    peso:        r[1] ? num(r[1]) : null,
+    cintura:     r[2] ? num(r[2]) : null,
+    cadera:      r[3] ? num(r[3]) : null,
+    pantorrilla: r[4] ? num(r[4]) : null,
+    grasa_pct:   r[5] ? num(r[5]) : null,
+    musculo_kg:  r[6] ? num(r[6]) : null,
+    grasa_visc:  r[7] ? num(r[7]) : null,
+    metab:       r[8] ? num(r[8]) : null,
   }));
 }
 
