@@ -360,26 +360,26 @@
     .cal-day.outside.pilates, .cal-day.outside.casa, .cal-day.outside.yoga-combo,
     .cal-day.outside.pilates-combo, .cal-day.outside.casa-combo { opacity: .7; }
     .cal-day.today { border: 1.5px solid var(--accent); color: var(--accent); font-weight: 600; }
-    .cal-day.trained { background: var(--accent); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.trained { background: var(--day-c, var(--accent)); color: #0f0f0f; font-weight: 700; cursor: pointer; }
     .cal-day.trained:active { opacity: .75; }
-    .cal-day.trained.today { background: var(--accent); border-color: transparent; }
-    .cal-day.snack { background: var(--warning); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.trained.today { background: var(--day-c, var(--accent)); border-color: transparent; }
+    .cal-day.snack { background: var(--day-c, var(--warning)); color: #0f0f0f; font-weight: 700; cursor: pointer; }
     .cal-day.snack:active { opacity: .75; }
-    .cal-day.snack.today { background: var(--warning); border-color: transparent; }
+    .cal-day.snack.today { background: var(--day-c, var(--warning)); border-color: transparent; }
     .cal-day.yoga { background: #a855f7; color: #fff; font-weight: 700; cursor: default; }
     .cal-day.yoga.today { background: #a855f7; border-color: transparent; }
-    .cal-day.yoga-combo { background: conic-gradient(var(--accent) 50%, #a855f7 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
-    .cal-day.snack.yoga-combo { background: conic-gradient(var(--warning) 50%, #a855f7 50%); }
+    .cal-day.yoga-combo { background: conic-gradient(var(--day-c, var(--accent)) 50%, #a855f7 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.snack.yoga-combo { background: conic-gradient(var(--day-c, var(--warning)) 50%, #a855f7 50%); }
     .cal-day.yoga-combo.today { border-color: transparent; }
     .cal-day.pilates { background: #06b6d4; color: #fff; font-weight: 700; cursor: default; }
     .cal-day.pilates.today { background: #06b6d4; border-color: transparent; }
-    .cal-day.pilates-combo { background: conic-gradient(var(--accent) 50%, #06b6d4 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
-    .cal-day.snack.pilates-combo { background: conic-gradient(var(--warning) 50%, #06b6d4 50%); }
+    .cal-day.pilates-combo { background: conic-gradient(var(--day-c, var(--accent)) 50%, #06b6d4 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.snack.pilates-combo { background: conic-gradient(var(--day-c, var(--warning)) 50%, #06b6d4 50%); }
     .cal-day.pilates-combo.today { border-color: transparent; }
     .cal-day.yoga.pilates-combo { background: conic-gradient(#a855f7 50%, #06b6d4 50%); color: #fff; cursor: default; }
     .cal-day.casa { background: #6366f1; color: #fff; font-weight: 700; cursor: pointer; }
     .cal-day.casa.today { background: #6366f1; border-color: transparent; }
-    .cal-day.casa-combo { background: conic-gradient(var(--accent) 50%, #6366f1 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
+    .cal-day.casa-combo { background: conic-gradient(var(--day-c, var(--accent)) 50%, #6366f1 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
     .cal-day.casa-combo.today { border-color: transparent; }
     .pilates-tipo-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 8px; height: auto; }
     .pilates-tipo-btn .ptb-icon  { font-size: 22px; line-height: 1; }
@@ -1052,10 +1052,13 @@
         <div class="cal-grid" id="cal-grid"></div>
         <div style="display:flex;gap:14px;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span>Rutina
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--danger);display:inline-block"></span>≤3
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
-            <span style="width:10px;height:10px;border-radius:50%;background:var(--warning);display:inline-block"></span>Libre
+            <span style="width:10px;height:10px;border-radius:50%;background:#f97316;display:inline-block"></span>4-7
+          </span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
+            <span style="width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block"></span>8+
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
             <span style="width:10px;height:10px;border-radius:50%;background:#a855f7;display:inline-block"></span>Yoga
@@ -3093,8 +3096,16 @@ function renderCal() {
   });
   // Días con snacks dedicados (ejercicios libres)
   S.snacks.forEach(sn => {
-    if (inRange(sn.fecha) && !fullDays.has(sn.fecha)) snackDays.add(sn.fecha);
+    if (!inRange(sn.fecha)) return;
+    if (!fullDays.has(sn.fecha)) snackDays.add(sn.fecha);
+    if (!byDate[sn.fecha]) byDate[sn.fecha] = new Set();
+    if (sn.ejercicio) byDate[sn.fecha].add(sn.ejercicio);
   });
+  // Color por cantidad de ejercicios del día: ≤3 rojo, 4-7 naranja, 8+ verde
+  const dayColor = ds => {
+    const n = byDate[ds] ? byDate[ds].size : 0;
+    return n >= 8 ? 'var(--accent)' : n >= 4 ? '#f97316' : 'var(--danger)';
+  };
 
   const yogaDays = new Set();
   S.yoga.forEach(ys => { if (inRange(ys.fecha)) yogaDays.add(ys.fecha); });
@@ -3146,6 +3157,7 @@ function renderCal() {
       + (isCasa && !isFull && !isSnack && !isYoga && !isPilates ? ' casa' : '')
       + (isCasa && (isFull || isSnack || isYoga || isPilates) ? ' casa-combo' : '')
       + (ds === todayS ? ' today' : '');
+    if (isFull || isSnack) e.style.setProperty('--day-c', dayColor(ds));
     e.textContent = dt.getDate();
     const hasContent = isFull || isSnack || isYoga || isPilates || isCasa;
     // Días pasados y hoy: se abren siempre, para poder apuntar un entreno de ese día
