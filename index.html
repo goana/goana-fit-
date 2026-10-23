@@ -358,7 +358,7 @@
     .cal-day.outside { color: var(--muted); opacity: .45; }
     .cal-day.outside.trained, .cal-day.outside.snack, .cal-day.outside.yoga,
     .cal-day.outside.pilates, .cal-day.outside.casa, .cal-day.outside.yoga-combo,
-    .cal-day.outside.pilates-combo, .cal-day.outside.casa-combo { opacity: .7; }
+    .cal-day.outside.pilates-combo, .cal-day.outside.casa-combo, .cal-day.outside.calis, .cal-day.outside.multi { opacity: .7; }
     .cal-day.today { border: 1.5px solid var(--accent); color: var(--accent); font-weight: 600; }
     .cal-day.trained { background: var(--day-c, var(--accent)); color: #0f0f0f; font-weight: 700; cursor: pointer; }
     .cal-day.trained:active { opacity: .75; }
@@ -377,6 +377,10 @@
     .cal-day.snack.pilates-combo { background: conic-gradient(var(--day-c, var(--warning)) 50%, #06b6d4 50%); }
     .cal-day.pilates-combo.today { border-color: transparent; }
     .cal-day.yoga.pilates-combo { background: conic-gradient(#a855f7 50%, #06b6d4 50%); color: #fff; cursor: default; }
+    .cal-day.calis { background: #ec4899; color: #fff; font-weight: 700; cursor: pointer; }
+    .cal-day.calis.today { background: #ec4899; border-color: transparent; }
+    .cal-day.multi { font-weight: 700; cursor: pointer; }
+    .cal-day.multi.today { border-color: transparent; }
     .cal-day.casa { background: #6366f1; color: #fff; font-weight: 700; cursor: pointer; }
     .cal-day.casa.today { background: #6366f1; border-color: transparent; }
     .cal-day.casa-combo { background: conic-gradient(var(--day-c, var(--accent)) 50%, #6366f1 50%); color: #0f0f0f; font-weight: 700; cursor: pointer; }
@@ -1002,6 +1006,7 @@
     <button class="drawer-item" onclick="closeDrawer();openHistory()"><span class="di-icon"><i class="ph ph-chart-line-up"></i></span>Progreso</button>
     <button class="drawer-item" onclick="closeDrawer();openYogaScreen()"><span class="di-icon"><i class="ph ph-flower-lotus"></i></span>Yoga</button>
     <button class="drawer-item" onclick="closeDrawer();openPilatesScreen()"><span class="di-icon"><i class="ph ph-person-simple-tai-chi"></i></span>Pilates</button>
+    <button class="drawer-item" onclick="closeDrawer();openCalisScreen()"><span class="di-icon"><i class="ph ph-person-arms-spread"></i></span>Calistenia</button>
     <button class="drawer-item" onclick="closeDrawer();openSnackScreen()"><span class="di-icon"><i class="ph ph-lightning"></i></span>Libre</button>
     <button class="drawer-item" onclick="closeDrawer();openBodyScreen()"><span class="di-icon"><i class="ph ph-ruler"></i></span>Cuerpo</button>
     <button class="drawer-item" onclick="closeDrawer();openMenuScreen()"><span class="di-icon"><i class="ph ph-bowl-food"></i></span>Menú semanal</button>
@@ -1065,6 +1070,9 @@
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
             <span style="width:10px;height:10px;border-radius:50%;background:#06b6d4;display:inline-block"></span>Pilates
+          </span>
+          <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
+            <span style="width:10px;height:10px;border-radius:50%;background:#ec4899;display:inline-block"></span>Calistenia
           </span>
           <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)">
             <span style="width:10px;height:10px;border-radius:50%;background:#6366f1;display:inline-block"></span>En casa
@@ -1141,6 +1149,13 @@
         <span class="mod-icon" style="color:#06b6d4"><i class="ph ph-person-simple-tai-chi"></i></span>
         <div class="mod-text">
           <div class="mod-title">Pilates</div>
+          <div class="mod-sub">Sesión libre</div>
+        </div>
+      </button>
+      <button class="mod-btn" onclick="pickMod('calis')">
+        <span class="mod-icon" style="color:#ec4899"><i class="ph ph-person-arms-spread"></i></span>
+        <div class="mod-text">
+          <div class="mod-title">Calistenia</div>
           <div class="mod-sub">Sesión libre</div>
         </div>
       </button>
@@ -1710,6 +1725,34 @@
     </div>
   </div>
 
+  <!-- ═══ CALISTENIA ═════════════════════════════════════ -->
+  <div id="screen-calis" class="screen">
+    <div class="app-header">
+      <button class="back-btn" onclick="showScreen('dashboard')">←</button>
+      <h1><i class="ph ph-person-arms-spread"></i> Calistenia</h1>
+      <div style="width:40px"></div>
+    </div>
+    <div class="ci-pad">
+      <div class="ci-block">
+        <div class="ci-q">Fecha</div>
+        <input type="date" id="calis-fecha" class="receta-input" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Duración (minutos)</div>
+        <input type="number" id="calis-duracion" class="receta-input" min="5" max="180" step="5" placeholder="30" style="margin-bottom:0">
+      </div>
+      <div class="ci-block">
+        <div class="ci-q">Nota <span style="color:var(--muted);font-weight:400">(opcional)</span></div>
+        <textarea id="calis-nota" rows="2" placeholder="Ejercicios, series, cómo te has sentido…"
+          style="width:100%;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);
+                 color:var(--text);font-family:inherit;font-size:14px;padding:10px;
+                 resize:none;box-sizing:border-box"></textarea>
+      </div>
+      <div id="calis-historial" style="margin-top:6px"></div>
+      <button class="btn-primary" onclick="saveCalis()">Guardar sesión de calistenia</button>
+    </div>
+  </div>
+
   <!-- ═══ PILATES ════════════════════════════════════════ -->
   <div id="screen-pilates" class="screen">
     <div class="app-header">
@@ -2103,6 +2146,7 @@ const S = {
   medidas:      [],
   yoga:         [],
   pilates:      [],
+  calis:        [],
   casa:         [],
   casaRutinas:  [],
   snacks:       [],
@@ -2116,6 +2160,7 @@ const TMR = { running: false, paused: false, secs: 90, iv: null, label: '' };
 const STMR = { start: null, offset: 0, iv: null }; // session timer
 let _yogaEditCtx    = null;
 let _pilatesEditCtx = null;
+let _calisEditCtx   = null;
 let _casaEditCtx    = null;
 let _snackEditCtx   = null;
 let _casaRutinaSel  = null; // nombre de la rutina de casa seleccionada
@@ -2654,7 +2699,7 @@ async function api(method, path, body, params) {
 async function ensureSheets() {
   const data  = await api('GET', '');
   const exist = (data.sheets||[]).map(s => s.properties.title);
-  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','casa','casa_rutinas','snacks','lugares'].filter(n => !exist.includes(n))
+  const reqs  = ['sesiones','config','checkins','medidas','recetas','yoga','pilates','calistenia','casa','casa_rutinas','snacks','lugares'].filter(n => !exist.includes(n))
                   .map(title => ({ addSheet: { properties: { title } } }));
   if (reqs.length) {
     await api('POST', ':batchUpdate', { requests: reqs });
@@ -2677,6 +2722,9 @@ async function ensureSheets() {
     if (!exist.includes('pilates'))
       await api('PUT', '/values/pilates!A1:D1',
         { values:[['fecha','duracion_min','tipo','nota']] }, 'valueInputOption=RAW');
+    if (!exist.includes('calistenia'))
+      await api('PUT', '/values/calistenia!A1:C1',
+        { values:[['fecha','duracion_min','nota']] }, 'valueInputOption=RAW');
     if (!exist.includes('casa'))
       await api('PUT', '/values/casa!A1:D1',
         { values:[['fecha','duracion_min','rutina','nota']] }, 'valueInputOption=RAW');
@@ -2917,6 +2965,7 @@ function calcStreak() {
     ...S.sessions.map(s => s.fecha),
     ...(S.yoga    || []).map(s => s.fecha),
     ...(S.pilates || []).map(s => s.fecha),
+    ...(S.calis   || []).map(s => s.fecha),
     ...(S.casa    || []).map(s => s.fecha),
     ...(S.snacks  || []).map(s => s.fecha),
   ]);
@@ -3057,6 +3106,7 @@ function pickMod(mod) {
   }
   else if (mod === 'yoga')    openYogaScreen(date);
   else if (mod === 'pilates') openPilatesScreen(date);
+  else if (mod === 'calis')   openCalisScreen(date);
   else if (mod === 'casa')    openCasaScreen(date);
   else if (mod === 'snacks')  openSnackScreen(date);
 }
@@ -3113,6 +3163,9 @@ function renderCal() {
   const pilatesDays = new Set();
   S.pilates.forEach(ps => { if (inRange(ps.fecha)) pilatesDays.add(ps.fecha); });
 
+  const calisDays = new Set();
+  S.calis.forEach(cs => { if (inRange(cs.fecha)) calisDays.add(cs.fecha); });
+
   const casaDays = new Set();
   S.casa.forEach(cs => { if (inRange(cs.fecha)) casaDays.add(cs.fecha); });
 
@@ -3143,23 +3196,32 @@ function renderCal() {
     const isYoga    = yogaDays.has(ds);
     const isPilates = pilatesDays.has(ds);
     const isCasa    = casaDays.has(ds);
-    const yogaCombo    = isYoga && (isFull || isSnack);
-    const pilatesCombo = isPilates && (isFull || isSnack || isYoga);
+    const isCalis   = calisDays.has(ds);
+    // Colores del día: base (gym/libre) + cada actividad extra. Uno solo = color liso; varios = sectores.
+    const cols = [];
+    if (isFull || isSnack) cols.push(dayColor(ds));
+    if (isYoga)    cols.push('#a855f7');
+    if (isPilates) cols.push('#06b6d4');
+    if (isCalis)   cols.push('#ec4899');
+    if (isCasa)    cols.push('#6366f1');
+    const multi = cols.length > 1;
     e.className = 'cal-day'
       + (outside ? ' outside' : '')
-      + (isFull  ? ' trained' : '')
-      + (isSnack ? ' snack'   : '')
-      + (isYoga    && !isFull && !isSnack && !isPilates ? ' yoga'    : '')
-      + (yogaCombo && !isPilates ? ' yoga-combo' : '')
-      + (isPilates && !isFull && !isSnack && !isYoga ? ' pilates' : '')
-      + (isPilates && isYoga && !isFull && !isSnack ? ' pilates-combo' : '')
-      + (pilatesCombo && (isFull || isSnack) ? ' pilates-combo' : '')
-      + (isCasa && !isFull && !isSnack && !isYoga && !isPilates ? ' casa' : '')
-      + (isCasa && (isFull || isSnack || isYoga || isPilates) ? ' casa-combo' : '')
+      + (!multi && isFull  ? ' trained' : '')
+      + (!multi && isSnack ? ' snack'   : '')
+      + (!multi && isYoga    ? ' yoga'    : '')
+      + (!multi && isPilates ? ' pilates' : '')
+      + (!multi && isCalis   ? ' calis'   : '')
+      + (!multi && isCasa    ? ' casa'    : '')
+      + (multi ? ' multi' : '')
       + (ds === todayS ? ' today' : '');
-    if (isFull || isSnack) e.style.setProperty('--day-c', dayColor(ds));
+    if (multi) {
+      const step = 100 / cols.length;
+      e.style.background = `conic-gradient(${cols.map((c, k) => `${c} ${k*step}% ${(k+1)*step}%`).join(', ')})`;
+      e.style.color = (isFull || isSnack) ? '#0f0f0f' : '#fff';
+    } else if (isFull || isSnack) e.style.setProperty('--day-c', dayColor(ds));
     e.textContent = dt.getDate();
-    const hasContent = isFull || isSnack || isYoga || isPilates || isCasa;
+    const hasContent = isFull || isSnack || isYoga || isPilates || isCalis || isCasa;
     // Días pasados y hoy: se abren siempre, para poder apuntar un entreno de ese día
     if (hasContent || ds <= todayS) { e.onclick = () => openSessionSheet(ds); e.style.cursor = 'pointer'; }
     grid.appendChild(e);
@@ -4081,9 +4143,10 @@ function openSessionSheet(date) {
   const rows        = S.sessions.filter(s => s.fecha === date);
   const yogaRows    = S.yoga.filter(y => y.fecha === date);
   const pilatesRows = S.pilates.filter(p => p.fecha === date);
+  const calisRows   = S.calis.filter(c => c.fecha === date);
   const casaRows    = S.casa.filter(c => c.fecha === date);
   const snackRows   = S.snacks.filter(s => s.fecha === date);
-  const vacio = !rows.length && !yogaRows.length && !pilatesRows.length && !casaRows.length && !snackRows.length;
+  const vacio = !rows.length && !yogaRows.length && !pilatesRows.length && !calisRows.length && !casaRows.length && !snackRows.length;
   if (vacio && date > todayStr()) { closeSessionSheet(); return; }
 
   const dur    = rows.find(r => r.duracion_min > 0);
@@ -4181,8 +4244,27 @@ function openSessionSheet(date) {
     }).join('');
   }
 
-  if (casaRows.length) {
+  if (calisRows.length) {
     const sep = (rutinaRows.length || yogaRows.length || pilatesRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
+      <span style="font-size:13px;font-weight:700;color:#ec4899"><i class="ph ph-person-arms-spread"></i> Calistenia</span>
+    </div>`;
+    html += calisRows.map((c, nth) => {
+      return `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:2px 16px 8px;gap:8px">
+        <div>
+          <div style="font-size:13px;color:var(--text)">${c.duracion_min ? `${c.duracion_min} min` : '—'}</div>
+          ${c.nota ? `<div style="font-size:12px;color:var(--muted);font-style:italic">"${linkify(c.nota)}"</div>` : ''}
+        </div>
+        <div style="display:flex;gap:4px">
+          ${iconBtn('<i class="ph ph-pencil-simple"></i>', `editCalisEntry('${date}', ${nth})`, 'Editar')}
+          ${iconBtn('<i class="ph ph-trash"></i>', `deleteCalisEntry('${date}', ${nth})`, 'Eliminar')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  if (casaRows.length) {
+    const sep = (rutinaRows.length || yogaRows.length || pilatesRows.length || calisRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
       <span style="font-size:13px;font-weight:700;color:#6366f1"><i class="ph ph-house"></i> En casa</span>
     </div>`;
@@ -4204,7 +4286,7 @@ function openSessionSheet(date) {
   }
 
   if (snackRows.length || fuerzaSess.length) {
-    const sep = (rutinaRows.length || yogaRows.length || pilatesRows.length || casaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
+    const sep = (rutinaRows.length || yogaRows.length || pilatesRows.length || calisRows.length || casaRows.length) ? 'border-top:1px solid var(--border);margin-top:4px;' : '';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;${sep}">
       <span style="font-size:13px;font-weight:700;color:var(--warning)"><i class="ph ph-lightning"></i> Libre</span>
       <div style="display:flex;gap:6px">
@@ -4333,6 +4415,138 @@ async function deletePilatesEntry(date, nth) {
     toast('Sesión de pilates eliminada ✓', 'success');
     openSessionSheet(date);
   } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
+}
+
+async function deleteCalisEntry(date, nth) {
+  if (!confirm('¿Eliminar esta sesión de calistenia?')) return;
+  try {
+    const data = await api('GET', '/values/calistenia!A:A');
+    const rows = data.values || [];
+    let count = -1, targetIdx = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === date) { count++; if (count === nth) { targetIdx = i; break; } }
+    }
+    if (targetIdx === -1) { toast('No se encontró la sesión', 'error'); return; }
+    const meta = await api('GET', '');
+    const sheetId = meta.sheets.find(s => s.properties.title === 'calistenia')?.properties.sheetId;
+    await api('POST', ':batchUpdate', { requests: [{ deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: targetIdx, endIndex: targetIdx + 1 } } }] });
+    await loadCalis();
+    renderCal();
+    toast('Sesión de calistenia eliminada ✓', 'success');
+    openSessionSheet(date);
+  } catch(e) { toast('Error al eliminar: ' + e.message, 'error'); }
+}
+
+async function editCalisEntry(date, nth) {
+  const entry = S.calis.filter(c => c.fecha === date)[nth];
+  if (!entry) return;
+  _calisEditCtx = { date, nth };
+  closeSessionSheet();
+  showScreen('calis');
+  document.getElementById('calis-fecha').value = entry.fecha;
+  document.getElementById('calis-duracion').value = entry.duracion_min || '';
+  document.getElementById('calis-nota').value = entry.nota || '';
+  document.querySelector('#screen-calis .btn-primary').textContent = 'Actualizar sesión de calistenia';
+  renderCalisHistorial();
+}
+
+async function loadCalis() {
+  try {
+    const d = await api('GET', '/values/calistenia!A2:C');
+    S.calis = (d.values||[]).filter(r=>r[0]).map(r => ({
+      fecha: r[0], duracion_min: r[1] ? +r[1] : null, nota: r[2]||''
+    }));
+    localStorage.setItem('gfit_calis', JSON.stringify(S.calis));
+  } catch(e) {
+    if (e.code === 'offline') {
+      const c = localStorage.getItem('gfit_calis');
+      if (c) S.calis = JSON.parse(c);
+    } else throw e;
+  }
+}
+
+async function openCalisScreen(forDate) {
+  const date = forDate || logDateStr();
+  showScreen('calis');
+  document.getElementById('calis-fecha').value = date;
+  try { await loadCalis(); } catch(e) { console.warn('loadCalis:', e); }
+
+  if (S.calis.some(c => c.fecha === date)) {
+    await editCalisEntry(date, 0);
+    return;
+  }
+
+  _calisEditCtx = null;
+  document.getElementById('calis-duracion').value = '';
+  document.getElementById('calis-nota').value = '';
+  document.querySelector('#screen-calis .btn-primary').textContent = 'Guardar sesión de calistenia';
+  renderCalisHistorial();
+}
+
+function renderCalisHistorial() {
+  const wrap = document.getElementById('calis-historial');
+  const last = [...S.calis].sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0,5);
+  if (!last.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<div class="recetas-cat-title">Últimas sesiones</div>` +
+    last.map(c => {
+      const parts = [c.duracion_min ? `${c.duracion_min} min` : null, c.nota || null].filter(Boolean);
+      return `<div class="receta-card" style="flex-direction:column;align-items:flex-start;gap:2px">
+        <div style="font-size:13px;font-weight:600">${fmtDateES(c.fecha)}</div>
+        <div style="font-size:12px;color:var(--muted)">${parts.join(' · ') || '—'}</div>
+      </div>`;
+    }).join('');
+}
+
+async function saveCalis() {
+  const fecha = document.getElementById('calis-fecha').value;
+  const durRaw = document.getElementById('calis-duracion').value;
+  const dur = durRaw ? +durRaw : null;
+  const nota = document.getElementById('calis-nota').value.trim();
+
+  if (!fecha) { toast('Selecciona una fecha', 'error'); return; }
+  if (dur !== null && (isNaN(dur) || dur < 1)) { toast('Introduce una duración válida', 'error'); return; }
+
+  const resetForm = () => {
+    document.getElementById('calis-duracion').value = '';
+    document.getElementById('calis-nota').value = '';
+    document.querySelector('#screen-calis .btn-primary').textContent = 'Guardar sesión de calistenia';
+  };
+
+  if (_calisEditCtx) {
+    try {
+      const { date: editDate, nth } = _calisEditCtx;
+      const data = await api('GET', '/values/calistenia!A:A');
+      const sheetRows = data.values || [];
+      let count = -1, targetIdx = -1;
+      for (let i = 1; i < sheetRows.length; i++) {
+        if (sheetRows[i][0] === editDate) { count++; if (count === nth) { targetIdx = i; break; } }
+      }
+      if (targetIdx !== -1)
+        await api('PUT', `/values/calistenia!A${targetIdx+1}:C${targetIdx+1}`,
+          { values: [[fecha, dur !== null ? dur : '', nota]] }, 'valueInputOption=RAW');
+      _calisEditCtx = null;
+      await loadCalis();
+      renderCal();
+      toast('Sesión de calistenia actualizada ✓', 'success');
+      resetForm();
+      renderCalisHistorial();
+    } catch(e) { toast('Error al actualizar: ' + e.message, 'error'); }
+    return;
+  }
+
+  if (S.calis.some(c => c.fecha === fecha) && !confirm('Ya tienes una sesión de calistenia para esta fecha. ¿Añadir otra?')) return;
+
+  try {
+    await api('POST', '/values/calistenia!A:C:append',
+      { values: [[fecha, dur !== null ? dur : '', nota]] },
+      'valueInputOption=RAW&insertDataOption=INSERT_ROWS');
+    S.calis.push({ fecha, duracion_min: dur, nota });
+    localStorage.setItem('gfit_calis', JSON.stringify(S.calis));
+    renderCal();
+    toast('Sesión de calistenia guardada ✓', 'success');
+    resetForm();
+    renderCalisHistorial();
+  } catch(e) { toast('Error al guardar: ' + e.message, 'error'); }
 }
 
 async function deleteCasaEntry(date, nth) {
@@ -6258,7 +6472,7 @@ async function boot() {
 
   try {
     await ensureSheets();
-    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadCasa(), loadCasaRutinas(), loadSnacks(), loadLugares()]);
+    await Promise.all([loadSessions(), loadConfig(), loadMedidas(), loadYoga(), loadPilates(), loadCalis(), loadCasa(), loadCasaRutinas(), loadSnacks(), loadLugares()]);
     if (S.pending.length) await syncQueue();
     renderDash();
     updateSyncBtn();
